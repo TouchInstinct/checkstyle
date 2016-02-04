@@ -126,10 +126,16 @@ public class MethodCallHandler extends AbstractExpressionHandler {
         final DetailAST first = getMainAst().getFirstChild();
         IndentLevel suggestedLevel = new IndentLevel(getLineStart(first));
         if (!areOnSameLine(child.getMainAst().getFirstChild(),
-                           getMainAst().getFirstChild())) {
+                           getMainAst().getFirstChild())
+                //HACK: ignore this rule for any lambda in method parameters
+                && child.getClass() != LambdaHandler.class) {
             suggestedLevel = new IndentLevel(suggestedLevel,
                     getBasicOffset(),
                     getIndentCheck().getLineWrappingIndentation());
+        }
+
+        if (child.getClass() == LambdaHandler.class) {
+            suggestedLevel.addAcceptedIndent(getLineStart(first) + getIndentCheck().getLineWrappingIndentation() * 2);
         }
 
         // If the right parenthesis is at the start of a line;

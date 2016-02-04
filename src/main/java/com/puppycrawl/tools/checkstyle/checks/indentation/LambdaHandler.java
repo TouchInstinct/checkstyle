@@ -58,6 +58,9 @@ public class LambdaHandler extends AbstractExpressionHandler {
 
         // Use the start of the parent's line as the reference indentation level.
         IndentLevel level = new IndentLevel(getLineStart(parent));
+        if(getParent() instanceof NewHandler) {
+            level.addAcceptedIndent(getLineStart(parent) + getIndentCheck().getLineWrappingIndentation());
+        }
 
         // If the start of the lambda is the first element on the line;
         // assume line wrapping with respect to its parent.
@@ -75,7 +78,8 @@ public class LambdaHandler extends AbstractExpressionHandler {
         final DetailAST firstChild = getMainAst().getFirstChild();
         if (getLineStart(firstChild) == firstChild.getColumnNo()) {
             final IndentLevel level = getIndent();
-            if (!level.isAcceptable(firstChild.getColumnNo())) {
+            if (!level.isAcceptable(firstChild.getColumnNo())
+                && !level.isAcceptable(firstChild.getColumnNo() - getIndentCheck().getLineWrappingIndentation())) {
                 logError(firstChild, "arguments", firstChild.getColumnNo(), level);
             }
         }
@@ -84,7 +88,8 @@ public class LambdaHandler extends AbstractExpressionHandler {
         if (getLineStart(getMainAst()) == getMainAst().getColumnNo()) {
             final IndentLevel level =
                 new IndentLevel(getIndent(), getIndentCheck().getLineWrappingIndentation());
-            if (!level.isAcceptable(getMainAst().getColumnNo())) {
+            if (!level.isAcceptable(getMainAst().getColumnNo())
+                && !level.isAcceptable(getMainAst().getColumnNo() - getIndentCheck().getLineWrappingIndentation())) {
                 logError(getMainAst(), "", getMainAst().getColumnNo(), level);
             }
         }

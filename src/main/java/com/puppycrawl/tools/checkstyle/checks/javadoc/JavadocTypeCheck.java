@@ -23,9 +23,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.commons.lang3.ArrayUtils;
-
-import com.puppycrawl.tools.checkstyle.api.Check;
+import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.FileContents;
 import com.puppycrawl.tools.checkstyle.api.Scope;
@@ -46,7 +44,7 @@ import com.puppycrawl.tools.checkstyle.utils.ScopeUtils;
  * @author Michael Tamm
  */
 public class JavadocTypeCheck
-    extends Check {
+    extends AbstractCheck {
 
     /**
      * A key is pointing to the warning message text in "messages.properties"
@@ -89,6 +87,14 @@ public class JavadocTypeCheck
 
     /** Close angle bracket literal. */
     private static final String CLOSE_ANGLE_BRACKET = ">";
+
+    /** Pattern to match type name within angle brackets in javadoc param tag. */
+    private static final Pattern TYPE_NAME_IN_JAVADOC_TAG =
+            Pattern.compile("\\s*<([^>]+)>.*");
+
+    /** Pattern to split type name field in javadoc param tag. */
+    private static final Pattern TYPE_NAME_IN_JAVADOC_TAG_SPLITTER =
+            Pattern.compile("\\s+");
 
     /** The scope to check for. */
     private Scope scope = Scope.PRIVATE;
@@ -179,7 +185,7 @@ public class JavadocTypeCheck
 
     @Override
     public int[] getRequiredTokens() {
-        return ArrayUtils.EMPTY_INT_ARRAY;
+        return CommonUtils.EMPTY_INT_ARRAY;
     }
 
     @Override
@@ -270,23 +276,21 @@ public class JavadocTypeCheck
      */
     private void checkTag(int lineNo, List<JavadocTag> tags, String tagName,
                           Pattern formatPattern, String format) {
-        if (formatPattern == null) {
-            return;
-        }
-
-        int tagCount = 0;
-        final String tagPrefix = "@";
-        for (int i = tags.size() - 1; i >= 0; i--) {
-            final JavadocTag tag = tags.get(i);
-            if (tag.getTagName().equals(tagName)) {
-                tagCount++;
-                if (!formatPattern.matcher(tag.getFirstArg()).find()) {
-                    log(lineNo, MSG_TAG_FORMAT, tagPrefix + tagName, format);
+        if (formatPattern != null) {
+            int tagCount = 0;
+            final String tagPrefix = "@";
+            for (int i = tags.size() - 1; i >= 0; i--) {
+                final JavadocTag tag = tags.get(i);
+                if (tag.getTagName().equals(tagName)) {
+                    tagCount++;
+                    if (!formatPattern.matcher(tag.getFirstArg()).find()) {
+                        log(lineNo, MSG_TAG_FORMAT, tagPrefix + tagName, format);
+                    }
                 }
             }
-        }
-        if (tagCount == 0) {
-            log(lineNo, MSG_MISSING_TAG, tagPrefix + tagName);
+            if (tagCount == 0) {
+                log(lineNo, MSG_MISSING_TAG, tagPrefix + tagName);
+            }
         }
     }
 
@@ -322,22 +326,37 @@ public class JavadocTypeCheck
     private void checkUnusedTypeParamTags(
         final List<JavadocTag> tags,
         final List<String> typeParamNames) {
-        final Pattern pattern = Pattern.compile("\\s*<([^>]+)>.*");
         for (int i = tags.size() - 1; i >= 0; i--) {
             final JavadocTag tag = tags.get(i);
             if (tag.isParamTag()) {
 
-                final Matcher matcher = pattern.matcher(tag.getFirstArg());
-                if (matcher.find()) {
-                    final String typeParamName = matcher.group(1).trim();
-                    if (!typeParamNames.contains(typeParamName)) {
-                        log(tag.getLineNo(), tag.getColumnNo(),
+                final String typeParamName = extractTypeParamNameFromTag(tag);
+
+                if (!typeParamNames.contains(typeParamName)) {
+                    log(tag.getLineNo(), tag.getColumnNo(),
                             MSG_UNUSED_TAG,
                             JavadocTagInfo.PARAM.getText(),
                             OPEN_ANGLE_BRACKET + typeParamName + CLOSE_ANGLE_BRACKET);
-                    }
                 }
             }
         }
+    }
+
+    /**
+     * Extracts type parameter name from tag.
+     * @param tag javadoc tag to extract parameter name
+     * @return extracts type parameter name from tag
+     */
+    private static String extractTypeParamNameFromTag(JavadocTag tag) {
+        final String typeParamName;
+        final Matcher matchInAngleBrackets =
+                TYPE_NAME_IN_JAVADOC_TAG.matcher(tag.getFirstArg());
+        if (matchInAngleBrackets.find()) {
+            typeParamName = matchInAngleBrackets.group(1).trim();
+        }
+        else {
+            typeParamName = TYPE_NAME_IN_JAVADOC_TAG_SPLITTER.split(tag.getFirstArg())[0];
+        }
+        return typeParamName;
     }
 }

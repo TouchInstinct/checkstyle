@@ -20,10 +20,10 @@
 package com.puppycrawl.tools.checkstyle.checks.indentation;
 
 import java.lang.reflect.Constructor;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import com.google.common.collect.Maps;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
 import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
@@ -37,12 +37,10 @@ public class HandlerFactory {
     /**
      * Registered handlers.
      */
-    private final Map<Integer, Constructor<?>> typeHandlers =
-        Maps.newHashMap();
+    private final Map<Integer, Constructor<?>> typeHandlers = new HashMap<>();
 
     /** Cache for created method call handlers. */
-    private final Map<DetailAST, AbstractExpressionHandler> createdHandlers =
-        Maps.newHashMap();
+    private final Map<DetailAST, AbstractExpressionHandler> createdHandlers = new HashMap<>();
 
     /** Creates a HandlerFactory. */
     public HandlerFactory() {
@@ -165,11 +163,11 @@ public class HandlerFactory {
      */
     private AbstractExpressionHandler createMethodCallHandler(IndentationCheck indentCheck,
         DetailAST ast, AbstractExpressionHandler parent) {
-        AbstractExpressionHandler theParent = parent;
         DetailAST astNode = ast.getFirstChild();
         while (astNode.getType() == TokenTypes.DOT) {
             astNode = astNode.getFirstChild();
         }
+        AbstractExpressionHandler theParent = parent;
         if (isHandledType(astNode.getType())) {
             theParent = getHandler(indentCheck, astNode, theParent);
             createdHandlers.put(astNode, theParent);
@@ -178,7 +176,7 @@ public class HandlerFactory {
     }
 
     /** Clears cache of created handlers. */
-    void clearCreatedHandlers() {
+    public void clearCreatedHandlers() {
         createdHandlers.clear();
     }
 }

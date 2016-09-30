@@ -24,7 +24,6 @@ import static com.puppycrawl.tools.checkstyle.checks.coding.IllegalInstantiation
 import java.io.File;
 import java.io.IOException;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -35,6 +34,7 @@ import com.puppycrawl.tools.checkstyle.api.FileContents;
 import com.puppycrawl.tools.checkstyle.api.FileText;
 import com.puppycrawl.tools.checkstyle.api.LocalizedMessages;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
+import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
 public class IllegalInstantiationCheckTest
     extends BaseCheckTestSupport {
@@ -76,9 +76,9 @@ public class IllegalInstantiationCheckTest
     public void testJava8() throws Exception {
         final DefaultConfiguration checkConfig =
                 createCheckConfig(IllegalInstantiationCheck.class);
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
         verify(checkConfig,
-                getNonCompilablePath("InputIllegalInstantiation2.java"),
+                getPath("InputIllegalInstantiation2.java"),
                 expected);
     }
 
@@ -90,7 +90,7 @@ public class IllegalInstantiationCheckTest
                 "classes",
                 "java.lang.Boolean");
         final String[] expected = {
-            "3:19: " + getCheckMessage(MSG_KEY, "java.lang.Boolean"),
+            "3:20: " + getCheckMessage(MSG_KEY, "java.lang.Boolean"),
         };
         verify(checkConfig,
                 getNonCompilablePath("InputIllegalInstantiationNoPackage.java"),
@@ -106,7 +106,7 @@ public class IllegalInstantiationCheckTest
                 "java.lang.Boolean,java.lang.String");
         final String[] expected = {
             "4:19: " + getCheckMessage(MSG_KEY, "java.lang.Boolean"),
-            "11:20: " + getCheckMessage(MSG_KEY, "java.lang.String"),
+            "12:20: " + getCheckMessage(MSG_KEY, "java.lang.String"),
         };
         verify(checkConfig,
                 getNonCompilablePath("InputIllegalInstantiationLang.java"),
@@ -120,7 +120,7 @@ public class IllegalInstantiationCheckTest
         checkConfig.addAttribute(
                 "classes",
                 "jjva.lang.Boolean,java.lang*Boolean");
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
         verify(checkConfig,
                 getNonCompilablePath("InputIllegalInstantiationLang.java"),
                 expected);
@@ -175,7 +175,7 @@ public class IllegalInstantiationCheckTest
     }
 
     @Test
-    public void testImproperToken() throws Exception {
+    public void testImproperToken() {
         final IllegalInstantiationCheck check = new IllegalInstantiationCheck();
 
         final DetailAST lambdaAst = new DetailAST();

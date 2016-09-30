@@ -48,7 +48,7 @@ public class CommentsIndentationTest extends BaseCheckTestSupport {
             "47: " + getCheckMessage(CommentsIndentationCheck.class, "comments.indentation.single",
                 46, 15, 12),
             "49: " + getCheckMessage(CommentsIndentationCheck.class, "comments.indentation.single",
-                48, 10, 8),
+                45, 10, 8),
             "54: " + getCheckMessage(CommentsIndentationCheck.class, "comments.indentation.single",
                 53, 13, 8),
             "74: " + getCheckMessage(CommentsIndentationCheck.class, "comments.indentation.single",
@@ -90,7 +90,7 @@ public class CommentsIndentationTest extends BaseCheckTestSupport {
             "322: " + getCheckMessage(CommentsIndentationCheck.class, "comments.indentation.single",
                 323, 0, 4),
             "336: " + getCheckMessage(CommentsIndentationCheck.class, "comments.indentation.single",
-                337, 0, 4),
+                333, 0, 8),
             "355: " + getCheckMessage(CommentsIndentationCheck.class, "comments.indentation.single",
                 352, 9, 8),
             };
@@ -106,6 +106,8 @@ public class CommentsIndentationTest extends BaseCheckTestSupport {
     @Test
     public void testCommentIsInsideSwitchBlock() throws Exception {
         final String[] expected = {
+            "19: " + getCheckMessage(CommentsIndentationCheck.class, "comments.indentation.block",
+                20, 12, 16),
             "25: " + getCheckMessage(CommentsIndentationCheck.class, "comments.indentation.single",
                 "24, 26", 19, "16, 12"),
             "31: " + getCheckMessage(CommentsIndentationCheck.class, "comments.indentation.single",
@@ -131,9 +133,9 @@ public class CommentsIndentationTest extends BaseCheckTestSupport {
             "200: " + getCheckMessage(CommentsIndentationCheck.class, "comments.indentation.single",
                 "199, 201", 4, "12, 12"),
             "203: " + getCheckMessage(CommentsIndentationCheck.class, "comments.indentation.single",
-                204, 22, 20),
+                "202, 206", 22, "16, 12"),
             "204: " + getCheckMessage(CommentsIndentationCheck.class, "comments.indentation.single",
-                205, 20, 17),
+                "202, 206", 20, "16, 12"),
             "205: " + getCheckMessage(CommentsIndentationCheck.class, "comments.indentation.single",
                 "202, 206", 17, "16, 12"),
             "229: " + getCheckMessage(CommentsIndentationCheck.class, "comments.indentation.single",
@@ -152,7 +154,7 @@ public class CommentsIndentationTest extends BaseCheckTestSupport {
     public void testCommentIsInsideEmptyBlock() throws Exception {
         final String[] expected = {
             "9: " + getCheckMessage(CommentsIndentationCheck.class, "comments.indentation.single",
-                10, 19, 23),
+                12, 19, 31),
             "10: " + getCheckMessage(CommentsIndentationCheck.class, "comments.indentation.block",
                 12, 23, 31),
             "33: " + getCheckMessage(CommentsIndentationCheck.class, "comments.indentation.single",
@@ -183,13 +185,13 @@ public class CommentsIndentationTest extends BaseCheckTestSupport {
             "28: " + getCheckMessage(CommentsIndentationCheck.class, "comments.indentation.block",
                 31, 16, 12),
             "50: " + getCheckMessage(CommentsIndentationCheck.class, "comments.indentation.single",
-                51, 27, 23),
+                53, 27, 36),
             "51: " + getCheckMessage(CommentsIndentationCheck.class, "comments.indentation.block",
                 53, 23, 36),
             "90: " + getCheckMessage(CommentsIndentationCheck.class, "comments.indentation.single",
                 91, 14, 8),
             "98: " + getCheckMessage(CommentsIndentationCheck.class, "comments.indentation.single",
-                99, 13, 8),
+                100, 13, 8),
             "108: " + getCheckMessage(CommentsIndentationCheck.class, "comments.indentation.single",
                 109, 33, 8),
             };

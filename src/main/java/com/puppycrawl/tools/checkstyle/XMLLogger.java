@@ -24,6 +24,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
+import java.util.Locale;
 import java.util.ResourceBundle;
 
 import com.puppycrawl.tools.checkstyle.api.AuditEvent;
@@ -40,6 +41,8 @@ import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
  * @author <a href="mailto:stephane.bailliez@wanadoo.fr">Stephane Bailliez</a>
  */
+// -@cs[AbbreviationAsWordInName] We can not change it as,
+// check's name is part of API (used in configurations).
 public class XMLLogger
     extends AutomaticBean
     implements AuditListener {
@@ -84,7 +87,7 @@ public class XMLLogger
         writer.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
 
         final ResourceBundle compilationProperties =
-            ResourceBundle.getBundle("checkstylecompilation");
+            ResourceBundle.getBundle("checkstylecompilation", Locale.ROOT);
         final String version =
             compilationProperties.getString("checkstyle.compile.version");
 

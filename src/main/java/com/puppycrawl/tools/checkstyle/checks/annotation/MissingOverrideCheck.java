@@ -22,7 +22,7 @@ package com.puppycrawl.tools.checkstyle.checks.annotation;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.puppycrawl.tools.checkstyle.api.Check;
+import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TextBlock;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
@@ -75,7 +75,7 @@ import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
  *
  * @author Travis Schneeberger
  */
-public final class MissingOverrideCheck extends Check {
+public final class MissingOverrideCheck extends AbstractCheck {
     /**
      * A key is pointing to the warning message text in "messages.properties"
      * file.
@@ -141,6 +141,7 @@ public final class MissingOverrideCheck extends Check {
         {TokenTypes.METHOD_DEF, };
     }
 
+    // -@cs[CyclomaticComplexity] Too complex to break apart.
     @Override
     public void visitToken(final DetailAST ast) {
         final TextBlock javadoc =
@@ -150,23 +151,26 @@ public final class MissingOverrideCheck extends Check {
         if (containsTag && !JavadocTagInfo.INHERIT_DOC.isValidOn(ast)) {
             log(ast.getLineNo(), MSG_KEY_TAG_NOT_VALID_ON,
                 JavadocTagInfo.INHERIT_DOC.getText());
-            return;
         }
+        else {
+            boolean check = true;
 
-        if (javaFiveCompatibility) {
-            final DetailAST defOrNew = ast.getParent().getParent();
+            if (javaFiveCompatibility) {
+                final DetailAST defOrNew = ast.getParent().getParent();
 
-            if (defOrNew.branchContains(TokenTypes.EXTENDS_CLAUSE)
-                || defOrNew.branchContains(TokenTypes.IMPLEMENTS_CLAUSE)
-                || defOrNew.getType() == TokenTypes.LITERAL_NEW) {
-                return;
+                if (defOrNew.branchContains(TokenTypes.EXTENDS_CLAUSE)
+                    || defOrNew.branchContains(TokenTypes.IMPLEMENTS_CLAUSE)
+                    || defOrNew.getType() == TokenTypes.LITERAL_NEW) {
+                    check = false;
+                }
             }
-        }
 
-        if (containsTag
-            && !AnnotationUtility.containsAnnotation(ast, OVERRIDE)
-            && !AnnotationUtility.containsAnnotation(ast, FQ_OVERRIDE)) {
-            log(ast.getLineNo(), MSG_KEY_ANNOTATION_MISSING_OVERRIDE);
+            if (check
+                && containsTag
+                && !AnnotationUtility.containsAnnotation(ast, OVERRIDE)
+                && !AnnotationUtility.containsAnnotation(ast, FQ_OVERRIDE)) {
+                log(ast.getLineNo(), MSG_KEY_ANNOTATION_MISSING_OVERRIDE);
+            }
         }
     }
 

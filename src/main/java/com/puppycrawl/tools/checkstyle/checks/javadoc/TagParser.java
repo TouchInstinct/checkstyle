@@ -19,9 +19,8 @@
 
 package com.puppycrawl.tools.checkstyle.checks.javadoc;
 
+import java.util.LinkedList;
 import java.util.List;
-
-import com.google.common.collect.Lists;
 
 /**
  * <p>
@@ -47,7 +46,7 @@ import com.google.common.collect.Lists;
  */
 class TagParser {
     /** List of HtmlTags found on the input line of text. */
-    private final List<HtmlTag> tags = Lists.newLinkedList();
+    private final List<HtmlTag> tags = new LinkedList<>();
 
     /**
      * Constructs a TagParser and finds the first tag if any.
@@ -93,9 +92,7 @@ class TagParser {
      */
     private void parseTags(String[] text, int lineNo) {
         final int nLines = text.length;
-        Point position = new Point(0, 0);
-
-        position = findChar(text, '<', position);
+        Point position = findChar(text, '<', new Point(0, 0));
         while (position.getLineNo() < nLines) {
             // if this is html comment then skip it
             if (isCommentTag(text, position)) {

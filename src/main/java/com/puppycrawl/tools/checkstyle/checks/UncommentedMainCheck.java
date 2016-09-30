@@ -19,10 +19,10 @@
 
 package com.puppycrawl.tools.checkstyle.checks;
 
+import java.util.Optional;
 import java.util.regex.Pattern;
 
-import com.google.common.base.Optional;
-import com.puppycrawl.tools.checkstyle.api.Check;
+import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.FullIdent;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
@@ -41,7 +41,7 @@ import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
  * @author o_sukhodolsky
  */
 public class UncommentedMainCheck
-    extends Check {
+    extends AbstractCheck {
 
     /**
      * A key is pointing to the warning message text in "messages.properties"
@@ -153,16 +153,13 @@ public class UncommentedMainCheck
      * @param method method definition node
      */
     private void visitMethodDef(DetailAST method) {
-        if (classDepth != 1) {
-            // method in inner class or in interface definition
-            return;
-        }
-
-        if (checkClassName()
-            && checkName(method)
-            && checkModifiers(method)
-            && checkType(method)
-            && checkParams(method)) {
+        if (classDepth == 1
+                // method not in inner class or in interface definition
+                && checkClassName()
+                && checkName(method)
+                && checkModifiers(method)
+                && checkType(method)
+                && checkParams(method)) {
             log(method.getLineNo(), MSG_KEY);
         }
     }
@@ -220,9 +217,9 @@ public class UncommentedMainCheck
 
         if (params.getChildCount() == 1) {
             final DetailAST parameterType = params.getFirstChild().findFirstToken(TokenTypes.TYPE);
-            final Optional<DetailAST> arrayDecl = Optional.fromNullable(
+            final Optional<DetailAST> arrayDecl = Optional.ofNullable(
                 parameterType.findFirstToken(TokenTypes.ARRAY_DECLARATOR));
-            final Optional<DetailAST> varargs = Optional.fromNullable(
+            final Optional<DetailAST> varargs = Optional.ofNullable(
                 params.getFirstChild().findFirstToken(TokenTypes.ELLIPSIS));
 
             if (arrayDecl.isPresent()) {

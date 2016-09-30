@@ -19,11 +19,10 @@
 
 package com.puppycrawl.tools.checkstyle.checks;
 
-import org.apache.commons.lang3.ArrayUtils;
-
-import com.puppycrawl.tools.checkstyle.api.Check;
+import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.FileContents;
+import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
 /**
  * Holds the current file contents for global access when configured
@@ -33,7 +32,7 @@ import com.puppycrawl.tools.checkstyle.api.FileContents;
  * @author Rick Giles
  */
 public class FileContentsHolder
-    extends Check {
+    extends AbstractCheck {
     /** The current file contents. */
     private static final ThreadLocal<FileContents> FILE_CONTENTS = new ThreadLocal<>();
 
@@ -51,7 +50,7 @@ public class FileContentsHolder
 
     @Override
     public int[] getAcceptableTokens() {
-        return ArrayUtils.EMPTY_INT_ARRAY;
+        return CommonUtils.EMPTY_INT_ARRAY;
     }
 
     @Override

@@ -30,12 +30,12 @@ import static org.junit.Assert.assertArrayEquals;
 import java.io.File;
 import java.io.IOException;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.junit.Test;
 
 import com.puppycrawl.tools.checkstyle.BaseCheckTestSupport;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
+import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
 public class JavadocStyleCheckTest
     extends BaseCheckTestSupport {
@@ -68,7 +68,7 @@ public class JavadocStyleCheckTest
 
     @Test
     public void testDefaultSettings()
-        throws Exception {
+            throws Exception {
         final DefaultConfiguration checkConfig =
             createCheckConfig(JavadocStyleCheck.class);
         final String[] expected = {
@@ -98,6 +98,7 @@ public class JavadocStyleCheckTest
             "386: " + getCheckMessage(MSG_NO_PERIOD),
             "393: " + getCheckMessage(MSG_NO_PERIOD),
             "405: " + getCheckMessage(MSG_NO_PERIOD),
+            "418: " + getCheckMessage(MSG_NO_PERIOD),
         };
 
         verify(checkConfig, getPath("InputJavadocStyle.java"), expected);
@@ -122,6 +123,7 @@ public class JavadocStyleCheckTest
             "386: " + getCheckMessage(MSG_NO_PERIOD),
             "393: " + getCheckMessage(MSG_NO_PERIOD),
             "405: " + getCheckMessage(MSG_NO_PERIOD),
+            "418: " + getCheckMessage(MSG_NO_PERIOD),
         };
 
         verify(checkConfig, getPath("InputJavadocStyle.java"), expected);
@@ -150,6 +152,7 @@ public class JavadocStyleCheckTest
             "386: " + getCheckMessage(MSG_NO_PERIOD),
             "393: " + getCheckMessage(MSG_NO_PERIOD),
             "405: " + getCheckMessage(MSG_NO_PERIOD),
+            "418: " + getCheckMessage(MSG_NO_PERIOD),
         };
 
         verify(checkConfig, getPath("InputJavadocStyle.java"), expected);
@@ -185,7 +188,7 @@ public class JavadocStyleCheckTest
         final DefaultConfiguration checkConfig = createCheckConfig(JavadocStyleCheck.class);
         checkConfig.addAttribute("checkFirstSentence", "false");
         checkConfig.addAttribute("checkHtml", "true");
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
 
         verify(checkConfig, getPath("InputJavadocStyleHtmlComment.java"), expected);
     }
@@ -193,14 +196,14 @@ public class JavadocStyleCheckTest
     @Test
     public void testOnInputWithNoJavadoc() throws Exception {
         final DefaultConfiguration checkConfig = createCheckConfig(JavadocStyleCheck.class);
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
 
         verify(checkConfig, getPath("InputNoJavadoc.java"), expected);
     }
 
     @Test
     public void testScopePublic()
-        throws Exception {
+            throws Exception {
         final DefaultConfiguration checkConfig =
             createCheckConfig(JavadocStyleCheck.class);
         checkConfig.addAttribute("checkFirstSentence", "true");
@@ -217,6 +220,7 @@ public class JavadocStyleCheckTest
             "335:33: " + getCheckMessage(MSG_EXTRA_HTML, "</string>"),
             "382: " + getCheckMessage(MSG_NO_PERIOD),
             "386: " + getCheckMessage(MSG_NO_PERIOD),
+            "418: " + getCheckMessage(MSG_NO_PERIOD),
         };
 
         verify(checkConfig, getPath("InputJavadocStyle.java"), expected);
@@ -224,7 +228,7 @@ public class JavadocStyleCheckTest
 
     @Test
     public void testScopeProtected()
-        throws Exception {
+            throws Exception {
         final DefaultConfiguration checkConfig =
             createCheckConfig(JavadocStyleCheck.class);
         checkConfig.addAttribute("checkFirstSentence", "true");
@@ -244,6 +248,7 @@ public class JavadocStyleCheckTest
             "335:33: " + getCheckMessage(MSG_EXTRA_HTML, "</string>"),
             "382: " + getCheckMessage(MSG_NO_PERIOD),
             "386: " + getCheckMessage(MSG_NO_PERIOD),
+            "418: " + getCheckMessage(MSG_NO_PERIOD),
         };
 
         verify(checkConfig, getPath("InputJavadocStyle.java"), expected);
@@ -251,7 +256,7 @@ public class JavadocStyleCheckTest
 
     @Test
     public void testScopePackage()
-        throws Exception {
+            throws Exception {
         final DefaultConfiguration checkConfig =
             createCheckConfig(JavadocStyleCheck.class);
         checkConfig.addAttribute("checkFirstSentence", "true");
@@ -276,6 +281,7 @@ public class JavadocStyleCheckTest
             "386: " + getCheckMessage(MSG_NO_PERIOD),
             "393: " + getCheckMessage(MSG_NO_PERIOD),
             "405: " + getCheckMessage(MSG_NO_PERIOD),
+            "418: " + getCheckMessage(MSG_NO_PERIOD),
         };
 
         verify(checkConfig, getPath("InputJavadocStyle.java"), expected);
@@ -300,7 +306,7 @@ public class JavadocStyleCheckTest
 
     @Test
     public void testExcludeScope()
-        throws Exception {
+            throws Exception {
         final DefaultConfiguration checkConfig =
             createCheckConfig(JavadocStyleCheck.class);
         checkConfig.addAttribute("scope", "private");
@@ -360,7 +366,7 @@ public class JavadocStyleCheckTest
     public void packageInfoAnnotation() throws Exception {
         final DefaultConfiguration checkConfig =
             createCheckConfig(JavadocStyleCheck.class);
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
 
         verify(createChecker(checkConfig),
                getPath("pkginfo" + File.separator + "annotation" + File.separator
@@ -385,7 +391,7 @@ public class JavadocStyleCheckTest
     public void packageInfoValid() throws Exception {
         final DefaultConfiguration checkConfig =
             createCheckConfig(JavadocStyleCheck.class);
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
 
         verify(createChecker(checkConfig),
                getPath("pkginfo" + File.separator + "valid" + File.separator + "package-info.java"),
@@ -394,7 +400,7 @@ public class JavadocStyleCheckTest
 
     @Test
     public void testRestrictedTokenSet()
-        throws Exception {
+            throws Exception {
         final DefaultConfiguration checkConfig = createCheckConfig(JavadocStyleCheck.class);
         checkConfig.addAttribute("tokens", "METHOD_DEF");
         checkConfig.addAttribute("scope", "public");
@@ -404,6 +410,7 @@ public class JavadocStyleCheckTest
         final String[] expected = {
             "88: " + getCheckMessage(MSG_NO_PERIOD),
             "386: " + getCheckMessage(MSG_NO_PERIOD),
+            "418: " + getCheckMessage(MSG_NO_PERIOD),
         };
         verify(checkConfig, getPath("InputJavadocStyle.java"), expected);
     }

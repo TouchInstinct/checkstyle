@@ -29,17 +29,19 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
+import java.util.stream.Collectors;
 
-import com.google.common.base.Predicate;
-import com.google.common.collect.Lists;
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.MapDifference.ValueDifference;
 import com.google.common.collect.Maps;
@@ -88,7 +90,7 @@ public class BaseCheckTestSupport {
                 .toString();
     }
 
-    protected String getSrcPath(String filename) throws IOException {
+    protected static String getSrcPath(String filename) throws IOException {
         return new File("src/test/java/com/puppycrawl/tools/checkstyle/" + filename)
                 .getCanonicalPath();
     }
@@ -96,6 +98,23 @@ public class BaseCheckTestSupport {
     protected String getNonCompilablePath(String filename) throws IOException {
         return new File("src/test/resources-noncompilable/com/puppycrawl/tools/checkstyle/"
                 + filename).getCanonicalPath();
+    }
+
+    protected static void verifyAst(String expectedTextPrintFileName, String actualJavaFileName)
+            throws Exception {
+        verifyAst(expectedTextPrintFileName, actualJavaFileName, false);
+    }
+
+    protected static void verifyAst(String expectedTextPrintFileName, String actualJavaFileName,
+            boolean withComments) throws Exception {
+        final String expectedContents = new String(Files.readAllBytes(
+            Paths.get(expectedTextPrintFileName)), StandardCharsets.UTF_8)
+            .replaceAll("\\\\r\\\\n", "\\\\n");
+        final String actualContents = AstTreeStringPrinter.printFileAst(
+                new File(actualJavaFileName), withComments).replaceAll("\\\\r\\\\n", "\\\\n");
+
+        assertEquals("Generated AST from Java file should match pre-defined AST", expectedContents,
+                actualContents);
     }
 
     protected void verify(Configuration aConfig, String fileName, String... expected)
@@ -114,7 +133,7 @@ public class BaseCheckTestSupport {
                           String... expected)
             throws Exception {
         verify(checker,
-                new File[]{new File(processedFilename)},
+                new File[] {new File(processedFilename)},
                 messageFileName, expected);
     }
 
@@ -128,20 +147,23 @@ public class BaseCheckTestSupport {
                           String... expected)
             throws Exception {
         stream.flush();
-        final List<File> theFiles = Lists.newArrayList();
+        final List<File> theFiles = new ArrayList<>();
         Collections.addAll(theFiles, processedFiles);
         final int errs = checker.process(theFiles);
 
         // process each of the lines
         final ByteArrayInputStream inputStream =
                 new ByteArrayInputStream(stream.toByteArray());
-        try (final LineNumberReader lnr = new LineNumberReader(
+        try (LineNumberReader lnr = new LineNumberReader(
                 new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
+
+            final List<String> actuals = lnr.lines().limit(expected.length)
+                    .sorted().collect(Collectors.toList());
+            Arrays.sort(expected);
 
             for (int i = 0; i < expected.length; i++) {
                 final String expectedResult = messageFileName + ":" + expected[i];
-                final String actual = lnr.readLine();
-                assertEquals("error message " + i, expectedResult, actual);
+                assertEquals("error message " + i, expectedResult, actuals.get(i));
             }
 
             assertEquals("unexpected output: " + lnr.readLine(),
@@ -156,19 +178,14 @@ public class BaseCheckTestSupport {
                           Map<String, List<String>> expectedViolations)
             throws Exception {
         stream.flush();
-        final List<File> theFiles = Lists.newArrayList();
+        final List<File> theFiles = new ArrayList<>();
         Collections.addAll(theFiles, processedFiles);
         final int errs = checker.process(theFiles);
 
         // process each of the lines
         final Map<String, List<String>> actualViolations = getActualViolations(errs);
         final Map<String, List<String>> realExpectedViolations =
-            Maps.filterValues(expectedViolations, new Predicate<List<String>>() {
-                @Override
-                public boolean apply(List<String> input) {
-                    return !input.isEmpty();
-                }
-            });
+            Maps.filterValues(expectedViolations, input -> !input.isEmpty());
         final MapDifference<String, List<String>> violationDifferences =
             Maps.difference(realExpectedViolations, actualViolations);
 
@@ -209,7 +226,7 @@ public class BaseCheckTestSupport {
         final ByteArrayInputStream inputStream =
                 new ByteArrayInputStream(stream.toByteArray());
 
-        try (final LineNumberReader lnr = new LineNumberReader(
+        try (LineNumberReader lnr = new LineNumberReader(
                 new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
 
             final Map<String, List<String>> actualViolations = new HashMap<>();

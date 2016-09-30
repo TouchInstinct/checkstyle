@@ -300,6 +300,20 @@ class Test {
         <p>
           Purpose of <b>ignore*</b> option is to ignore related violations, however it still impacts on other class members.
         </p>
+
+        <p>
+          ATTENTION: the check skips class fields which have
+          <a href="http://docs.oracle.com/javase/specs/jls/se8/html/jls-8.html#jls-8.3.3">forward references</a>
+           from validation due to the fact that we have Checkstyle's limitations to clearly
+          detect user intention of fields location and grouping. For example,
+          <source>
+public class A {
+    private double x = 1.0;
+    private double y = 2.0;
+    public double slope = x / y; // will be skipped from validation due to forward reference
+}
+          </source>
+        </p>
       </subsection>
 
       <subsection name="Properties">
@@ -571,7 +585,7 @@ String nullString = null;
           <tr>
             <td>ignoreEqualsIgnoreCase</td>
             <td>whether to ignore <code>String.equalsIgnoreCase()</code> invocations</td>
-            <td><a href="property_types.html#boolean">boolean</a></td>
+            <td><a href="property_types.html#boolean">Boolean</a></td>
             <td>false</td>
           </tr>
         </table>
@@ -628,8 +642,12 @@ String nullString = null;
     <section name="EqualsHashCode">
       <subsection name="Description">
         <p>
-          Checks that classes that override <code>equals()</code>
-          also override <code>hashCode()</code>.
+          Checks that classes that either override <code>equals()</code>
+          or <code>hashCode()</code> also overrides the other.
+          This checks only verifies that the method declarations match
+          <code>Object.equals(Object)}</code> and <code>Object.hashCode()</code> exactly to be
+          considered an override. This check does not verify invalid method names, parameters
+          other than <code>Object</code>, or anything else.
         </p>
 
         <p>
@@ -665,6 +683,10 @@ String nullString = null;
 
       <subsection name="Error Messages">
         <ul>
+          <li>
+            <a href="https://github.com/search?q=path%3Asrc%2Fmain%2Fresources%2Fcom%2Fpuppycrawl%2Ftools%2Fcheckstyle%2Fchecks%2Fcoding+filename%3Amessages*.properties+repo%3Acheckstyle%2Fcheckstyle+%22equals.noEquals%22">
+            equals.noEquals</a>
+          </li>
           <li>
             <a href="https://github.com/search?q=path%3Asrc%2Fmain%2Fresources%2Fcom%2Fpuppycrawl%2Ftools%2Fcheckstyle%2Fchecks%2Fcoding+filename%3Amessages*.properties+repo%3Acheckstyle%2Fcheckstyle+%22equals.noHashCode%22">
             equals.noHashCode</a>
@@ -1266,7 +1288,7 @@ class SomeClass
           <tr>
             <td>illegalClassNames</td>
             <td>exception class names to reject</td>
-            <td><a href="property_types.html#stringSet">list of strings</a></td>
+            <td><a href="property_types.html#stringSet">String Set</a></td>
             <td><code>&quot;java.lang.Exception,
             java.lang.Throwable, java.lang.RuntimeException&quot;</code></td>
           </tr>
@@ -1453,7 +1475,7 @@ class SomeClass
           <tr>
             <td>illegalClassNames</td>
             <td>throw class names to reject</td>
-            <td><a href="property_types.html#stringSet">list of strings</a></td>
+            <td><a href="property_types.html#stringSet">String Set</a></td>
             <td>
               <code>&quot;java.lang.Throwable,
               java.lang.Error, java.lang.RuntimeException&quot;</code>
@@ -1462,7 +1484,7 @@ class SomeClass
           <tr>
             <td>ignoredMethodNames</td>
             <td>names of methods to ignore</td>
-            <td><a href="property_types.html#stringSet">list of strings</a></td>
+            <td><a href="property_types.html#stringSet">String Set</a></td>
             <td><code>finalize</code></td>
           </tr>
           <tr>
@@ -1756,7 +1778,7 @@ class SomeClass
           <tr>
             <td>validateAbstractClassNames</td>
             <td>Whether to validate abstract class names</td>
-            <td>boolean</td>
+            <td><a href="property_types.html#boolean">Boolean</a></td>
             <td>false</td>
           </tr>
           <tr>
@@ -1982,44 +2004,32 @@ static final Integer ANSWER_TO_THE_ULTIMATE_QUESTION_OF_LIFE = new Integer(42);
           <tr>
             <td>ignoreNumbers</td>
             <td>non-magic numbers</td>
-            <td>list of numbers</td>
+            <td><a href="property_types.html#intSet">Number Set</a></td>
             <td>-1, 0, 1, 2</td>
           </tr>
           <tr>
             <td>ignoreHashCodeMethod</td>
             <td>ignore magic numbers in hashCode methods</td>
-            <td><a href="property_types.html#boolean">boolean</a></td>
+            <td><a href="property_types.html#boolean">Boolean</a></td>
             <td><span class="default">false</span></td>
           </tr>
           <tr>
             <td>ignoreAnnotation</td>
             <td>ignore magic numbers in annotation declarations.</td>
-            <td><a href="property_types.html#boolean">boolean</a></td>
+            <td><a href="property_types.html#boolean">Boolean</a></td>
             <td><span class="default">false</span></td>
           </tr>
           <tr>
               <td>ignoreFieldDeclaration</td>
               <td>ignore magic numbers in field declarations.</td>
-              <td><a href="property_types.html#boolean">boolean</a></td>
+              <td><a href="property_types.html#boolean">Boolean</a></td>
               <td><span class="default">false</span></td>
           </tr>
           <tr>
               <td>constantWaiverParentToken</td>
               <td>Token that are allowed in the AST path from the number literal to the enclosing constant definition.</td>
               <td>subset of tokens
-                <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#ASSIGN">ASSIGN</a>,
-                <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#ARRAY_INIT">ARRAY_INIT</a>,
-                <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#EXPR">EXPR</a>,
-                <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#UNARY_PLUS">UNARY_PLUS</a>,
-                <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#UNARY_MINUS">UNARY_MINUS</a>,
-                <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#TYPECAST">TYPECAST</a>,
-                <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#ELIST">ELIST</a>,
-                <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#LITERAL_NEW">LITERAL_NEW</a>,
-                <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#METHOD_CALL">METHOD_CALL</a>,
-                <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#STAR">STAR</a>,
-                <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#DIV">DIV</a>,
-                <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#PLUS">PLUS</a>,
-                <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#MINUS">MINUS</a>.
+                <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html">TokenTypes</a>
               </td>
               <td>
                 <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#ASSIGN">ASSIGN</a>,
@@ -2459,9 +2469,8 @@ class MyClass {
               annotations or static initializers from the check.
             </td>
             <td>
-              <a href="property_types.html#stringSet">list</a> of
-              <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html">token type</a>
-              names
+              subset of tokens
+              <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html">TokenTypes</a>
             </td>
             <td>
               <code>ANNOTATION</code>
@@ -3241,7 +3250,8 @@ public void foo(int i, String s) {}
         </p>
 
         <p>
-          Warning: the Check is very controversial and not that actual nowadays.
+           Warning: the Check is very controversial if 'validateOnlyOverlapping' option is set to
+           'false' and not that actual nowadays.
         </p>
 
         <p>
@@ -3271,13 +3281,19 @@ public void foo(int i, String s) {}
           <tr>
             <td>checkFields</td>
             <td>Whether to check references to fields.</td>
-            <td><a href="property_types.html#boolean">boolean</a></td>
+            <td><a href="property_types.html#boolean">Boolean</a></td>
             <td><code>true</code></td>
           </tr>
           <tr>
             <td>checkMethods</td>
             <td>Whether to check references to methods.</td>
-            <td><a href="property_types.html#boolean">boolean</a></td>
+            <td><a href="property_types.html#boolean">Boolean</a></td>
+            <td><code>true</code></td>
+          </tr>
+          <tr>
+            <td>validateOnlyOverlapping</td>
+            <td>Whether to check only overlapping by variables or arguments.</td>
+            <td><a href="property_types.html#boolean">Boolean</a></td>
             <td><code>true</code></td>
           </tr>
         </table>
@@ -3299,6 +3315,105 @@ public void foo(int i, String s) {}
     &lt;property name=&quot;checkMethods&quot; value=&quot;false&quot;/&gt;
 &lt;/module&gt;
         </source>
+
+       <p>
+         Examples of how the check works if validateOnlyOverlapping option is set to true:
+       </p>
+       <source>
+public static class A {
+  private int field1;
+  private int field2;
+
+  public A(int field1) {
+    // Overlapping by constructor argument.
+    field1 = field1; // violation: Reference to instance variable "field1" needs "this".
+    field2 = 0;
+  }
+
+  void foo3() {
+    String field1 = "values";
+    // Overlapping by local variable.
+    field1 = field1; // violation:  Reference to instance variable "field1" needs "this".
+  }
+}
+
+public static class B {
+  private int field1;
+
+  public A(int f) {
+    field1 = f;
+  }
+
+  String addSuffixToField(String field1) {
+    // Overlapping by method argument. Equal to "return field1 = field1 + "suffix";"
+    return field1 += "suffix"; // violation: Reference to instance variable "field1" needs "this".
+  }
+}
+       </source>
+       <p>
+         Please, be aware of the following logic, which is implemented in the check:
+       </p>
+       <p>
+         1) If you arranges 'this' in your code on your own, the check will not rise violation for
+            variables which use 'this' to reference a class field, for example:
+       </p>
+       <source>
+public class C {
+  private int scale;
+  private int x;
+  public void foo(int scale) {
+    scale = this.scale; // no violation
+    if (scale > 0) {
+      scale = -scale; // no violation
+    }
+    x *= scale;
+  }
+}
+       </source>
+       <p>
+         2) If method parameter is returned from the method, the check will not rise violation for
+            returned variable/parameter, for example:
+       </p>
+       <source>
+public class D {
+  private String prefix;
+  public String modifyPrefix(String prefix) {
+    prefix = "^" + prefix + "$" // no violation (modification of parameter)
+    return prefix; // modified method parameter is returned from the method
+  }
+}
+       </source>
+       <p>
+         Examples of how the check works if validateOnlyOverlapping option is set to false:
+       </p>
+       <source>
+public static class A {
+  private int field1;
+  private int field2;
+
+  public A(int field1) {
+    field1 = field1; // violation: Reference to instance variable "field1" needs "this".
+    field2 = 0; // violation: Reference to instance variable "field2" needs "this".
+  }
+
+  void foo3() {
+    String field1 = "values";
+    field1 = field1; // violation:  Reference to instance variable "field1" needs "this".
+    }
+  }
+
+public static class B {
+  private int field1;
+
+  public A(int f) {
+    field1 = f; // violation:  Reference to instance variable "field1" needs "this".
+  }
+
+  String addSuffixToField(String field1) {
+    return field1 += "suffix"; // violation: Reference to instance variable "field1" needs "this".
+  }
+}
+       </source>
       </subsection>
 
       <subsection name="Example of Usage">
@@ -3348,6 +3463,18 @@ public void foo(int i, String s) {}
         </p>
 
         <p>
+          <b>max</b> property will only check returns in methods and lambdas that return a specific value (Ex: 'return 1;').
+        </p>
+
+        <p>
+          <b>maxForVoid</b> property will only check returns in methods, constructors, and lambdas that have no return type (IE
+          'return;').
+          It will only count visible return statements. Return statements not normally written, but implied, at
+          the end of the method/constructor definition will not be taken into account.
+          To disallow "return;" in void return type methods, use a value of 0.
+        </p>
+
+        <p>
           Rationale: Too many return points can mean that code is
           attempting to do too much or may be difficult to understand.
         </p>
@@ -3363,9 +3490,15 @@ public void foo(int i, String s) {}
           </tr>
           <tr>
             <td>max</td>
-            <td>maximum allowed number of return statements</td>
+            <td>maximum allowed number of return statements in non-void methods/lambdas</td>
             <td><a href="property_types.html#integer">Integer</a></td>
             <td><code>2</code></td>
+          </tr>
+          <tr>
+            <td>maxForVoid</td>
+            <td>maximum allowed number of return statements in void methods/constructors/lambdas</td>
+            <td><a href="property_types.html#integer">Integer</a></td>
+            <td><code>1</code></td>
           </tr>
           <tr>
             <td>format</td>
@@ -3400,6 +3533,28 @@ public void foo(int i, String s) {}
         <source>
 &lt;module name=&quot;ReturnCount&quot;&gt;
     &lt;property name=&quot;max&quot; value=&quot;3&quot;/&gt;
+&lt;/module&gt;
+        </source>
+
+        <p>
+          To configure the check so that it doesn't allow any
+          return statements per void method:
+        </p>
+        <source>
+&lt;module name=&quot;ReturnCount&quot;&gt;
+    &lt;property name=&quot;maxForVoid&quot; value=&quot;0&quot;/&gt;
+&lt;/module&gt;
+        </source>
+
+        <p>
+          To configure the check so that it doesn't allow more than 2
+          return statements per method (ignoring the <code>equals()</code>
+          method) and more than 1 return statements per void method:
+        </p>
+        <source>
+&lt;module name=&quot;ReturnCount&quot;&gt;
+    &lt;property name=&quot;max&quot; value=&quot;2&quot;/&gt;
+    &lt;property name=&quot;maxForVoid&quot; value=&quot;1&quot;/&gt;
 &lt;/module&gt;
         </source>
 
@@ -3941,7 +4096,7 @@ if (&quot;something&quot;.equals(x))
           <tr>
             <td>allowedDistance</td>
             <td>A distance between declaration of variable and its first usage</td>
-            <td><a href="property_types.html#integer">integer</a></td>
+            <td><a href="property_types.html#integer">Integer</a></td>
             <td>3</td>
           </tr>
 

@@ -19,11 +19,10 @@
 
 package com.puppycrawl.tools.checkstyle.checks.whitespace;
 
-import org.apache.commons.lang3.ArrayUtils;
-
-import com.puppycrawl.tools.checkstyle.api.Check;
+import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
+import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
 /**
  * <p>Checks that chosen statements are not line-wrapped.
@@ -36,7 +35,7 @@ import com.puppycrawl.tools.checkstyle.api.TokenTypes;
  *    tools.checkstyle.checks;
  *
  * import com.puppycrawl.tools.
- *    checkstyle.api.Check;
+ *    checkstyle.api.AbstractCheck;
  * }</pre>
  *
  * <p>
@@ -58,12 +57,12 @@ import com.puppycrawl.tools.checkstyle.api.TokenTypes;
  * </pre>
  *
  * <p>Examples of not line-wrapped statements (good case):
- * <pre>{@code import com.puppycrawl.tools.checkstyle.api.Check;
+ * <pre>{@code import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
  * }</pre>
  *
  * @author maxvetrenko
  */
-public class NoLineWrapCheck extends Check {
+public class NoLineWrapCheck extends AbstractCheck {
 
     /**
      * A key is pointing to the warning message text in "messages.properties"
@@ -91,7 +90,7 @@ public class NoLineWrapCheck extends Check {
 
     @Override
     public int[] getRequiredTokens() {
-        return ArrayUtils.EMPTY_INT_ARRAY;
+        return CommonUtils.EMPTY_INT_ARRAY;
     }
 
     @Override

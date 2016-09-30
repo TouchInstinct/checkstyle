@@ -19,9 +19,13 @@
 
 package com.puppycrawl.tools.checkstyle;
 
+import static junit.framework.TestCase.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import java.lang.reflect.Method;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.Set;
 
 import org.junit.Test;
 
@@ -35,16 +39,16 @@ import com.puppycrawl.tools.checkstyle.checks.naming.ConstantNameCheck;
 public class PackageObjectFactoryTest {
 
     private final PackageObjectFactory factory = new PackageObjectFactory(
-            new HashSet<String>(), Thread.currentThread().getContextClassLoader());
+        new HashSet<>(), Thread.currentThread().getContextClassLoader());
 
     @Test(expected = IllegalArgumentException.class)
     public void testCtorException() {
-        new PackageObjectFactory(new HashSet<String>(), null);
+        new PackageObjectFactory(new HashSet<>(), null);
     }
 
     @Test
     public void testMakeObjectFromName()
-        throws CheckstyleException {
+            throws CheckstyleException {
         final Checker checker =
             (Checker) factory.createModule(
                         "com.puppycrawl.tools.checkstyle.Checker");
@@ -53,7 +57,7 @@ public class PackageObjectFactoryTest {
 
     @Test
     public void testMakeCheckFromName()
-        throws CheckstyleException {
+            throws CheckstyleException {
         final ConstantNameCheck check =
                 (ConstantNameCheck) factory.createModule(
                         "com.puppycrawl.tools.checkstyle.checks.naming.ConstantName");
@@ -61,12 +65,15 @@ public class PackageObjectFactoryTest {
     }
 
     @Test
-    public void testMakeObjectFromList()
-        throws CheckstyleException {
-        factory.addPackage("com.");
-        final Checker checker =
-                (Checker) factory.createModule(
-                        "puppycrawl.tools.checkstyle.Checker");
-        assertNotNull(checker);
+    public void testJoinPackageNamesWhichContainNullWithClassName() throws Exception {
+        final Class<PackageObjectFactory> clazz = PackageObjectFactory.class;
+        final Method method =
+            clazz.getDeclaredMethod("joinPackageNamesWithClassName", String.class, Set.class);
+        method.setAccessible(true);
+        final Set<String> packages = Collections.singleton(null);
+        final String className = "SomeClass";
+        final String actual =
+            String.valueOf(method.invoke(PackageObjectFactory.class, className, packages));
+        assertEquals(className, actual);
     }
 }

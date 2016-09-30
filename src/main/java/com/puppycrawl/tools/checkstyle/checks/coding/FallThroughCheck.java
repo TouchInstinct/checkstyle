@@ -22,7 +22,7 @@ package com.puppycrawl.tools.checkstyle.checks.coding;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.puppycrawl.tools.checkstyle.api.Check;
+import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
 
@@ -67,7 +67,7 @@ import com.puppycrawl.tools.checkstyle.api.TokenTypes;
  *
  * @author o_sukhodolsky
  */
-public class FallThroughCheck extends Check {
+public class FallThroughCheck extends AbstractCheck {
 
     /**
      * A key is pointing to the warning message text in "messages.properties"
@@ -133,20 +133,17 @@ public class FallThroughCheck extends Check {
     public void visitToken(DetailAST ast) {
         final DetailAST nextGroup = ast.getNextSibling();
         final boolean isLastGroup = nextGroup.getType() != TokenTypes.CASE_GROUP;
-        if (isLastGroup && !checkLastCaseGroup) {
-            // we do not need to check last group
-            return;
-        }
+        if (!isLastGroup || checkLastCaseGroup) {
+            final DetailAST slist = ast.findFirstToken(TokenTypes.SLIST);
 
-        final DetailAST slist = ast.findFirstToken(TokenTypes.SLIST);
-
-        if (slist != null && !isTerminated(slist, true, true)
-            && !hasFallThroughComment(ast, nextGroup)) {
-            if (isLastGroup) {
-                log(ast, MSG_FALL_THROUGH_LAST);
-            }
-            else {
-                log(nextGroup, MSG_FALL_THROUGH);
+            if (slist != null && !isTerminated(slist, true, true)
+                && !hasFallThroughComment(ast, nextGroup)) {
+                if (isLastGroup) {
+                    log(ast, MSG_FALL_THROUGH_LAST);
+                }
+                else {
+                    log(nextGroup, MSG_FALL_THROUGH);
+                }
             }
         }
     }

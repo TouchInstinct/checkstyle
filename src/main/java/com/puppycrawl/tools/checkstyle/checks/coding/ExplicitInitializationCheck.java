@@ -19,7 +19,7 @@
 
 package com.puppycrawl.tools.checkstyle.checks.coding;
 
-import com.puppycrawl.tools.checkstyle.api.Check;
+import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
 import com.puppycrawl.tools.checkstyle.utils.CheckUtils;
@@ -48,7 +48,7 @@ import com.puppycrawl.tools.checkstyle.utils.ScopeUtils;
  *
  * @author o_sukhodolsky
  */
-public class ExplicitInitializationCheck extends Check {
+public class ExplicitInitializationCheck extends AbstractCheck {
 
     /**
      * A key is pointing to the warning message text in "messages.properties"
@@ -73,31 +73,29 @@ public class ExplicitInitializationCheck extends Check {
 
     @Override
     public void visitToken(DetailAST ast) {
-        if (isSkipCase(ast)) {
-            return;
-        }
+        if (!isSkipCase(ast)) {
+            final DetailAST ident = ast.findFirstToken(TokenTypes.IDENT);
+            final DetailAST assign = ast.findFirstToken(TokenTypes.ASSIGN);
+            final DetailAST exprStart =
+                assign.getFirstChild().getFirstChild();
+            final DetailAST type = ast.findFirstToken(TokenTypes.TYPE);
+            if (isObjectType(type)
+                && exprStart.getType() == TokenTypes.LITERAL_NULL) {
+                log(ident, MSG_KEY, ident.getText(), "null");
+            }
 
-        final DetailAST ident = ast.findFirstToken(TokenTypes.IDENT);
-        final DetailAST assign = ast.findFirstToken(TokenTypes.ASSIGN);
-        final DetailAST exprStart =
-            assign.getFirstChild().getFirstChild();
-        final DetailAST type = ast.findFirstToken(TokenTypes.TYPE);
-        if (isObjectType(type)
-            && exprStart.getType() == TokenTypes.LITERAL_NULL) {
-            log(ident, MSG_KEY, ident.getText(), "null");
-        }
-
-        final int primitiveType = type.getFirstChild().getType();
-        if (primitiveType == TokenTypes.LITERAL_BOOLEAN
-            && exprStart.getType() == TokenTypes.LITERAL_FALSE) {
-            log(ident, MSG_KEY, ident.getText(), "false");
-        }
-        if (isNumericType(primitiveType) && isZero(exprStart)) {
-            log(ident, MSG_KEY, ident.getText(), "0");
-        }
-        if (primitiveType == TokenTypes.LITERAL_CHAR
-            && isZeroChar(exprStart)) {
-            log(ident, MSG_KEY, ident.getText(), "\\0");
+            final int primitiveType = type.getFirstChild().getType();
+            if (primitiveType == TokenTypes.LITERAL_BOOLEAN
+                && exprStart.getType() == TokenTypes.LITERAL_FALSE) {
+                log(ident, MSG_KEY, ident.getText(), "false");
+            }
+            if (isNumericType(primitiveType) && isZero(exprStart)) {
+                log(ident, MSG_KEY, ident.getText(), "0");
+            }
+            if (primitiveType == TokenTypes.LITERAL_CHAR
+                && isZeroChar(exprStart)) {
+                log(ident, MSG_KEY, ident.getText(), "\\0");
+            }
         }
     }
 

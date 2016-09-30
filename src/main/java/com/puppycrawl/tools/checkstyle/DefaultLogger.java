@@ -97,14 +97,14 @@ public class DefaultLogger extends AutomaticBean implements AuditListener {
         closeInfo = closeInfoAfterUse;
         closeError = closeErrorAfterUse;
         final Writer infoStreamWriter = new OutputStreamWriter(infoStream, StandardCharsets.UTF_8);
-        final Writer errorStreamWriter = new OutputStreamWriter(errorStream,
-            StandardCharsets.UTF_8);
         infoWriter = new PrintWriter(infoStreamWriter);
 
         if (infoStream == errorStream) {
             errorWriter = infoWriter;
         }
         else {
+            final Writer errorStreamWriter = new OutputStreamWriter(errorStream,
+                    StandardCharsets.UTF_8);
             errorWriter = new PrintWriter(errorStreamWriter);
         }
         formatter = messageFormatter;
@@ -113,8 +113,6 @@ public class DefaultLogger extends AutomaticBean implements AuditListener {
     /**
      * Print an Emacs compliant line on the error stream.
      * If the column number is non zero, then also display it.
-     *
-     * @param event the event details
      * @see AuditListener
      **/
     @Override

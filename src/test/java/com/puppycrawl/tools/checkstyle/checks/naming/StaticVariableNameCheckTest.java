@@ -25,12 +25,12 @@ import static org.junit.Assert.assertArrayEquals;
 import java.io.File;
 import java.io.IOException;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.junit.Test;
 
 import com.puppycrawl.tools.checkstyle.BaseCheckTestSupport;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
+import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
 public class StaticVariableNameCheckTest
     extends BaseCheckTestSupport {
@@ -49,7 +49,7 @@ public class StaticVariableNameCheckTest
 
     @Test
     public void testSpecified()
-        throws Exception {
+            throws Exception {
         final DefaultConfiguration checkConfig =
             createCheckConfig(StaticVariableNameCheck.class);
         checkConfig.addAttribute("format", "^s[A-Z][a-zA-Z0-9]*$");
@@ -64,7 +64,7 @@ public class StaticVariableNameCheckTest
 
     @Test
     public void testAccessTuning()
-        throws Exception {
+            throws Exception {
         final DefaultConfiguration checkConfig =
             createCheckConfig(StaticVariableNameCheck.class);
         checkConfig.addAttribute("format", "^s[A-Z][a-zA-Z0-9]*$");
@@ -72,16 +72,16 @@ public class StaticVariableNameCheckTest
         // allow method names and class names to equal
         checkConfig.addAttribute("applyToPrivate", "false");
 
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
         verify(checkConfig, getPath("InputSimple.java"), expected);
     }
 
     @Test
     public void testInterfaceOrAnnotationBlock()
-        throws Exception {
+            throws Exception {
         final DefaultConfiguration checkConfig =
                 createCheckConfig(StaticVariableNameCheck.class);
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
         verify(checkConfig, getPath("InputStaticVariableName.java"), expected);
     }
 

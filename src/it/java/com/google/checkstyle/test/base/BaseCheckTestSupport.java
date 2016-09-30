@@ -40,7 +40,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.regex.Pattern;
 
-import com.google.common.collect.Lists;
 import com.puppycrawl.tools.checkstyle.BriefUtLogger;
 import com.puppycrawl.tools.checkstyle.Checker;
 import com.puppycrawl.tools.checkstyle.ConfigurationLoader;
@@ -118,18 +117,18 @@ public class BaseCheckTestSupport {
             String messageFileName,
             String[] expected,
             Integer... warnsExpected)
-        throws Exception {
+            throws Exception {
         stream.flush();
-        final List<File> theFiles = Lists.newArrayList();
+        final List<File> theFiles = new ArrayList<>();
         Collections.addAll(theFiles, processedFiles);
-        final List<Integer> theWarnings = Lists.newArrayList();
+        final List<Integer> theWarnings = new ArrayList<>();
         Collections.addAll(theWarnings, warnsExpected);
         final int errs = checker.process(theFiles);
 
         // process each of the lines
         final ByteArrayInputStream inputStream =
                 new ByteArrayInputStream(stream.toByteArray());
-        try (final LineNumberReader lnr = new LineNumberReader(
+        try (LineNumberReader lnr = new LineNumberReader(
                 new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
 
             int previousLineNumber = 0;
@@ -143,8 +142,8 @@ public class BaseCheckTestSupport {
                 parseInt = parseInt.substring(0, parseInt.indexOf(':'));
                 final int lineNumber = Integer.parseInt(parseInt);
                 assertTrue("input file is expected to have a warning comment on line number "
-                        + lineNumber, theWarnings.remove((Integer) lineNumber)
-                            || previousLineNumber == lineNumber);
+                        + lineNumber, previousLineNumber == lineNumber
+                            || theWarnings.remove((Integer) lineNumber));
                 previousLineNumber = lineNumber;
             }
 

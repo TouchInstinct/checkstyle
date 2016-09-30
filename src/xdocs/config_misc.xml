@@ -539,8 +539,10 @@ String unitAbbrev = "\u03bc\u03bc\u03bc";
           <tr>
             <td>limitedTokens</td>
             <td>set of tokens with limited occurrences as descendants</td>
-            <td>subset of tokens declared in <a
-            href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html">TokenTypes</a></td>
+            <td>
+             subset of tokens
+             <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html">TokenTypes</a>
+            </td>
             <td>empty set</td>
           </tr>
           <tr>
@@ -866,8 +868,8 @@ String unitAbbrev = "\u03bc\u03bc\u03bc";
       <subsection name="Description">
         <p>
           Check that parameters for methods, constructors, and catch blocks are
-          final. Interface and abstract methods are not checked: the final
-          keyword does not make sense for interface and abstract method
+          final. Interface, abstract, and native methods are not checked: the final
+          keyword does not make sense for interface, abstract, and native method
           parameters as there is no code that could modify the parameter.
         </p>
 
@@ -1006,19 +1008,19 @@ String unitAbbrev = "\u03bc\u03bc\u03bc";
           </tr>
           <tr>
             <td>basicOffset</td>
-            <td>how many spaces to use for new indentation level</td>
+            <td>how far new indentation level should be indented when on the next line</td>
             <td><a href="property_types.html#integer">Integer</a></td>
             <td>4</td>
           </tr>
           <tr>
             <td>braceAdjustment</td>
-            <td>how far braces should be indented when on the next line</td>
+            <td>how far a braces should be indented when on the next line</td>
             <td><a href="property_types.html#integer">Integer</a></td>
             <td>0</td>
           </tr>
           <tr>
             <td>caseIndent</td>
-            <td>how much to indent a case label</td>
+            <td>how far a case label should be indented when on next line</td>
             <td><a href="property_types.html#integer">Integer</a></td>
             <td>4</td>
           </tr>
@@ -1030,7 +1032,7 @@ String unitAbbrev = "\u03bc\u03bc\u03bc";
           </tr>
           <tr>
             <td>arrayInitIndent</td>
-            <td>how much to indent an array initialisation when on next line</td>
+            <td>how far an array initialisation should be indented when on next line</td>
             <td><a href="property_types.html#integer">Integer</a></td>
             <td>4</td>
           </tr>
@@ -1042,8 +1044,8 @@ String unitAbbrev = "\u03bc\u03bc\u03bc";
           </tr>
           <tr>
             <td>forceStrictCondition</td>
-            <td>force strict condition in line wrapping case. If value is true, line wrap indent
-                have to be same as lineWrappingIndentation parameter</td>
+            <td>force strict indent level in line wrapping case. If value is true, line wrap indent
+                have to be same as lineWrappingIndentation parameter. If value is false, line wrap indent could be bigger on any value user would like.</td>
             <td><a href="property_types.html#boolean">Boolean</a></td>
             <td>false</td>
           </tr>
@@ -1151,8 +1153,15 @@ void foo(String aFooString,
 
         <p>
           Rationale: Any source files and text files in general should
-          end with a line separator, especially when using source control management
-          systems such as CVS. CVS will even print a warning when it
+          end with a line separator to let other easily add new content
+          at the end of file and "diff" command does not show previous lines as changed.
+          <br/>
+          Example (line 36 should not be in diff):
+          <img src="https://cloud.githubusercontent.com/assets/812984/13894408/afd965b8-ed24-11e5-8bfd-e9edf56a6fe6.png" alt="example of diff"/>
+        </p>
+        <p>
+          Old Ratinale: CVS source control management
+          systems will even print a warning when it
           encounters a file that doesn't end with a line separator.
         </p>
       </subsection>
@@ -1555,7 +1564,8 @@ d = e / f;        // Another comment for this line
           the correct translation of code by checking property files for
           consistency regarding their keys. Two property files
           describing one and the same context are consistent if they
-          contain the same keys.
+          contain the same keys. TranslationCheck also can check an existence of required
+          translations which must exist in project, if 'requiredTranslations' option is used.
         </p>
 
         <p>
@@ -1595,7 +1605,7 @@ messages.properties: Key 'ok' missing.
           <tr>
             <td>fileExtensions</td>
             <td>
-              file type extension to identify translation files. Setting
+              File type extension to identify translation files. Setting
               this property is typically only required if your
               translation files are preprocessed and the original files
               do not have the extension <code>.properties</code>
@@ -1604,43 +1614,54 @@ messages.properties: Key 'ok' missing.
             <td><code>properties</code></td>
           </tr>
           <tr>
-            <td>basenameSeparator</td>
-            <td>Allows setting file names separator</td>
-            <td><a href="property_types.html#string">String</a></td>
-            <td><code>_</code></td>
+            <td>baseName</td>
+            <td><a href="https://docs.oracle.com/javase/7/docs/api/java/util/ResourceBundle.html">
+              Base name</a> of resource bundles which contain message resources. It helps
+              the check to distinguish config and localization resources.</td>
+            <td><a href="property_types.html#regexp">regular expression</a></td>
+            <td><code>^messages.*$</code></td>
           </tr>
           <tr>
-             <td>requiredTranslations</td>
-             <td>
-                 Allows to specify language codes of required translations which must exist in project.
-                 The check looks only for messages bundles which names contain the word 'messages'.
-                 Language code is composed of the lowercase, two-letter codes as defined by
-                 <a href="http://www.fatbellyman.com/webstuff/language_codes_639-1/">ISO 639-1</a>.
-                 Default value is empty String Set which means that only the existence
-                 of default translation is checked.
-                 Note, if you specify language codes (or just one language code) of required translations
-                 the check will also check for existence of default translation files in project.
-             </td>
-              <td><a href="property_types.html#stringSet">String Set</a></td>
-             <td><code>empty String Set</code></td>
+            <td>requiredTranslations</td>
+            <td>
+              Allows to specify language codes of required translations which must exist in project.
+              Language code is composed of the lowercase, two-letter codes as defined by
+              <a href="https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes">ISO 639-1</a>.
+              Default value is empty String Set which means that only the existence
+              of default translation is checked. Note, if you specify language codes (or just
+              one language code) of required translations the check will also check for
+              existence of default translation files in project.
+              ATTENTION: the check will perform the validation of ISO codes if the option
+              is used. So, if you specify, for example, "mm" for language code, TranslationCheck
+              will rise violation that the language code is incorrect.
+            </td>
+            <td><a href="property_types.html#stringSet">String Set</a></td>
+            <td><code>empty String Set</code></td>
           </tr>
         </table>
       </subsection>
 
       <subsection name="Examples">
         <p>
-          To configure the check for files with '_' name separator:
-        </p>
-        <source>
-&lt;module name=&quot;Translation&quot;/&gt;
-        </source>
-
-        <p>
-          To configure the check for files with user-set name separator:
+          To configure the check to check only files which have '.properties' and '.translations'
+          extensions:
         </p>
         <source>
 &lt;module name=&quot;Translation&quot;&gt;
-    &lt;property name=&quot;basenameSeparator&quot; value=&quot;STRING_LITERAL&quot;/&gt;
+    &lt;property name=&quot;fileExtensions&quot; value=&quot;properties, translations&quot;/&gt;
+&lt;/module&gt;
+        </source>
+        <p>
+          Note, that files with the same path and base name but which have different
+          extensions will be considered as files that belong to different resource bundles.
+        </p>
+        <p>
+          An example of how to configure the check to validate only bundles which base names
+          start with "ButtonLabels":
+        </p>
+        <source>
+&lt;module name=&quot;Translation&quot;&gt;
+    &lt;property name=&quot;baseName&quot; value=&quot;^ButtonLabels.*$&quot;/&gt;
 &lt;/module&gt;
         </source>
 
@@ -1649,9 +1670,35 @@ messages.properties: Key 'ok' missing.
         </p>
         <source>
 &lt;module name=&quot;Translation&quot;&gt;
-&lt;property name=&quot;requiredTranslations&quot; value=&quot;ja, fr&quot;/&gt;
+    &lt;property name=&quot;requiredTranslations&quot; value=&quot;ja, fr&quot;/&gt;
 &lt;/module&gt;
         </source>
+        <p>
+          The following example shows how the check works if there is a message bundle which
+          element name contains language code, county code, platform name.
+          Consider that we have the below configuration:
+        </p>
+        <source>
+&lt;module name=&quot;Translation&quot;&gt;
+    &lt;property name=&quot;requiredTranslations&quot; value=&quot;es, fr, de&quot;/&gt;
+&lt;/module&gt;
+        </source>
+        <p>
+        </p>
+        <p>
+          As we can see from the configuration, the TranslationCheck was configured to check
+          an existence of 'es', 'fr' and 'de' translations. Lets assume that we have the resource
+          bunbdle:
+        </p>
+        <source>
+messages_home.properties
+messages_home_es_US.properties
+messages_home_fr_CA_UNIX.properties
+        </source>
+        <p>
+          Than the check will rise the following violation:
+          "0: Properties file 'messages_home_de.properties' is missing."
+        </p>
       </subsection>
 
       <subsection name="Example of Usage">

@@ -21,17 +21,18 @@ package com.google.checkstyle.test.chapter4formatting.rule412nonemptyblocks;
 
 import static com.puppycrawl.tools.checkstyle.checks.blocks.RightCurlyCheck.MSG_KEY_LINE_ALONE;
 import static com.puppycrawl.tools.checkstyle.checks.blocks.RightCurlyCheck.MSG_KEY_LINE_NEW;
+import static com.puppycrawl.tools.checkstyle.checks.blocks.RightCurlyCheck.MSG_KEY_LINE_SAME;
 
 import java.io.File;
 import java.io.IOException;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.junit.Test;
 
 import com.google.checkstyle.test.base.BaseCheckTestSupport;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
 import com.puppycrawl.tools.checkstyle.checks.blocks.RightCurlyCheck;
 import com.puppycrawl.tools.checkstyle.checks.blocks.RightCurlyOption;
+import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
 public class RightCurlyTest extends BaseCheckTestSupport {
 
@@ -65,10 +66,25 @@ public class RightCurlyTest extends BaseCheckTestSupport {
         final DefaultConfiguration newCheckConfig = createCheckConfig(RightCurlyCheck.class);
         newCheckConfig.addAttribute("option", RightCurlyOption.SAME.toString());
 
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
 
         final String filePath = getPath("InputRightCurlySame.java");
         final Integer[] warnList = getLinesWithWarn(filePath);
         verify(newCheckConfig, filePath, expected, warnList);
+    }
+
+    @Test
+    public void testRightCurlySameAndLiteralDo() throws Exception {
+        final DefaultConfiguration checkConfig = createCheckConfig(RightCurlyCheck.class);
+        checkConfig.addAttribute("option", RightCurlyOption.SAME.toString());
+        checkConfig.addAttribute("tokens", "LITERAL_DO");
+        final String[] expected = {
+            "62:9: " + getCheckMessage(RightCurlyCheck.class, MSG_KEY_LINE_SAME, "}", 9),
+            "67:13: " + getCheckMessage(RightCurlyCheck.class, MSG_KEY_LINE_SAME, "}", 13),
+            "83:9: " + getCheckMessage(RightCurlyCheck.class, MSG_KEY_LINE_SAME, "}", 9),
+        };
+        final String filePath = getPath("InputRightCurlyDoWhile.java");
+        final Integer[] warnList = getLinesWithWarn(filePath);
+        verify(checkConfig, filePath, expected, warnList);
     }
 }

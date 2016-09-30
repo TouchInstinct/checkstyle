@@ -229,15 +229,21 @@ for (Iterator foo = very.long.line.iterator();
           <tr>
             <td>allowNoEmptyLineBetweenFields</td>
             <td>Allow no empty line between fields</td>
-            <td><a href="property_types.html#boolean">boolean</a></td>
+            <td><a href="property_types.html#boolean">Boolean</a></td>
             <td>false</td>
           </tr>
           <tr>
              <td>allowMultipleEmptyLines</td>
              <td>Allow multiple empty lines between class members</td>
-             <td><a href="property_types.html#boolean">boolean</a></td>
+             <td><a href="property_types.html#boolean">Boolean</a></td>
              <td>true</td>
           </tr>
+            <tr>
+                <td>allowMultipleEmptyLinesInsideClassMembers</td>
+                <td>Allow multiple empty lines inside class members</td>
+                <td><a href="property_types.html#boolean">Boolean</a></td>
+                <td>true</td>
+            </tr>
           <tr>
             <td>tokens</td>
             <td>tokens to check</td>
@@ -328,6 +334,45 @@ class Foo
     &lt;property name="allowNoEmptyLineBetweenFields" value="true"/&gt;
 &lt;/module&gt;
       </source>
+      <p>
+          An example how to disallow multiple empty lines inside constructor, initialization block and method:
+      </p>
+      <source>
+          &lt;module name="EmptyLineSeparator"&gt;
+          &lt;property name="allowMultipleEmptyLinesInsideClassMembers" value="false"/&gt;
+          &lt;/module&gt;
+      </source>
+
+      <p>
+          The check is valid only for statements that have body:
+          <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#CLASS_DEF">CLASS_DEF</a>,
+          <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#INTERFACE_DEF">INTERFACE_DEF</a>,
+          <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#ENUM_DEF">ENUM_DEF</a>,
+          <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#METHOD_DEF">STATIC_INIT</a>,
+          <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#INSTANCE_INIT">INSTANCE_INIT</a>,
+          <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#METHOD_DEF">METHOD_DEF</a>,
+          <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#CTOR_DEF">CTOR_DEF</a>,
+      </p>
+      <p>
+          Example of declarations with multiple empty lines inside method:
+      </p>
+      <source>
+          ///////////////////////////////////////////////////
+          //HEADER
+          ///////////////////////////////////////////////////
+
+          package com.puppycrawl.tools.checkstyle.whitespace;
+
+          class Foo
+          {
+
+              public void foo() {
+              <br/>
+
+                  System.out.println(1); // violation since method has 2 empty lines subsequently
+              }
+          }
+      </source>
       </subsection>
 
       <subsection name="Example of Usage">
@@ -356,6 +401,10 @@ class Foo
           <li>
             <a href="https://github.com/search?q=path%3Asrc%2Fmain%2Fresources%2Fcom%2Fpuppycrawl%2Ftools%2Fcheckstyle%2Fchecks%2Fwhitespace+filename%3Amessages*.properties+repo%3Acheckstyle%2Fcheckstyle+%22empty.line.separator.multiple.lines.after%22">
             empty.line.separator.multiple.lines.after</a>
+          </li>
+          <li>
+            <a href="https://github.com/search?q=path%3Asrc%2Fmain%2Fresources%2Fcom%2Fpuppycrawl%2Ftools%2Fcheckstyle%2Fchecks%2Fwhitespace+filename%3Amessages*.properties+repo%3Acheckstyle%2Fcheckstyle+%22empty.line.separator.multiple.lines.inside%22">
+            empty.line.separator.multiple.lines.inside</a>
           </li>
         </ul>
         <p>
@@ -412,7 +461,7 @@ class Foo
           <tr>
             <td>eachLine</td>
             <td>whether to report on each line containing a tab, or just the first instance</td>
-            <td><a href="property_types.html#boolean">boolean</a></td>
+            <td><a href="property_types.html#boolean">Boolean</a></td>
             <td><code>false</code></td>
           </tr>
           <tr>
@@ -619,7 +668,7 @@ sort(list, Comparable::&lt;String&gt;compareTo);             // Method reference
               whether a line break between the identifier and left parenthesis
               is allowed
             </td>
-            <td><a href="property_types.html#boolean">boolean</a></td>
+            <td><a href="property_types.html#boolean">Boolean</a></td>
             <td><code>false</code></td>
           </tr>
           <tr>
@@ -793,7 +842,7 @@ package com.puppycrawl.
     tools.checkstyle.checks;
 
 import com.puppycrawl.tools.
-    checkstyle.api.Check;
+    checkstyle.api.AbstractCheck;
       </source>
       <p>
         To configure the check to force no line-wrapping
@@ -815,7 +864,7 @@ import com.puppycrawl.tools.
         Examples of not line-wrapped statements (good case):
       </p>
       <source>
-import com.puppycrawl.tools.checkstyle.api.Check;
+import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
       </source>
       </subsection>
 
@@ -892,7 +941,7 @@ import com.puppycrawl.tools.checkstyle.api.Check;
             <td>
               whether whitespace is allowed if the token is at a linebreak
             </td>
-            <td><a href="property_types.html#boolean">boolean</a></td>
+            <td><a href="property_types.html#boolean">Boolean</a></td>
             <td><code>true</code></td>
           </tr>
           <tr>
@@ -1032,7 +1081,7 @@ import com.puppycrawl.tools.checkstyle.api.Check;
             <td>
               whether whitespace is allowed if the token is at a linebreak
             </td>
-            <td><a href="property_types.html#boolean">boolean</a></td>
+            <td><a href="property_types.html#boolean">Boolean</a></td>
             <td><code>false</code></td>
           </tr>
           <tr>
@@ -1150,7 +1199,8 @@ import com.puppycrawl.tools.checkstyle.api.Check;
               <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#COLON">COLON</a>,
               <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#EQUAL">EQUAL</a>,
               <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#NOT_EQUAL">NOT_EQUAL</a>,
-              <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#DIV, PLUS">DIV, PLUS</a>,
+              <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#DIV">DIV</a>,
+              <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#PLUS">PLUS</a>,
               <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#MINUS">MINUS</a>,
               <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#STAR">STAR</a>,
               <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#MOD">MOD</a>,
@@ -1187,7 +1237,8 @@ import com.puppycrawl.tools.checkstyle.api.Check;
               <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#COLON">COLON</a>,
               <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#EQUAL">EQUAL</a>,
               <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#NOT_EQUAL">NOT_EQUAL</a>,
-              <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#DIV, PLUS">DIV, PLUS</a>,
+              <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#DIV">DIV</a>,
+              <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#PLUS">PLUS</a>,
               <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#MINUS">MINUS</a>,
               <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#STAR">STAR</a>,
               <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#MOD">MOD</a>,
@@ -1608,6 +1659,110 @@ foo(i,
       </subsection>
     </section>
 
+    <section name="SingleSpaceSeparator">
+      <subsection name="Description">
+        <p>
+          Checks that non-whitespace characters are separated by no more than one
+          whitespace. Separating characters by tabs or multiple spaces will be
+          reported. Currently the check doesn't permit horizontal alignment. To inspect
+          whitespaces before and after comments, set the property
+          validateComments to true.
+        </p>
+
+        <p>
+          Setting validateComments to false will ignore cases like:
+        </p>
+
+        <source>
+int i;  // Multiple whitespaces before comment tokens will be ignored.
+private void foo(int  /* whitespaces before and after block-comments will be
+ignored */  i) {
+        </source>
+
+        <p>
+          Sometimes, users like to space similar items on different lines to the same
+          column position for easier reading. This feature isn't supported by this
+          check, so both braces in the following case will be reported as violations.
+        </p>
+
+        <source>
+public long toNanos(long d)  { return d;             } // 2 violations
+public long toMicros(long d) { return d / (C1 / C0); }
+        </source>
+      </subsection>
+
+      <subsection name="Properties">
+        <table>
+          <tr>
+            <th>name</th>
+            <th>description</th>
+            <th>type</th>
+            <th>default value</th>
+          </tr>
+          <tr>
+            <td>validateComments</td>
+            <td>If set to true, whitespaces surrounding comments will be ignored.</td>
+            <td><a href="property_types.html#boolean">Boolean</a></td>
+            <td><code>false</code></td>
+          </tr>
+        </table>
+      </subsection>
+
+      <subsection name="Examples">
+        <p>
+          To configure the check:
+        </p>
+
+        <source>
+&lt;module name=&quot;SingleSpaceSeparator&quot;/&gt;
+        </source>
+
+        <p>
+          To configure the check so that it validates comments:
+        </p>
+
+        <source>
+&lt;module name=&quot;SingleSpaceSeparator&quot;&gt;
+  &lt;property name=&quot;validateComments&quot; value=&quot;true&quot;/&gt;
+&lt;/module&gt;
+        </source>
+      </subsection>
+
+      <subsection name="Example of Usage">
+        <ul>
+          <li>
+            <a href="https://github.com/search?q=path%3Aconfig+filename%3Acheckstyle_checks.xml+repo%3Acheckstyle%2Fcheckstyle+SingleSpaceSeparator">
+            Checkstyle Style</a>
+          </li>
+        </ul>
+      </subsection>
+
+      <subsection name="Error Messages">
+        <ul>
+          <li>
+            <a href="https://github.com/search?q=path%3Asrc%2Fmain%2Fresources%2Fcom%2Fpuppycrawl%2Ftools%2Fcheckstyle%2Fchecks%2Fwhitespace+filename%3Amessages*.properties+repo%3Acheckstyle%2Fcheckstyle+%22single.space.separator%22">
+            single.space.separator</a>
+          </li>
+        </ul>
+        <p>
+          All messages can be customized if the default message doesn't suite you.
+          Please <a href="config.html#Custom_messages">see the documentation</a> to learn how to.
+        </p>
+      </subsection>
+
+      <subsection name="Package">
+        <p>
+          com.puppycrawl.tools.checkstyle.checks.whitespace
+        </p>
+      </subsection>
+
+      <subsection name="Parent Module">
+        <p>
+          <a href="config.html#TreeWalker">TreeWalker</a>
+        </p>
+      </subsection>
+    </section>
+
     <section name="TypecastParenPad">
       <subsection name="Description">
         <p>
@@ -1833,6 +1988,12 @@ public @interface Beta {} // empty annotation type
         </code>, <code>allowEmptyTypes</code>, <code>allowEmptyLoops</code> and
         <code>allowEmptyLambdas</code> properties.
         </p>
+        <p>This check does not flag as violation double brace initialization like:</p>
+        <pre><code>
+new Properties() {{
+    setProperty("key", "value");
+}};
+        </code></pre>
       </subsection>
 
       <subsection name="Properties">
@@ -1846,37 +2007,37 @@ public @interface Beta {} // empty annotation type
           <tr>
             <td>allowEmptyConstructors</td>
             <td>allow empty constructor bodies</td>
-            <td><a href="property_types.html#boolean">boolean</a></td>
+            <td><a href="property_types.html#boolean">Boolean</a></td>
             <td><code>false</code></td>
           </tr>
           <tr>
             <td>allowEmptyMethods</td>
             <td>allow empty method bodies</td>
-            <td><a href="property_types.html#boolean">boolean</a></td>
+            <td><a href="property_types.html#boolean">Boolean</a></td>
             <td><code>false</code></td>
           </tr>
           <tr>
             <td>allowEmptyTypes</td>
             <td>allow empty class, interface and enum bodies</td>
-            <td><a href="property_types.html#boolean">boolean</a></td>
+            <td><a href="property_types.html#boolean">Boolean</a></td>
             <td><code>false</code></td>
           </tr>
           <tr>
             <td>allowEmptyLoops</td>
             <td>allow empty loop bodies</td>
-            <td><a href="property_types.html#boolean">boolean</a></td>
+            <td><a href="property_types.html#boolean">Boolean</a></td>
             <td><code>false</code></td>
           </tr>
           <tr>
             <td>allowEmptyLambdas</td>
             <td>allow empty lambda bodies</td>
-            <td><a href="property_types.html#boolean">boolean</a></td>
+            <td><a href="property_types.html#boolean">Boolean</a></td>
             <td><code>false</code></td>
           </tr>
           <tr>
             <td>ignoreEnhancedForColon</td>
             <td>ignore whitespace around colon in for-each loops</td>
-            <td><a href="property_types.html#boolean">boolean</a></td>
+            <td><a href="property_types.html#boolean">Boolean</a></td>
             <td><code>true</code></td>
           </tr>
           <tr>
@@ -1901,6 +2062,7 @@ public @interface Beta {} // empty annotation type
               <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#EQUAL">EQUAL</a>,
               <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#GE">GE</a>,
               <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#GT">GT</a>,
+              <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#LAMBDA">LAMBDA</a>,
               <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#LAND">LAND</a>,
               <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#LCURLY">LCURLY</a>,
               <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#LE">LE</a>,
@@ -1956,6 +2118,7 @@ public @interface Beta {} // empty annotation type
               <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#EQUAL">EQUAL</a>,
               <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#GE">GE</a>,
               <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#GT">GT</a>,
+              <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#LAMBDA">LAMBDA</a>,
               <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#LAND">LAND</a>,
               <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#LCURLY">LCURLY</a>,
               <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#LE">LE</a>,

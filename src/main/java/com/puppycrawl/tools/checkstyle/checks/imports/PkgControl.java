@@ -19,10 +19,10 @@
 
 package com.puppycrawl.tools.checkstyle.checks.imports;
 
+import java.util.ArrayList;
 import java.util.Deque;
+import java.util.LinkedList;
 import java.util.List;
-
-import com.google.common.collect.Lists;
 
 /**
  * Represents the a tree of guards for controlling whether packages are allowed
@@ -33,9 +33,9 @@ import com.google.common.collect.Lists;
  */
 class PkgControl {
     /** List of {@link Guard} objects to check. */
-    private final Deque<Guard> guards = Lists.newLinkedList();
+    private final Deque<Guard> guards = new LinkedList<>();
     /** List of children {@link PkgControl} objects. */
-    private final List<PkgControl> children = Lists.newArrayList();
+    private final List<PkgControl> children = new ArrayList<>();
     /** The parent. Null indicates we are the root node. */
     private final PkgControl parent;
     /** The full package name for the node. */
@@ -65,15 +65,8 @@ class PkgControl {
      * Adds a guard to the node.
      * @param thug the guard to be added.
      */
-    void addGuard(final Guard thug) {
+    protected void addGuard(final Guard thug) {
         guards.addFirst(thug);
-    }
-
-    /**
-     * @return the full package name represented by the node.
-     */
-    String getFullPackage() {
-        return fullPackage;
     }
 
     /**
@@ -81,7 +74,7 @@ class PkgControl {
      * @param forPkg the package to search for.
      * @return the finest match, or null if no match at all.
      */
-    PkgControl locateFinest(final String forPkg) {
+    public PkgControl locateFinest(final String forPkg) {
         PkgControl finestMatch = null;
         // Check if we are a match.
         // This algorithm should be improved to check for a trailing "."
@@ -111,7 +104,7 @@ class PkgControl {
      * @param inPkg the package doing the import.
      * @return an {@link AccessResult}.
      */
-    AccessResult checkAccess(final String forImport, final String inPkg) {
+    public AccessResult checkAccess(final String forImport, final String inPkg) {
         final AccessResult result;
         final AccessResult returnValue = localCheckAccess(forImport, inPkg);
         if (returnValue != AccessResult.UNKNOWN) {

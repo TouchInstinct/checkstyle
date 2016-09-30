@@ -25,7 +25,6 @@ import static org.junit.Assert.assertEquals;
 import java.io.File;
 import java.io.IOException;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -35,6 +34,7 @@ import com.puppycrawl.tools.checkstyle.BaseCheckTestSupport;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
+import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
 public class UncommentedMainCheckTest
     extends BaseCheckTestSupport {
@@ -45,7 +45,7 @@ public class UncommentedMainCheckTest
 
     @Test
     public void testDefaults()
-        throws Exception {
+            throws Exception {
         final DefaultConfiguration checkConfig =
             createCheckConfig(UncommentedMainCheck.class);
         final String[] expected = {
@@ -59,7 +59,7 @@ public class UncommentedMainCheckTest
 
     @Test
     public void testExcludedClasses()
-        throws Exception {
+            throws Exception {
         final DefaultConfiguration checkConfig =
             createCheckConfig(UncommentedMainCheck.class);
         checkConfig.addAttribute("excludedClasses", "\\.Main.*$");
@@ -72,7 +72,7 @@ public class UncommentedMainCheckTest
     }
 
     @Test
-    public void testTokens() throws Exception {
+    public void testTokens() {
         final UncommentedMainCheck check = new UncommentedMainCheck();
         Assert.assertNotNull(check.getRequiredTokens());
         Assert.assertNotNull(check.getAcceptableTokens());
@@ -83,26 +83,26 @@ public class UncommentedMainCheckTest
     @Test
     public void testDeepDepth() throws Exception {
         final DefaultConfiguration checkConfig = createCheckConfig(UncommentedMainCheck.class);
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
         verify(checkConfig, getPath("InputUncommentedMain2.java"), expected);
     }
 
     @Test
     public void testWrongName() throws Exception {
         final DefaultConfiguration checkConfig = createCheckConfig(UncommentedMainCheck.class);
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
         verify(checkConfig, getPath("InputUncommentedMain3.java"), expected);
     }
 
     @Test
     public void testWrongArrayType() throws Exception {
         final DefaultConfiguration checkConfig = createCheckConfig(UncommentedMainCheck.class);
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
         verify(checkConfig, getPath("InputUncommentedMain4.java"), expected);
     }
 
     @Test
-    public void testIllegalStateException() throws Exception {
+    public void testIllegalStateException() {
         final UncommentedMainCheck check = new UncommentedMainCheck();
         final DetailAST ast = new DetailAST();
         ast.initialize(new CommonHiddenStreamToken(TokenTypes.CTOR_DEF, "ctor"));

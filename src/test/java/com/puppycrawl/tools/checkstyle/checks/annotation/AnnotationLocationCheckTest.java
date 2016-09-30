@@ -26,12 +26,12 @@ import static org.junit.Assert.assertArrayEquals;
 import java.io.File;
 import java.io.IOException;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.junit.Test;
 
 import com.puppycrawl.tools.checkstyle.BaseCheckTestSupport;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
+import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
 public class AnnotationLocationCheckTest extends BaseCheckTestSupport {
     @Override
@@ -43,13 +43,13 @@ public class AnnotationLocationCheckTest extends BaseCheckTestSupport {
     @Test
     public void testGetRequiredTokens() {
         final AnnotationLocationCheck checkObj = new AnnotationLocationCheck();
-        assertArrayEquals(ArrayUtils.EMPTY_INT_ARRAY, checkObj.getRequiredTokens());
+        assertArrayEquals(CommonUtils.EMPTY_INT_ARRAY, checkObj.getRequiredTokens());
     }
 
     @Test
     public void testCorrect() throws Exception {
         final DefaultConfiguration checkConfig = createCheckConfig(AnnotationLocationCheck.class);
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
 
         verify(checkConfig, getPath("InputCorrectAnnotationLocation.java"), expected);
     }
@@ -108,7 +108,7 @@ public class AnnotationLocationCheckTest extends BaseCheckTestSupport {
     @Test
     public void testWithoutAnnotations() throws Exception {
         final DefaultConfiguration checkConfig = createCheckConfig(AnnotationLocationCheck.class);
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
         verify(checkConfig, getPath("InputAnnotationLocation1.java"), expected);
     }
 
@@ -148,4 +148,28 @@ public class AnnotationLocationCheckTest extends BaseCheckTestSupport {
         verify(checkConfig, getPath("InputAnnotationLocation2.java"), expected);
     }
 
+    @Test
+    public void testAllTokens() throws Exception {
+        final DefaultConfiguration checkConfig = createCheckConfig(AnnotationLocationCheck.class);
+        checkConfig.addAttribute("tokens", "CLASS_DEF, INTERFACE_DEF, ENUM_DEF, METHOD_DEF, "
+                + "CTOR_DEF, VARIABLE_DEF, PARAMETER_DEF, ANNOTATION_DEF, TYPECAST, "
+                + "LITERAL_THROWS, IMPLEMENTS_CLAUSE, TYPE_ARGUMENT, LITERAL_NEW, DOT, "
+                + "ANNOTATION_FIELD_DEF");
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        verify(checkConfig, getPath("InputAnnotationLocation3.java"), expected);
+    }
+
+    @Test
+    public void testAnnotationInForEachLoopParameterAndVariableDef() throws Exception {
+        final DefaultConfiguration checkConfig = createCheckConfig(AnnotationLocationCheck.class);
+        checkConfig.addAttribute("tokens", "CLASS_DEF, INTERFACE_DEF, ENUM_DEF, METHOD_DEF,"
+            + " CTOR_DEF, VARIABLE_DEF, PARAMETER_DEF, ANNOTATION_DEF, TYPECAST, LITERAL_THROWS,"
+            + " IMPLEMENTS_CLAUSE, TYPE_ARGUMENT, LITERAL_NEW, DOT, ANNOTATION_FIELD_DEF,"
+            + " TYPE_ARGUMENT");
+        checkConfig.addAttribute("allowSamelineMultipleAnnotations", "false");
+        checkConfig.addAttribute("allowSamelineSingleParameterlessAnnotation", "false");
+        checkConfig.addAttribute("allowSamelineParameterizedAnnotation", "false");
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        verify(checkConfig, getPath("InputAnnotationLocation4.java"), expected);
+    }
 }

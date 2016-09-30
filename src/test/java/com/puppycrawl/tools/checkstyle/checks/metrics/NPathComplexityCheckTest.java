@@ -24,7 +24,6 @@ import static com.puppycrawl.tools.checkstyle.checks.metrics.NPathComplexityChec
 import java.io.File;
 import java.io.IOException;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -34,6 +33,7 @@ import com.puppycrawl.tools.checkstyle.BaseCheckTestSupport;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
+import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
 public class NPathComplexityCheckTest extends BaseCheckTestSupport {
     @Override
@@ -71,7 +71,7 @@ public class NPathComplexityCheckTest extends BaseCheckTestSupport {
 
         checkConfig.addAttribute("max", "0");
 
-        final long largerThanMaxInt = 3486784401L;
+        final long largerThanMaxInt = 3_486_784_401L;
 
         final String[] expected = {
             "9:5: " + getCheckMessage(MSG_KEY, largerThanMaxInt, 0),
@@ -84,9 +84,9 @@ public class NPathComplexityCheckTest extends BaseCheckTestSupport {
     public void testDefaultConfiguration() throws Exception {
         final DefaultConfiguration checkConfig =
             createCheckConfig(NPathComplexityCheck.class);
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
 
         createChecker(checkConfig);
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
         verify(checkConfig, getPath("InputComplexity.java"), expected);
     }
 

@@ -19,6 +19,7 @@
 
 package com.puppycrawl.tools.checkstyle.checks;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -27,10 +28,8 @@ import java.util.Map;
 
 import org.apache.commons.beanutils.ConversionException;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
+import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.AuditEvent;
-import com.puppycrawl.tools.checkstyle.api.Check;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
 
@@ -41,7 +40,7 @@ import com.puppycrawl.tools.checkstyle.api.TokenTypes;
  * @author St&eacute;phane Galland
  */
 public class SuppressWarningsHolder
-    extends Check {
+    extends AbstractCheck {
 
     /**
      * A key is pointing to the warning message text in "messages.properties"
@@ -74,7 +73,12 @@ public class SuppressWarningsHolder
      * A thread-local holder for the list of suppression entries for the last
      * file parsed.
      */
-    private static final ThreadLocal<List<Entry>> ENTRIES = new ThreadLocal<>();
+    private static final ThreadLocal<List<Entry>> ENTRIES = new ThreadLocal<List<Entry>>() {
+        @Override
+        protected List<Entry> initialValue() {
+            return new LinkedList<>();
+        }
+    };
 
     /**
      * Returns the default alias for the source name of a check, which is the
@@ -126,8 +130,8 @@ public class SuppressWarningsHolder
      * paramnum}.
      * @param aliasList the list of comma-separated alias assignments
      */
-    public void setAliasList(String aliasList) {
-        for (String sourceAlias : aliasList.split(",")) {
+    public void setAliasList(String... aliasList) {
+        for (String sourceAlias : aliasList) {
             final int index = sourceAlias.indexOf('=');
             if (index > 0) {
                 registerAlias(sourceAlias.substring(0, index), sourceAlias
@@ -155,14 +159,8 @@ public class SuppressWarningsHolder
         final int column = event.getColumn();
         boolean suppressed = false;
         for (Entry entry : entries) {
-            final boolean afterStart =
-                entry.getFirstLine() < line
-                    || entry.getFirstLine() == line
-                            && (column == 0 || entry.getFirstColumn() <= column);
-            final boolean beforeEnd =
-                entry.getLastLine() > line
-                    || entry.getLastLine() == line && entry
-                        .getLastColumn() >= column;
+            final boolean afterStart = isSuppressedAfterEventStart(line, column, entry);
+            final boolean beforeEnd = isSuppressedBeforeEventEnd(line, column, entry);
             final boolean nameMatches =
                 ALL_WARNING_MATCHING_ID.equals(entry.getCheckName())
                     || entry.getCheckName().equalsIgnoreCase(checkAlias);
@@ -173,6 +171,36 @@ public class SuppressWarningsHolder
             }
         }
         return suppressed;
+    }
+
+    /**
+     * Checks whether suppression entry position is after the audit event occurrence position
+     * in the source file.
+     * @param line the line number in the source file where the event occurred.
+     * @param column the column number in the source file where the event occurred.
+     * @param entry suppression entry.
+     * @return true if suppression entry position is after the audit event occurrence position
+     *         in the source file.
+     */
+    private static boolean isSuppressedAfterEventStart(int line, int column, Entry entry) {
+        return entry.getFirstLine() < line
+            || entry.getFirstLine() == line
+            && (column == 0 || entry.getFirstColumn() <= column);
+    }
+
+    /**
+     * Checks whether suppression entry position is before the audit event occurrence position
+     * in the source file.
+     * @param line the line number in the source file where the event occurred.
+     * @param column the column number in the source file where the event occurred.
+     * @param entry suppression entry.
+     * @return true if suppression entry position is before the audit event occurrence position
+     *         in the source file.
+     */
+    private static boolean isSuppressedBeforeEventEnd(int line, int column, Entry entry) {
+        return entry.getLastLine() > line
+            || entry.getLastLine() == line && entry
+                .getLastColumn() >= column;
     }
 
     @Override
@@ -192,7 +220,7 @@ public class SuppressWarningsHolder
 
     @Override
     public void beginTree(DetailAST rootAST) {
-        ENTRIES.set(new LinkedList<Entry>());
+        ENTRIES.get().clear();
     }
 
     @Override
@@ -206,40 +234,38 @@ public class SuppressWarningsHolder
         if ("SuppressWarnings".equals(identifier)) {
 
             final List<String> values = getAllAnnotationValues(ast);
-            if (isAnnotationEmpty(values)) {
-                return;
-            }
+            if (!isAnnotationEmpty(values)) {
+                final DetailAST targetAST = getAnnotationTarget(ast);
 
-            final DetailAST targetAST = getAnnotationTarget(ast);
+                if (targetAST == null) {
+                    log(ast.getLineNo(), MSG_KEY);
+                }
+                else {
+                    // get text range of target
+                    final int firstLine = targetAST.getLineNo();
+                    final int firstColumn = targetAST.getColumnNo();
+                    final DetailAST nextAST = targetAST.getNextSibling();
+                    final int lastLine;
+                    final int lastColumn;
+                    if (nextAST == null) {
+                        lastLine = Integer.MAX_VALUE;
+                        lastColumn = Integer.MAX_VALUE;
+                    }
+                    else {
+                        lastLine = nextAST.getLineNo();
+                        lastColumn = nextAST.getColumnNo() - 1;
+                    }
 
-            if (targetAST == null) {
-                log(ast.getLineNo(), MSG_KEY);
-                return;
-            }
-
-            // get text range of target
-            final int firstLine = targetAST.getLineNo();
-            final int firstColumn = targetAST.getColumnNo();
-            final DetailAST nextAST = targetAST.getNextSibling();
-            final int lastLine;
-            final int lastColumn;
-            if (nextAST == null) {
-                lastLine = Integer.MAX_VALUE;
-                lastColumn = Integer.MAX_VALUE;
-            }
-            else {
-                lastLine = nextAST.getLineNo();
-                lastColumn = nextAST.getColumnNo() - 1;
-            }
-
-            // add suppression entries for listed checks
-            final List<Entry> entries = ENTRIES.get();
-            for (String value : values) {
-                String checkName = value;
-                // strip off the checkstyle-only prefix if present
-                checkName = removeCheckstylePrefixIfExists(checkName);
-                entries.add(new Entry(checkName, firstLine, firstColumn,
-                        lastLine, lastColumn));
+                    // add suppression entries for listed checks
+                    final List<Entry> entries = ENTRIES.get();
+                    for (String value : values) {
+                        String checkName = value;
+                        // strip off the checkstyle-only prefix if present
+                        checkName = removeCheckstylePrefixIfExists(checkName);
+                        entries.add(new Entry(checkName, firstLine, firstColumn,
+                                lastLine, lastColumn));
+                    }
+                }
             }
         }
     }
@@ -434,7 +460,7 @@ public class SuppressWarningsHolder
     private static List<String> getAnnotationValues(DetailAST ast) {
         switch (ast.getType()) {
             case TokenTypes.EXPR:
-                return ImmutableList.of(getStringExpr(ast));
+                return Collections.singletonList(getStringExpr(ast));
 
             case TokenTypes.ANNOTATION_ARRAY_INIT:
                 return findAllExpressionsInChildren(ast);
@@ -451,7 +477,7 @@ public class SuppressWarningsHolder
      * @return list of expressions in strings
      */
     private static List<String> findAllExpressionsInChildren(DetailAST parent) {
-        final List<String> valueList = Lists.newLinkedList();
+        final List<String> valueList = new LinkedList<>();
         DetailAST childAST = parent.getFirstChild();
         while (childAST != null) {
             if (childAST.getType() == TokenTypes.EXPR) {

@@ -19,13 +19,14 @@
 
 package com.puppycrawl.tools.checkstyle.checks.coding;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
-import java.util.StringTokenizer;
+import java.util.stream.Collectors;
 
 import antlr.collections.AST;
 
-import com.google.common.collect.Sets;
-import com.puppycrawl.tools.checkstyle.api.Check;
+import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.FullIdent;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
@@ -62,7 +63,7 @@ import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
  * @author lkuehne
  */
 public class IllegalInstantiationCheck
-    extends Check {
+    extends AbstractCheck {
 
     /**
      * A key is pointing to the warning message text in "messages.properties"
@@ -73,17 +74,17 @@ public class IllegalInstantiationCheck
     /** {@link java.lang} package as string */
     private static final String JAVA_LANG = "java.lang.";
 
-    /** Set of fully qualified class names. E.g. "java.lang.Boolean" */
-    private final Set<String> illegalClasses = Sets.newHashSet();
-
     /** The imports for the file. */
-    private final Set<FullIdent> imports = Sets.newHashSet();
+    private final Set<FullIdent> imports = new HashSet<>();
 
     /** The class names defined in the file. */
-    private final Set<String> classNames = Sets.newHashSet();
+    private final Set<String> classNames = new HashSet<>();
 
     /** The instantiations in the file. */
-    private final Set<DetailAST> instantiations = Sets.newHashSet();
+    private final Set<DetailAST> instantiations = new HashSet<>();
+
+    /** Set of fully qualified class names. E.g. "java.lang.Boolean" */
+    private Set<String> illegalClasses = new HashSet<>();
 
     /** Name of the package. */
     private String pkgName;
@@ -143,9 +144,7 @@ public class IllegalInstantiationCheck
 
     @Override
     public void finishTree(DetailAST rootAST) {
-        for (DetailAST literalNewAST : instantiations) {
-            postProcessLiteralNew(literalNewAST);
-        }
+        instantiations.forEach(this::postProcessLiteralNew);
     }
 
     /**
@@ -201,18 +200,16 @@ public class IllegalInstantiationCheck
     private void postProcessLiteralNew(DetailAST newTokenAst) {
         final DetailAST typeNameAst = newTokenAst.getFirstChild();
         final AST nameSibling = typeNameAst.getNextSibling();
-        if (nameSibling.getType() == TokenTypes.ARRAY_DECLARATOR) {
-            // ast == "new Boolean[]"
-            return;
-        }
-
-        final FullIdent typeIdent = FullIdent.createFullIdent(typeNameAst);
-        final String typeName = typeIdent.getText();
-        final int lineNo = newTokenAst.getLineNo();
-        final int colNo = newTokenAst.getColumnNo();
-        final String fqClassName = getIllegalInstantiation(typeName);
-        if (fqClassName != null) {
-            log(lineNo, colNo, MSG_KEY, fqClassName);
+        if (nameSibling.getType() != TokenTypes.ARRAY_DECLARATOR) {
+            // ast != "new Boolean[]"
+            final FullIdent typeIdent = FullIdent.createFullIdent(typeNameAst);
+            final String typeName = typeIdent.getText();
+            final int lineNo = newTokenAst.getLineNo();
+            final int colNo = newTokenAst.getColumnNo();
+            final String fqClassName = getIllegalInstantiation(typeName);
+            if (fqClassName != null) {
+                log(lineNo, colNo, MSG_KEY, fqClassName);
+            }
         }
     }
 
@@ -355,11 +352,7 @@ public class IllegalInstantiationCheck
      * Sets the classes that are illegal to instantiate.
      * @param names a comma separate list of class names
      */
-    public void setClasses(String names) {
-        illegalClasses.clear();
-        final StringTokenizer tok = new StringTokenizer(names, ",");
-        while (tok.hasMoreTokens()) {
-            illegalClasses.add(tok.nextToken());
-        }
+    public void setClasses(String... names) {
+        illegalClasses = Arrays.stream(names).collect(Collectors.toSet());
     }
 }

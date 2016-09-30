@@ -1,24 +1,24 @@
 #!/usr/bin/env bash 
 
-# Guthub does not support fast-forward merge.
-# This scipt is intended to simplify merge of Pull Request to keep history liner (fast-forwarded)
-# All Pull Request from Github to our project has to be applied to our code by this script.
+# GitHub does not support fast-forward merge.
+# This script is intended to simplify merge of Pull Requests to keep history linear (fast-forwarded)
+# All Pull Requests from GitHub to our project has to be applied to our code by this script.
 
 set -e
 
 if [ $# -eq 0 ]
   then
-    echo "$(basename "$0") GIT_REPO FORK_USER_NAME USER_BRANCH
+    echo "$(basename "$0") FORK_USER_NAME USER_BRANCH
 example:
 
-    ./$(basename "$0") checkstyle konstantinos issue73
+    ./$(basename "$0") konstantinos issue73
 "
     exit 0;
 fi
 
-GIT_REPO=$1
-FORK_USER_NAME=$2
-USER_BRANCH=$3
+GIT_REPO=checkstyle
+FORK_USER_NAME=$1
+USER_BRANCH=$2
 REPO=${FORK_USER_NAME}-fork
 LOCAL_USER_BRANCH=${FORK_USER_NAME}-${USER_BRANCH}
 

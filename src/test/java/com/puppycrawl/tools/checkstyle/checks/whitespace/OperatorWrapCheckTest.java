@@ -25,13 +25,13 @@ import static com.puppycrawl.tools.checkstyle.checks.whitespace.OperatorWrapChec
 import java.io.File;
 import java.io.IOException;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.junit.Before;
 import org.junit.Test;
 
 import com.puppycrawl.tools.checkstyle.BaseCheckTestSupport;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
 import com.puppycrawl.tools.checkstyle.api.CheckstyleException;
+import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
 public class OperatorWrapCheckTest
     extends BaseCheckTestSupport {
@@ -50,7 +50,7 @@ public class OperatorWrapCheckTest
 
     @Test
     public void testDefault()
-        throws Exception {
+            throws Exception {
         final String[] expected = {
             "15:19: " + getCheckMessage(MSG_LINE_NEW, "+"),
             "16:15: " + getCheckMessage(MSG_LINE_NEW, "-"),
@@ -63,7 +63,7 @@ public class OperatorWrapCheckTest
 
     @Test
     public void testOpWrapEol()
-        throws Exception {
+            throws Exception {
         checkConfig.addAttribute("option", WrapOption.EOL.toString());
         final String[] expected = {
             "18:13: " + getCheckMessage(MSG_LINE_PREVIOUS, "-"),
@@ -75,7 +75,7 @@ public class OperatorWrapCheckTest
 
     @Test
     public void testAssignEol()
-        throws Exception {
+            throws Exception {
         checkConfig.addAttribute("tokens", "ASSIGN");
         checkConfig.addAttribute("option", WrapOption.EOL.toString());
         final String[] expected = {
@@ -87,7 +87,7 @@ public class OperatorWrapCheckTest
     @Test(expected = CheckstyleException.class)
     public void testInvalidOption() throws Exception {
         checkConfig.addAttribute("option", "invalid_option");
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
 
         verify(checkConfig, getPath("InputOpWrap.java"), expected);
     }

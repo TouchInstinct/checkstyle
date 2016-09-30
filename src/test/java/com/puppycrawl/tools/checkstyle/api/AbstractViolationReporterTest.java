@@ -21,13 +21,14 @@ package com.puppycrawl.tools.checkstyle.api;
 
 import static org.junit.Assert.assertEquals;
 
+import java.lang.reflect.Method;
 import java.util.SortedSet;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.junit.Test;
 
 import com.puppycrawl.tools.checkstyle.BaseCheckTestSupport;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
+import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
 /**
  * Tests to ensure that default message bundle is determined correctly.
@@ -35,22 +36,31 @@ import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
  * @author lkuehne
  */
 public class AbstractViolationReporterTest extends BaseCheckTestSupport {
-    private final Check emptyCheck = new EmptyCheck();
+    private final AbstractCheck emptyCheck = new EmptyCheck();
+
+    private static Method getGetMessageBundleMethod() throws Exception {
+        final Class<AbstractViolationReporter> abstractViolationReporterClass =
+            AbstractViolationReporter.class;
+        final Method getMessageBundleMethod =
+            abstractViolationReporterClass.getDeclaredMethod("getMessageBundle", String.class);
+        getMessageBundleMethod.setAccessible(true);
+        return getMessageBundleMethod;
+    }
 
     @Test
-    public void testGetMessageBundleWithPackage() {
+    public void testGetMessageBundleWithPackage() throws Exception {
         assertEquals("com.mycompany.checks.messages",
-            AbstractViolationReporter.getMessageBundle("com.mycompany.checks.MyCoolCheck"));
+            getGetMessageBundleMethod().invoke(null, "com.mycompany.checks.MyCoolCheck"));
     }
 
     @Test
-    public void testGetMessageBundleWithoutPackage() {
+    public void testGetMessageBundleWithoutPackage() throws Exception {
         assertEquals("messages",
-            AbstractViolationReporter.getMessageBundle("MyCoolCheck"));
+            getGetMessageBundleMethod().invoke(null, "MyCoolCheck"));
     }
 
     @Test
-    public void testCustomId() throws Exception {
+    public void testCustomId() {
         emptyCheck.setId("MyId");
         assertEquals("MyId", emptyCheck.getId());
     }
@@ -109,20 +119,20 @@ public class AbstractViolationReporterTest extends BaseCheckTestSupport {
         messages.first().getMessage();
     }
 
-    private static class EmptyCheck extends Check {
+    private static class EmptyCheck extends AbstractCheck {
         @Override
         public int[] getDefaultTokens() {
-            return ArrayUtils.EMPTY_INT_ARRAY;
+            return CommonUtils.EMPTY_INT_ARRAY;
         }
 
         @Override
         public int[] getAcceptableTokens() {
-            return ArrayUtils.EMPTY_INT_ARRAY;
+            return CommonUtils.EMPTY_INT_ARRAY;
         }
 
         @Override
         public int[] getRequiredTokens() {
-            return ArrayUtils.EMPTY_INT_ARRAY;
+            return CommonUtils.EMPTY_INT_ARRAY;
         }
     }
 }

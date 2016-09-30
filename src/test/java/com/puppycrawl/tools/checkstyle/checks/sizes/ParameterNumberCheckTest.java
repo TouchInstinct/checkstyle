@@ -25,12 +25,12 @@ import static org.junit.Assert.assertArrayEquals;
 import java.io.File;
 import java.io.IOException;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.junit.Test;
 
 import com.puppycrawl.tools.checkstyle.BaseCheckTestSupport;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
+import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
 public class ParameterNumberCheckTest
     extends BaseCheckTestSupport {
@@ -43,7 +43,7 @@ public class ParameterNumberCheckTest
     @Test
     public void testGetRequiredTokens() {
         final ParameterNumberCheck checkObj = new ParameterNumberCheck();
-        assertArrayEquals(ArrayUtils.EMPTY_INT_ARRAY, checkObj.getRequiredTokens());
+        assertArrayEquals(CommonUtils.EMPTY_INT_ARRAY, checkObj.getRequiredTokens());
     }
 
     @Test
@@ -61,7 +61,7 @@ public class ParameterNumberCheckTest
 
     @Test
     public void testDefault()
-        throws Exception {
+            throws Exception {
         final DefaultConfiguration checkConfig =
             createCheckConfig(ParameterNumberCheck.class);
         final String[] expected = {
@@ -72,7 +72,7 @@ public class ParameterNumberCheckTest
 
     @Test
     public void testNum()
-        throws Exception {
+            throws Exception {
         final DefaultConfiguration checkConfig =
             createCheckConfig(ParameterNumberCheck.class);
         checkConfig.addAttribute("max", "2");
@@ -85,7 +85,7 @@ public class ParameterNumberCheckTest
 
     @Test
     public void shouldLogActualParameterNumber()
-        throws Exception {
+            throws Exception {
         final DefaultConfiguration checkConfig =
             createCheckConfig(ParameterNumberCheck.class);
         checkConfig.addMessage("maxParam", "{0},{1}");

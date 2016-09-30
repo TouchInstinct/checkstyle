@@ -19,7 +19,7 @@
 
 package com.puppycrawl.tools.checkstyle.checks.blocks;
 
-import com.puppycrawl.tools.checkstyle.api.Check;
+import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
 
@@ -84,7 +84,7 @@ import com.puppycrawl.tools.checkstyle.api.TokenTypes;
  *
  * @author lkuehne
  */
-public class AvoidNestedBlocksCheck extends Check {
+public class AvoidNestedBlocksCheck extends AbstractCheck {
     /**
      * A key is pointing to the warning message text in "messages.properties"
      * file.
@@ -115,12 +115,10 @@ public class AvoidNestedBlocksCheck extends Check {
     @Override
     public void visitToken(DetailAST ast) {
         final DetailAST parent = ast.getParent();
-        if (parent.getType() == TokenTypes.SLIST) {
-            if (allowInSwitchCase
-                    && parent.getParent().getType() == TokenTypes.CASE_GROUP
-                    && parent.getNumberOfChildren() == 1) {
-                return;
-            }
+        if (parent.getType() == TokenTypes.SLIST
+                && (!allowInSwitchCase
+                    || parent.getParent().getType() != TokenTypes.CASE_GROUP
+                    || parent.getNumberOfChildren() != 1)) {
             log(ast.getLineNo(), ast.getColumnNo(), MSG_KEY_BLOCK_NESTED);
         }
     }

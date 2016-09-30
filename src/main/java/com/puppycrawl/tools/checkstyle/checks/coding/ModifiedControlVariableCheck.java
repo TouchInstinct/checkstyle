@@ -25,9 +25,10 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import com.google.common.collect.Sets;
-import com.puppycrawl.tools.checkstyle.api.Check;
+import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
 
@@ -94,7 +95,7 @@ import com.puppycrawl.tools.checkstyle.api.TokenTypes;
  * @author Daniel Grenner
  * @author <a href="mailto:piotr.listkiewicz@gmail.com">liscju</a>
  */
-public final class ModifiedControlVariableCheck extends Check {
+public final class ModifiedControlVariableCheck extends AbstractCheck {
 
     /**
      * A key is pointing to the warning message text in "messages.properties"
@@ -108,9 +109,9 @@ public final class ModifiedControlVariableCheck extends Check {
     private static final String ILLEGAL_TYPE_OF_TOKEN = "Illegal type of token: ";
 
     /** Operations which can change control variable in update part of the loop. */
-    private static final Set<Integer> MUTATION_OPERATIONS =
-            Sets.newHashSet(TokenTypes.POST_INC, TokenTypes.POST_DEC, TokenTypes.DEC,
-                    TokenTypes.INC, TokenTypes.ASSIGN);
+    private static final Set<Integer> MUTATION_OPERATIONS = Stream.of(TokenTypes.POST_INC,
+        TokenTypes.POST_DEC, TokenTypes.DEC, TokenTypes.INC, TokenTypes.ASSIGN)
+        .collect(Collectors.toSet());
 
     /** Stack of block parameters. */
     private final Deque<Deque<String>> variableStack = new ArrayDeque<>();
@@ -166,7 +167,7 @@ public final class ModifiedControlVariableCheck extends Check {
     public void beginTree(DetailAST rootAST) {
         // clear data
         variableStack.clear();
-        variableStack.push(new ArrayDeque<String>());
+        variableStack.push(new ArrayDeque<>());
     }
 
     @Override
@@ -250,7 +251,7 @@ public final class ModifiedControlVariableCheck extends Check {
      * Enters an inner class, which requires a new variable set.
      */
     private void enterBlock() {
-        variableStack.push(new ArrayDeque<String>());
+        variableStack.push(new ArrayDeque<>());
     }
 
     /**
@@ -304,8 +305,8 @@ public final class ModifiedControlVariableCheck extends Check {
     private static Set<String> getVariablesManagedByForLoop(DetailAST ast) {
         final Set<String> initializedVariables = getForInitVariables(ast);
         final Set<String> iteratingVariables = getForIteratorVariables(ast);
-
-        return Sets.intersection(initializedVariables, iteratingVariables);
+        return initializedVariables.stream().filter(iteratingVariables::contains)
+            .collect(Collectors.toSet());
     }
 
     /**
@@ -375,15 +376,15 @@ public final class ModifiedControlVariableCheck extends Check {
         final DetailAST forIteratorAST = ast.findFirstToken(TokenTypes.FOR_ITERATOR);
         final DetailAST forUpdateListAST = forIteratorAST.findFirstToken(TokenTypes.ELIST);
 
-        for (DetailAST iteratingExpressionAST : findChildrenOfExpressionType(forUpdateListAST)) {
-
-            if (MUTATION_OPERATIONS.contains(iteratingExpressionAST.getType())) {
+        findChildrenOfExpressionType(forUpdateListAST).stream()
+            .filter(iteratingExpressionAST ->
+                MUTATION_OPERATIONS.contains(iteratingExpressionAST.getType()))
+            .forEach(iteratingExpressionAST -> {
                 final DetailAST oneVariableOperatorChild = iteratingExpressionAST.getFirstChild();
                 if (oneVariableOperatorChild.getType() == TokenTypes.IDENT) {
                     iteratorVariables.add(oneVariableOperatorChild.getText());
                 }
-            }
-        }
+            });
 
         return iteratorVariables;
     }

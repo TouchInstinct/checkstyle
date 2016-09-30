@@ -19,22 +19,20 @@
 
 package com.puppycrawl.tools.checkstyle.checks;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-import org.apache.commons.lang3.ArrayUtils;
-
-import com.google.common.collect.Sets;
-import com.puppycrawl.tools.checkstyle.api.Check;
+import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TextBlock;
 import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
 /**
  * <p>
- * The check to ensure that requires that comments be the only thing on a line.
+ * The check to ensure that comments are the only thing on a line.
  * For the case of // comments that means that the only thing that should
  * precede it is whitespace.
  * It doesn't check comments if they do not end line, i.e. it accept
@@ -99,7 +97,7 @@ import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
  *
  * @author o_sukhodolsky
  */
-public class TrailingCommentCheck extends Check {
+public class TrailingCommentCheck extends AbstractCheck {
 
     /**
      * A key is pointing to the warning message text in "messages.properties"
@@ -111,7 +109,7 @@ public class TrailingCommentCheck extends Check {
     private Pattern legalComment;
 
     /** The format string of the regexp. */
-    private String format = "^[\\s\\}\\);]*$";
+    private String format = "^[\\s\\});]*$";
 
     /** The regexp to match against. */
     private Pattern regexp = Pattern.compile(format);
@@ -136,17 +134,17 @@ public class TrailingCommentCheck extends Check {
 
     @Override
     public int[] getDefaultTokens() {
-        return ArrayUtils.EMPTY_INT_ARRAY;
+        return CommonUtils.EMPTY_INT_ARRAY;
     }
 
     @Override
     public int[] getAcceptableTokens() {
-        return ArrayUtils.EMPTY_INT_ARRAY;
+        return CommonUtils.EMPTY_INT_ARRAY;
     }
 
     @Override
     public int[] getRequiredTokens() {
-        return ArrayUtils.EMPTY_INT_ARRAY;
+        return CommonUtils.EMPTY_INT_ARRAY;
     }
 
     @Override
@@ -160,7 +158,7 @@ public class TrailingCommentCheck extends Check {
                 .getCppComments();
         final Map<Integer, List<TextBlock>> cComments = getFileContents()
                 .getCComments();
-        final Set<Integer> lines = Sets.newHashSet();
+        final Set<Integer> lines = new HashSet<>();
         lines.addAll(cppComments.keySet());
         lines.addAll(cComments.keySet());
 

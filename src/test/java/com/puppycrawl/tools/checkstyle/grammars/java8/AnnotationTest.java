@@ -22,12 +22,12 @@ package com.puppycrawl.tools.checkstyle.grammars.java8;
 import java.io.File;
 import java.io.IOException;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.junit.Test;
 
 import com.puppycrawl.tools.checkstyle.BaseCheckTestSupport;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
 import com.puppycrawl.tools.checkstyle.checks.naming.MemberNameCheck;
+import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
 public class AnnotationTest extends BaseCheckTestSupport {
     @Override
@@ -44,102 +44,111 @@ public class AnnotationTest extends BaseCheckTestSupport {
 
     @Test
     public void testSimpleTypeAnnotation()
-        throws Exception {
+            throws Exception {
         final DefaultConfiguration checkConfig =
                 createCheckConfig(MemberNameCheck.class);
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
         verify(checkConfig, getPath("InputAnnotations1.java"), expected);
 
     }
 
     @Test
     public void testAnnotationOnClass()
-        throws Exception {
+            throws Exception {
         final DefaultConfiguration checkConfig =
                 createCheckConfig(MemberNameCheck.class);
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
-        verify(checkConfig, getNonCompilablePath("InputAnnotations2.java"), expected);
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        verify(checkConfig, getPath("InputAnnotations2.java"), expected);
 
     }
 
     @Test
     public void testClassCastTypeAnnotation()
-        throws Exception {
+            throws Exception {
         final DefaultConfiguration checkConfig =
                 createCheckConfig(MemberNameCheck.class);
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
-        verify(checkConfig, getNonCompilablePath("InputAnnotations3.java"), expected);
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        verify(checkConfig, getPath("InputAnnotations3.java"), expected);
 
     }
 
     @Test
     public void testMethodParametersTypeAnnotation()
-        throws Exception {
+            throws Exception {
         final DefaultConfiguration checkConfig =
                 createCheckConfig(MemberNameCheck.class);
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
-        verify(checkConfig, getNonCompilablePath("InputAnnotations4.java"), expected);
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        verify(checkConfig, getPath("InputAnnotations4.java"), expected);
 
     }
 
     @Test
     public void testAnnotationInThrows()
-        throws Exception {
+            throws Exception {
         final DefaultConfiguration checkConfig =
                 createCheckConfig(MemberNameCheck.class);
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
-        verify(checkConfig, getNonCompilablePath("InputAnnotations5.java"), expected);
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        verify(checkConfig, getPath("InputAnnotations5.java"), expected);
 
     }
 
     @Test
     public void testAnnotationInGeneric()
-        throws Exception {
+            throws Exception {
         final DefaultConfiguration checkConfig =
                 createCheckConfig(MemberNameCheck.class);
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
-        verify(checkConfig, getNonCompilablePath("InputAnnotations6.java"), expected);
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        verify(checkConfig, getPath("InputAnnotations6.java"), expected);
 
     }
 
     @Test
     public void testAnnotationOnConstructorCall()
-        throws Exception {
+            throws Exception {
         final DefaultConfiguration checkConfig =
                 createCheckConfig(MemberNameCheck.class);
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
-        verify(checkConfig, getNonCompilablePath("InputAnnotations7.java"), expected);
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        verify(checkConfig, getPath("InputAnnotations7.java"), expected);
 
     }
 
     @Test
     public void testAnnotationNestedCall()
-        throws Exception {
+            throws Exception {
         final DefaultConfiguration checkConfig =
                 createCheckConfig(MemberNameCheck.class);
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
-        verify(checkConfig, getNonCompilablePath("InputAnnotations8.java"), expected);
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        verify(checkConfig, getPath("InputAnnotations8.java"), expected);
 
     }
 
     @Test
     public void testAnnotationOnWildcards()
-        throws Exception {
+            throws Exception {
         final DefaultConfiguration checkConfig =
                 createCheckConfig(MemberNameCheck.class);
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
-        verify(checkConfig, getNonCompilablePath("InputAnnotations9.java"), expected);
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        verify(checkConfig, getPath("InputAnnotations9.java"), expected);
 
     }
 
     @Test
     public void testAnnotationInCatchParameters()
-        throws Exception {
+            throws Exception {
         final DefaultConfiguration checkConfig =
                 createCheckConfig(MemberNameCheck.class);
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
-        verify(checkConfig, getNonCompilablePath("InputAnnotations10.java"), expected);
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        verify(checkConfig, getPath("InputAnnotations10.java"), expected);
 
     }
 
+    @Test
+    public void testAnnotationInTypeParameters()
+            throws Exception {
+        final DefaultConfiguration checkConfig =
+                createCheckConfig(MemberNameCheck.class);
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        verify(checkConfig, getPath("InputAnnotations11.java"), expected);
+
+    }
 }

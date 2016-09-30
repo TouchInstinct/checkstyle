@@ -21,17 +21,16 @@ package com.puppycrawl.tools.checkstyle.checks.regexp;
 
 import java.util.Arrays;
 
-import org.apache.commons.lang3.ArrayUtils;
-
-import com.puppycrawl.tools.checkstyle.api.Check;
+import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
+import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
 /**
  * Implementation of a check that looks for a single line in Java files.
  * Supports ignoring comments for matches.
  * @author Oliver Burn
  */
-public class RegexpSinglelineJavaCheck extends Check {
+public class RegexpSinglelineJavaCheck extends AbstractCheck {
 
     /** The format of the regular expression to match. */
     private String format = "$.";
@@ -53,7 +52,7 @@ public class RegexpSinglelineJavaCheck extends Check {
 
     @Override
     public int[] getAcceptableTokens() {
-        return ArrayUtils.EMPTY_INT_ARRAY;
+        return CommonUtils.EMPTY_INT_ARRAY;
     }
 
     @Override

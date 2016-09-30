@@ -20,12 +20,12 @@
 package com.puppycrawl.tools.checkstyle;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map.Entry;
@@ -37,16 +37,15 @@ import antlr.Token;
 import antlr.TokenStreamException;
 import antlr.TokenStreamHiddenTokenFilter;
 import antlr.TokenStreamRecognitionException;
-
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
-import com.google.common.collect.Sets;
+import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.AbstractFileSetCheck;
-import com.puppycrawl.tools.checkstyle.api.Check;
 import com.puppycrawl.tools.checkstyle.api.CheckstyleException;
 import com.puppycrawl.tools.checkstyle.api.Configuration;
 import com.puppycrawl.tools.checkstyle.api.Context;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
+import com.puppycrawl.tools.checkstyle.api.ExternalResourceHolder;
 import com.puppycrawl.tools.checkstyle.api.FileContents;
 import com.puppycrawl.tools.checkstyle.api.FileText;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
@@ -61,31 +60,27 @@ import com.puppycrawl.tools.checkstyle.utils.TokenUtils;
  *
  * @author Oliver Burn
  */
-public final class TreeWalker
-    extends AbstractFileSetCheck {
+public final class TreeWalker extends AbstractFileSetCheck implements ExternalResourceHolder {
 
     /** Default distance between tab stops. */
     private static final int DEFAULT_TAB_WIDTH = 8;
 
     /** Maps from token name to ordinary checks. */
-    private final Multimap<String, Check> tokenToOrdinaryChecks =
+    private final Multimap<String, AbstractCheck> tokenToOrdinaryChecks =
         HashMultimap.create();
 
     /** Maps from token name to comment checks. */
-    private final Multimap<String, Check> tokenToCommentChecks =
+    private final Multimap<String, AbstractCheck> tokenToCommentChecks =
             HashMultimap.create();
 
     /** Registered ordinary checks, that don't use comment nodes. */
-    private final Set<Check> ordinaryChecks = Sets.newHashSet();
+    private final Set<AbstractCheck> ordinaryChecks = new HashSet<>();
 
     /** Registered comment checks. */
-    private final Set<Check> commentChecks = Sets.newHashSet();
+    private final Set<AbstractCheck> commentChecks = new HashSet<>();
 
     /** The distance between tab stops. */
     private int tabWidth = DEFAULT_TAB_WIDTH;
-
-    /** Cache file. **/
-    private PropertyCacheFile cache;
 
     /** Class loader to resolve classes with. **/
     private ClassLoader classLoader;
@@ -113,14 +108,15 @@ public final class TreeWalker
 
     /**
      * Sets cache file.
+     * @deprecated Use {@link Checker#setCacheFile} instead. It does not do anything now. We just
+     *             keep the setter for transition period to the same option in Checker. The
+     *             method will be completely removed in Checkstyle 8.0. See
+     *             <a href="https://github.com/checkstyle/checkstyle/issues/2883">issue#2883</a>
      * @param fileName the cache file
-     * @throws IOException if there are some problems with file loading
      */
-    public void setCacheFile(String fileName) throws IOException {
-        final Configuration configuration = getConfiguration();
-        cache = new PropertyCacheFile(configuration, fileName);
-
-        cache.load();
+    @Deprecated
+    public void setCacheFile(String fileName) {
+        // Deprecated
     }
 
     /**
@@ -151,14 +147,14 @@ public final class TreeWalker
 
     @Override
     public void setupChild(Configuration childConf)
-        throws CheckstyleException {
+            throws CheckstyleException {
         final String name = childConf.getName();
         final Object module = moduleFactory.createModule(name);
-        if (!(module instanceof Check)) {
+        if (!(module instanceof AbstractCheck)) {
             throw new CheckstyleException(
                 "TreeWalker is not allowed as a parent of " + name);
         }
-        final Check check = (Check) module;
+        final AbstractCheck check = (AbstractCheck) module;
         check.contextualize(childContext);
         check.configure(childConf);
         check.init();
@@ -169,42 +165,32 @@ public final class TreeWalker
     @Override
     protected void processFiltered(File file, List<String> lines) throws CheckstyleException {
         // check if already checked and passed the file
-        final String fileName = file.getPath();
-        final long timestamp = file.lastModified();
-        if (cache != null
-                && (cache.isInCache(fileName, timestamp)
-                    || !CommonUtils.matchesFileExtension(file, getFileExtensions()))) {
-            return;
-        }
+        if (CommonUtils.matchesFileExtension(file, getFileExtensions())) {
+            final String msg = "%s occurred during the analysis of file %s.";
+            final String fileName = file.getPath();
+            try {
+                final FileText text = FileText.fromLines(file, lines);
+                final FileContents contents = new FileContents(text);
+                final DetailAST rootAST = parse(contents);
 
-        final String msg = "%s occurred during the analysis of file %s.";
+                getMessageCollector().reset();
 
-        try {
-            final FileText text = FileText.fromLines(file, lines);
-            final FileContents contents = new FileContents(text);
-            final DetailAST rootAST = parse(contents);
+                walk(rootAST, contents, AstState.ORDINARY);
 
-            getMessageCollector().reset();
+                final DetailAST astWithComments = appendHiddenCommentNodes(rootAST);
 
-            walk(rootAST, contents, AstState.ORDINARY);
-
-            final DetailAST astWithComments = appendHiddenCommentNodes(rootAST);
-
-            walk(astWithComments, contents, AstState.WITH_COMMENTS);
-        }
-        catch (final TokenStreamRecognitionException tre) {
-            final String exceptionMsg = String.format(Locale.ROOT, msg,
-                    "TokenStreamRecognitionException", fileName);
-            throw new CheckstyleException(exceptionMsg, tre);
-        }
-        catch (RecognitionException | TokenStreamException ex) {
-            final String exceptionMsg = String.format(Locale.ROOT, msg,
-                    ex.getClass().getSimpleName(), fileName);
-            throw new CheckstyleException(exceptionMsg, ex);
-        }
-
-        if (cache != null && getMessageCollector().size() == 0) {
-            cache.put(fileName, timestamp);
+                walk(astWithComments, contents, AstState.WITH_COMMENTS);
+            }
+            catch (final TokenStreamRecognitionException tre) {
+                final String exceptionMsg = String.format(Locale.ROOT, msg,
+                        "TokenStreamRecognitionException", fileName);
+                throw new CheckstyleException(exceptionMsg, tre);
+            }
+            catch (RecognitionException | TokenStreamException ex) {
+                final String exceptionMsg = String.format(Locale.ROOT, msg,
+                        ex.getClass().getSimpleName(), fileName);
+                throw new CheckstyleException(exceptionMsg, ex);
+            }
         }
     }
 
@@ -213,8 +199,8 @@ public final class TreeWalker
      * @param check the check to register
      * @throws CheckstyleException if an error occurs
      */
-    private void registerCheck(Check check)
-        throws CheckstyleException {
+    private void registerCheck(AbstractCheck check)
+            throws CheckstyleException {
         validateDefaultTokens(check);
         final int[] tokens;
         final Set<String> checkTokens = check.getTokenNames();
@@ -257,7 +243,7 @@ public final class TreeWalker
      * @param check the check to register
      * @throws CheckstyleException if Check is misconfigured
      */
-    private void registerCheck(int tokenId, Check check) throws CheckstyleException {
+    private void registerCheck(int tokenId, AbstractCheck check) throws CheckstyleException {
         registerCheck(TokenUtils.getTokenName(tokenId), check);
     }
 
@@ -267,7 +253,7 @@ public final class TreeWalker
      * @param check the check to register
      * @throws CheckstyleException if Check is misconfigured
      */
-    private void registerCheck(String token, Check check) throws CheckstyleException {
+    private void registerCheck(String token, AbstractCheck check) throws CheckstyleException {
         if (check.isCommentNodesRequired()) {
             tokenToCommentChecks.put(token, check);
         }
@@ -287,7 +273,7 @@ public final class TreeWalker
      * @param check to validate
      * @throws CheckstyleException when validation of default tokens fails
      */
-    private static void validateDefaultTokens(Check check) throws CheckstyleException {
+    private static void validateDefaultTokens(AbstractCheck check) throws CheckstyleException {
         if (check.getRequiredTokens().length != 0) {
             final int[] defaultTokens = check.getDefaultTokens();
             Arrays.sort(defaultTokens);
@@ -327,7 +313,7 @@ public final class TreeWalker
      */
     private void notifyBegin(DetailAST rootAST, FileContents contents,
             AstState astState) {
-        final Set<Check> checks;
+        final Set<AbstractCheck> checks;
 
         if (astState == AstState.WITH_COMMENTS) {
             checks = commentChecks;
@@ -336,7 +322,7 @@ public final class TreeWalker
             checks = ordinaryChecks;
         }
 
-        for (Check check : checks) {
+        for (AbstractCheck check : checks) {
             check.setFileContents(contents);
             check.beginTree(rootAST);
         }
@@ -348,7 +334,7 @@ public final class TreeWalker
      * @param astState state of AST.
      */
     private void notifyEnd(DetailAST rootAST, AstState astState) {
-        final Set<Check> checks;
+        final Set<AbstractCheck> checks;
 
         if (astState == AstState.WITH_COMMENTS) {
             checks = commentChecks;
@@ -357,7 +343,7 @@ public final class TreeWalker
             checks = ordinaryChecks;
         }
 
-        for (Check check : checks) {
+        for (AbstractCheck check : checks) {
             check.finishTree(rootAST);
         }
     }
@@ -368,10 +354,10 @@ public final class TreeWalker
      * @param astState state of AST.
      */
     private void notifyVisit(DetailAST ast, AstState astState) {
-        final Collection<Check> visitors = getListOfChecks(ast, astState);
+        final Collection<AbstractCheck> visitors = getListOfChecks(ast, astState);
 
         if (visitors != null) {
-            for (Check check : visitors) {
+            for (AbstractCheck check : visitors) {
                 check.visitToken(ast);
             }
         }
@@ -384,10 +370,10 @@ public final class TreeWalker
      * @param astState state of AST.
      */
     private void notifyLeave(DetailAST ast, AstState astState) {
-        final Collection<Check> visitors = getListOfChecks(ast, astState);
+        final Collection<AbstractCheck> visitors = getListOfChecks(ast, astState);
 
         if (visitors != null) {
-            for (Check check : visitors) {
+            for (AbstractCheck check : visitors) {
                 check.leaveToken(ast);
             }
         }
@@ -402,8 +388,8 @@ public final class TreeWalker
      *            state of AST.
      * @return list of visitors
      */
-    private Collection<Check> getListOfChecks(DetailAST ast, AstState astState) {
-        Collection<Check> visitors = null;
+    private Collection<AbstractCheck> getListOfChecks(DetailAST ast, AstState astState) {
+        Collection<AbstractCheck> visitors = null;
         final String tokenType = TokenUtils.getTokenName(ast.getType());
 
         if (astState == AstState.WITH_COMMENTS) {
@@ -431,7 +417,7 @@ public final class TreeWalker
      *                 if parsing failed
      */
     public static DetailAST parse(FileContents contents)
-        throws RecognitionException, TokenStreamException {
+            throws RecognitionException, TokenStreamException {
         final String fullText = contents.getText().getFullText().toString();
         final Reader reader = new StringReader(fullText);
         final GeneratedJavaLexer lexer = new GeneratedJavaLexer(reader);
@@ -455,23 +441,49 @@ public final class TreeWalker
         return (DetailAST) parser.getAST();
     }
 
+    /**
+     * Parses Java source file. Result AST contains comment nodes.
+     * @param contents source file content
+     * @return DetailAST tree
+     * @throws RecognitionException if parser failed
+     * @throws TokenStreamException if lexer failed
+     */
+    public static DetailAST parseWithComments(FileContents contents)
+            throws RecognitionException, TokenStreamException {
+        return appendHiddenCommentNodes(parse(contents));
+    }
+
     @Override
     public void destroy() {
-        for (Check check : ordinaryChecks) {
-            check.destroy();
-        }
-        for (Check check : commentChecks) {
-            check.destroy();
-        }
-        if (cache != null) {
-            try {
-                cache.persist();
-            }
-            catch (IOException ex) {
-                throw new IllegalStateException("Unable to persist cache file", ex);
-            }
-        }
+        ordinaryChecks.forEach(AbstractCheck::destroy);
+        commentChecks.forEach(AbstractCheck::destroy);
         super.destroy();
+    }
+
+    @Override
+    public Set<String> getExternalResourceLocations() {
+        final Set<String> orinaryChecksResources = getExternalResourceLocations(ordinaryChecks);
+        final Set<String> commentChecksResources = getExternalResourceLocations(commentChecks);
+        final int resultListSize = orinaryChecksResources.size() + commentChecksResources.size();
+        final Set<String> resourceLocations = new HashSet<>(resultListSize);
+        resourceLocations.addAll(orinaryChecksResources);
+        resourceLocations.addAll(commentChecksResources);
+        return resourceLocations;
+    }
+
+    /**
+     * Returns a set of external configuration resource locations which are used by the checks set.
+     * @param checks a set of checks.
+     * @return a set of external configuration resource locations which are used by the checks set.
+     */
+    private static Set<String> getExternalResourceLocations(Set<AbstractCheck> checks) {
+        final Set<String> externalConfigurationResources = new HashSet<>();
+        checks.stream().filter(check -> check instanceof ExternalResourceHolder).forEach(check -> {
+            final Set<String> checkExternalResources =
+                ((ExternalResourceHolder) check).getExternalResourceLocations();
+            externalConfigurationResources.addAll(checkExternalResources);
+        });
+        return externalConfigurationResources;
     }
 
     /**
@@ -671,14 +683,28 @@ public final class TreeWalker
             String text, int initialLinesCnt, int initialColumnsCnt) {
         int lines = initialLinesCnt;
         int columns = initialColumnsCnt;
+        boolean foundCr = false;
         for (char c : text.toCharArray()) {
             if (c == '\n') {
+                foundCr = false;
                 lines++;
                 columns = 0;
             }
             else {
+                if (foundCr) {
+                    foundCr = false;
+                    lines++;
+                    columns = 0;
+                }
+                if (c == '\r') {
+                    foundCr = true;
+                }
                 columns++;
             }
+        }
+        if (foundCr) {
+            lines++;
+            columns = 0;
         }
         return new SimpleEntry<>(lines, columns);
     }

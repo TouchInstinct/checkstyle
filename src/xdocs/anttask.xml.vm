@@ -24,9 +24,8 @@
     <section name="Description">
 
       <p>
-        This task runs Checkstyle over specified Java files. The task has been
-        tested using ANT 1.5.  The latest version of checkstyle can be found
-        at
+        This task runs Checkstyle over specified Java files.
+        The latest version of checkstyle can be found at
         <a href="http://checkstyle.sourceforge.net/">http://checkstyle.sourceforge.net/</a>.
 
         This task is included in the checkstyle distribution.
@@ -111,19 +110,18 @@
           <td>config</td>
           <td>
             Specifies the location of the file that defines the configuration
-            modules. The location can either be a filesystem location, or a
-            name passed to the ClassLoader.getResource() method.
+            modules.
             <br/>
             <a href="config.html">See here</a> for a description of how to
             define a configuration.
           </td>
-          <td>Exactly one of config or configURL</td>
+          <td>Exactly one config file</td>
         </tr>
 
         <tr>
           <td>configURL</td>
           <td>
-            Specifies a URL that defines the configuration modules. <a
+            Specifies a URL or name passed to the ClassLoader.getResource() method that defines the configuration modules. <a
             href="config.html">See here</a> for a description of how to define
             a configuration.
           </td>
@@ -311,6 +309,19 @@
     </section>
 
     <section name="Examples">
+
+      <p>
+        An example project can be found
+        <a href="https://github.com/sevntu-checkstyle/checkstyle-samples/tree/master/ant-project">here</a>.
+      </p>
+
+      <p>
+        <b>
+          Checkstyle use ant configuration to validate its own code. See example is our git repository -
+          <a href="https://github.com/checkstyle/checkstyle/blob/master/config/ant-phase-verify.xml#L25">
+            config/ant-phase-verify.xml</a>.
+        </b>
+      </p>
 
       <p>
         <b>

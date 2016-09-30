@@ -20,7 +20,9 @@
 package com.puppycrawl.tools.checkstyle.checks.javadoc;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
@@ -28,8 +30,6 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.FileContents;
 import com.puppycrawl.tools.checkstyle.api.FullIdent;
@@ -142,6 +142,8 @@ public class JavadocMethodCheck extends AbstractTypeAwareCheck {
      * Controls whether to allow documented exceptions that are not declared if
      * they are a subclass of java.lang.RuntimeException.
      */
+    // -@cs[AbbreviationAsWordInName] We can not change it as,
+    // check's property is part of API (used in configurations).
     private boolean allowUndeclaredRTE;
 
     /**
@@ -220,15 +222,8 @@ public class JavadocMethodCheck extends AbstractTypeAwareCheck {
      * Sets list of annotations.
      * @param userAnnotations user's value.
      */
-    public void setAllowedAnnotations(String userAnnotations) {
-        final List<String> annotations = new ArrayList<>();
-        final String[] sAnnotations = userAnnotations.split(",");
-        for (int i = 0; i < sAnnotations.length; i++) {
-            sAnnotations[i] = sAnnotations[i].trim();
-        }
-
-        Collections.addAll(annotations, sAnnotations);
-        allowedAnnotations = annotations;
+    public void setAllowedAnnotations(String... userAnnotations) {
+        allowedAnnotations = Arrays.asList(userAnnotations);
     }
 
     /**
@@ -255,6 +250,8 @@ public class JavadocMethodCheck extends AbstractTypeAwareCheck {
      *
      * @param flag a {@code Boolean} value
      */
+    // -@cs[AbbreviationAsWordInName] We can not change it as,
+    // check's property is part of API (used in configurations).
     public void setAllowUndeclaredRTE(boolean flag) {
         allowUndeclaredRTE = flag;
     }
@@ -486,33 +483,29 @@ public class JavadocMethodCheck extends AbstractTypeAwareCheck {
     private void checkComment(DetailAST ast, TextBlock comment) {
         final List<JavadocTag> tags = getMethodTags(comment);
 
-        if (hasShortCircuitTag(ast, tags)) {
-            return;
-        }
+        if (!hasShortCircuitTag(ast, tags)) {
+            final Iterator<JavadocTag> it = tags.iterator();
+            if (ast.getType() == TokenTypes.ANNOTATION_FIELD_DEF) {
+                checkReturnTag(tags, ast.getLineNo(), true);
+            }
+            else {
+                // Check for inheritDoc
+                boolean hasInheritDocTag = false;
+                while (!hasInheritDocTag && it.hasNext()) {
+                    hasInheritDocTag = it.next().isInheritDocTag();
+                }
+                final boolean reportExpectedTags = !hasInheritDocTag && !hasAllowedAnnotations(ast);
 
-        final Iterator<JavadocTag> it = tags.iterator();
-        if (ast.getType() == TokenTypes.ANNOTATION_FIELD_DEF) {
-            checkReturnTag(tags, ast.getLineNo(), true);
-        }
-        else {
-            // Check for inheritDoc
-            boolean hasInheritDocTag = false;
-            while (!hasInheritDocTag && it.hasNext()) {
-                hasInheritDocTag = it.next().isInheritDocTag();
+                checkParamTags(tags, ast, reportExpectedTags);
+                checkThrowsTags(tags, getThrows(ast), reportExpectedTags);
+                if (CheckUtils.isNonVoidMethod(ast)) {
+                    checkReturnTag(tags, ast.getLineNo(), reportExpectedTags);
+                }
             }
 
-            checkParamTags(tags, ast, !hasInheritDocTag);
-            checkThrowsTags(tags, getThrows(ast), !hasInheritDocTag);
-            if (CheckUtils.isNonVoidMethod(ast)) {
-                checkReturnTag(tags, ast.getLineNo(), !hasInheritDocTag);
-            }
-        }
-
-        // Dump out all unused tags
-        for (JavadocTag javadocTag : tags) {
-            if (!javadocTag.isSeeOrInheritDocTag()) {
-                log(javadocTag.getLineNo(), MSG_UNUSED_TAG_GENERAL);
-            }
+            // Dump out all unused tags
+            tags.stream().filter(javadocTag -> !javadocTag.isSeeOrInheritDocTag())
+                .forEach(javadocTag -> log(javadocTag.getLineNo(), MSG_UNUSED_TAG_GENERAL));
         }
     }
 
@@ -569,7 +562,7 @@ public class JavadocMethodCheck extends AbstractTypeAwareCheck {
      */
     private static List<JavadocTag> getMethodTags(TextBlock comment) {
         final String[] lines = comment.getText();
-        final List<JavadocTag> tags = Lists.newArrayList();
+        final List<JavadocTag> tags = new ArrayList<>();
         int currentLine = comment.getStartLineNo() - 1;
         final int startColumnNumber = comment.getStartColNo();
 
@@ -695,7 +688,7 @@ public class JavadocMethodCheck extends AbstractTypeAwareCheck {
      */
     private static List<DetailAST> getParameters(DetailAST ast) {
         final DetailAST params = ast.findFirstToken(TokenTypes.PARAMETERS);
-        final List<DetailAST> returnValue = Lists.newArrayList();
+        final List<DetailAST> returnValue = new ArrayList<>();
 
         DetailAST child = params.getFirstChild();
         while (child != null) {
@@ -715,7 +708,7 @@ public class JavadocMethodCheck extends AbstractTypeAwareCheck {
      * @return the list of exception nodes for ast.
      */
     private List<ExceptionInfo> getThrows(DetailAST ast) {
-        final List<ExceptionInfo> returnValue = Lists.newArrayList();
+        final List<ExceptionInfo> returnValue = new ArrayList<>();
         final DetailAST throwsAST = ast
                 .findFirstToken(TokenTypes.LITERAL_THROWS);
         if (throwsAST != null) {
@@ -884,7 +877,7 @@ public class JavadocMethodCheck extends AbstractTypeAwareCheck {
             List<ExceptionInfo> throwsList, boolean reportExpectedTags) {
         // Loop over the tags, checking to see they exist in the throws.
         // The foundThrows used for performance only
-        final Set<String> foundThrows = Sets.newHashSet();
+        final Set<String> foundThrows = new HashSet<>();
         final ListIterator<JavadocTag> tagIt = tags.listIterator();
         while (tagIt.hasNext()) {
             final JavadocTag tag = tagIt.next();
@@ -921,14 +914,13 @@ public class JavadocMethodCheck extends AbstractTypeAwareCheck {
         // Now dump out all throws without tags :- unless
         // the user has chosen to suppress these problems
         if (!allowMissingThrowsTags && reportExpectedTags) {
-            for (ExceptionInfo exceptionInfo : throwsList) {
-                if (!exceptionInfo.isFound()) {
+            throwsList.stream().filter(exceptionInfo -> !exceptionInfo.isFound())
+                .forEach(exceptionInfo -> {
                     final Token token = exceptionInfo.getName();
                     log(token.getLineNo(), token.getColumnNo(),
-                            MSG_EXPECTED_TAG,
-                            JavadocTagInfo.THROWS.getText(), token.getText());
-                }
-            }
+                        MSG_EXPECTED_TAG,
+                        JavadocTagInfo.THROWS.getText(), token.getText());
+                });
         }
     }
 

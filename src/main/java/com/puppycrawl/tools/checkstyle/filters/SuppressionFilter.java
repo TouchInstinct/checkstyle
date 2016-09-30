@@ -23,11 +23,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URL;
+import java.util.Collections;
 import java.util.Objects;
+import java.util.Set;
 
 import com.puppycrawl.tools.checkstyle.api.AuditEvent;
 import com.puppycrawl.tools.checkstyle.api.AutomaticBean;
 import com.puppycrawl.tools.checkstyle.api.CheckstyleException;
+import com.puppycrawl.tools.checkstyle.api.ExternalResourceHolder;
 import com.puppycrawl.tools.checkstyle.api.Filter;
 import com.puppycrawl.tools.checkstyle.api.FilterSet;
 import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
@@ -40,9 +43,8 @@ import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
  * @author Rick Giles
  * @author <a href="mailto:piotr.listkiewicz@gmail.com">liscju</a>
  */
-public class SuppressionFilter
-    extends AutomaticBean
-    implements Filter {
+public class SuppressionFilter extends AutomaticBean implements Filter, ExternalResourceHolder {
+
     /** Filename of supression file. */
     private String file;
     /** Tells whether config file existence is optional. */
@@ -103,6 +105,11 @@ public class SuppressionFilter
                 filters = SuppressionsLoader.loadSuppressions(file);
             }
         }
+    }
+
+    @Override
+    public Set<String> getExternalResourceLocations() {
+        return Collections.singleton(file);
     }
 
     /**

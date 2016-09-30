@@ -22,9 +22,8 @@ package com.puppycrawl.tools.checkstyle.checks.blocks;
 import java.util.Locale;
 
 import org.apache.commons.beanutils.ConversionException;
-import org.apache.commons.lang3.ArrayUtils;
 
-import com.puppycrawl.tools.checkstyle.api.Check;
+import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
 import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
@@ -40,7 +39,8 @@ import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
  * LITERAL_IF},  {@link TokenTypes#LITERAL_SWITCH LITERAL_SWITCH},  {@link
  * TokenTypes#LITERAL_SYNCHRONIZED LITERAL_SYNCHRONIZED},  {@link
  * TokenTypes#LITERAL_TRY LITERAL_TRY},  {@link TokenTypes#LITERAL_WHILE
- * LITERAL_WHILE},  {@link TokenTypes#STATIC_INIT STATIC_INIT}.
+ * LITERAL_WHILE},  {@link TokenTypes#STATIC_INIT STATIC_INIT},
+ * {@link TokenTypes#LAMBDA LAMBDA}.
  * </p>
  *
  * <p>
@@ -79,7 +79,7 @@ import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
  * @author maxvetrenko
  */
 public class LeftCurlyCheck
-    extends Check {
+    extends AbstractCheck {
     /**
      * A key is pointing to the warning message text in "messages.properties"
      * file.
@@ -167,12 +167,13 @@ public class LeftCurlyCheck
             TokenTypes.LITERAL_FOR,
             TokenTypes.STATIC_INIT,
             TokenTypes.OBJBLOCK,
+            TokenTypes.LAMBDA,
         };
     }
 
     @Override
     public int[] getRequiredTokens() {
-        return ArrayUtils.EMPTY_INT_ARRAY;
+        return CommonUtils.EMPTY_INT_ARRAY;
     }
 
     @Override
@@ -208,6 +209,7 @@ public class LeftCurlyCheck
             case TokenTypes.LITERAL_DO:
             case TokenTypes.LITERAL_IF:
             case TokenTypes.STATIC_INIT:
+            case TokenTypes.LAMBDA:
                 startToken = ast;
                 brace = ast.findFirstToken(TokenTypes.SLIST);
                 break;

@@ -30,15 +30,24 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 
-import org.apache.commons.lang3.ArrayUtils;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import com.puppycrawl.tools.checkstyle.BaseCheckTestSupport;
+import com.puppycrawl.tools.checkstyle.BriefUtLogger;
+import com.puppycrawl.tools.checkstyle.Checker;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
+import com.puppycrawl.tools.checkstyle.TreeWalker;
 import com.puppycrawl.tools.checkstyle.api.CheckstyleException;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
+import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
 public class ImportControlCheckTest extends BaseCheckTestSupport {
+
+    @Rule
+    public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+
     @Override
     protected String getPath(String filename) throws IOException {
         return super.getPath("checks" + File.separator
@@ -109,11 +118,19 @@ public class ImportControlCheckTest extends BaseCheckTestSupport {
     }
 
     @Test
+    public void testNull() throws Exception {
+        final DefaultConfiguration checkConfig = createCheckConfig(ImportControlCheck.class);
+        checkConfig.addAttribute("file", null);
+        final String[] expected = {"1:47: " + getCheckMessage(MSG_MISSING_FILE)};
+        verify(checkConfig, getPath("InputImportControl.java"), expected);
+    }
+
+    @Test
     public void testUnknown() throws Exception {
         final DefaultConfiguration checkConfig = createCheckConfig(ImportControlCheck.class);
         checkConfig.addAttribute("file", "unknown-file");
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
         try {
+            final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
             verify(checkConfig, getPath("InputImportControl.java"), expected);
             fail("Test should fail if exception was not thrown");
         }
@@ -127,8 +144,8 @@ public class ImportControlCheckTest extends BaseCheckTestSupport {
     public void testBroken() throws Exception {
         final DefaultConfiguration checkConfig = createCheckConfig(ImportControlCheck.class);
         checkConfig.addAttribute("file", getPath("import-control_broken.xml"));
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
         try {
+            final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
             verify(checkConfig, getPath("InputImportControl.java"), expected);
             fail("Test should fail if exception was not thrown");
         }
@@ -193,12 +210,21 @@ public class ImportControlCheckTest extends BaseCheckTestSupport {
     }
 
     @Test
+    public void testUrlNull() throws Exception {
+        final DefaultConfiguration checkConfig = createCheckConfig(ImportControlCheck.class);
+        checkConfig.addAttribute("url", null);
+        final String[] expected = {"1:47: " + getCheckMessage(MSG_MISSING_FILE)};
+
+        verify(checkConfig, getPath("InputImportControl.java"), expected);
+    }
+
+    @Test
     public void testUrlUnableToLoad() throws Exception {
         final DefaultConfiguration checkConfig = createCheckConfig(ImportControlCheck.class);
         checkConfig.addAttribute("url", "https://UnableToLoadThisURL");
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
 
         try {
+            final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
             verify(checkConfig, getPath("InputImportControl.java"), expected);
             fail("Test should fail if exception was not thrown");
         }
@@ -212,9 +238,9 @@ public class ImportControlCheckTest extends BaseCheckTestSupport {
     public void testUrlIncorrectUrl() throws Exception {
         final DefaultConfiguration checkConfig = createCheckConfig(ImportControlCheck.class);
         checkConfig.addAttribute("url", "https://{WrongCharsInURL}");
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
 
         try {
+            final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
             verify(checkConfig, getPath("InputImportControl.java"), expected);
             fail("Test should fail if exception was not thrown");
         }
@@ -222,6 +248,52 @@ public class ImportControlCheckTest extends BaseCheckTestSupport {
             final String message = getInvocationTargetExceptionMessage(ex);
             assertTrue(message.startsWith("Syntax error in url "));
         }
+    }
+
+    @Test
+    public void testCacheWhenFileExternalResourceContentDoesNotChange() throws Exception {
+        final DefaultConfiguration checkConfig = createCheckConfig(ImportControlCheck.class);
+        checkConfig.addAttribute("file", getPath("import-control_one-re.xml"));
+
+        final Checker checker = createMockCheckerWithCache(checkConfig);
+
+        final String filePath = temporaryFolder.newFile("EmptyFile.java").getPath();
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+
+        verify(checker, filePath, filePath, expected);
+        // One more time to use cache.
+        verify(checker, filePath, filePath, expected);
+    }
+
+    @Test
+    public void testCacheWhenUrlExternalResourceContentDoesNotChange() throws Exception {
+        final DefaultConfiguration checkConfig = createCheckConfig(ImportControlCheck.class);
+        checkConfig.addAttribute("url", getUriString("import-control_one.xml"));
+
+        final Checker checker = createMockCheckerWithCache(checkConfig);
+
+        final String pathToEmptyFile = temporaryFolder.newFile("TestFile.java").getPath();
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+
+        verify(checker, pathToEmptyFile, pathToEmptyFile, expected);
+        // One more time to use cache.
+        verify(checker, pathToEmptyFile, pathToEmptyFile, expected);
+    }
+
+    private Checker createMockCheckerWithCache(DefaultConfiguration checkConfig)
+            throws IOException, CheckstyleException {
+        final DefaultConfiguration treeWalkerConfig = createCheckConfig(TreeWalker.class);
+        treeWalkerConfig.addChild(checkConfig);
+
+        final DefaultConfiguration checkerConfig = new DefaultConfiguration("checkstyle_checks");
+        checkerConfig.addChild(treeWalkerConfig);
+        checkerConfig.addAttribute("cacheFile", temporaryFolder.newFile().getPath());
+
+        final Checker checker = new Checker();
+        checker.setModuleClassLoader(Thread.currentThread().getContextClassLoader());
+        checker.configure(checkerConfig);
+        checker.addListener(new BriefUtLogger(stream));
+        return checker;
     }
 
     /**

@@ -31,6 +31,7 @@ import com.puppycrawl.tools.checkstyle.BaseCheckTestSupport;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
+import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
 public class ParameterAssignmentCheckTest extends BaseCheckTestSupport {
     @Override
@@ -41,7 +42,7 @@ public class ParameterAssignmentCheckTest extends BaseCheckTestSupport {
 
     @Test
     public void testDefault()
-        throws Exception {
+            throws Exception {
         final DefaultConfiguration checkConfig =
             createCheckConfig(ParameterAssignmentCheck.class);
         final String[] expected = {
@@ -55,6 +56,13 @@ public class ParameterAssignmentCheckTest extends BaseCheckTestSupport {
     }
 
     @Test
+    public void testReceiverParameter() throws Exception {
+        final DefaultConfiguration checkConfig = createCheckConfig(ParameterAssignmentCheck.class);
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        verify(checkConfig, getPath("InputParameterAssignmentReceiver.java"), expected);
+    }
+
+    @Test
     public void testTokensNotNull() {
         final ParameterAssignmentCheck check = new ParameterAssignmentCheck();
         Assert.assertNotNull(check.getAcceptableTokens());
@@ -63,7 +71,7 @@ public class ParameterAssignmentCheckTest extends BaseCheckTestSupport {
     }
 
     @Test
-    public void testImproperToken() throws Exception {
+    public void testImproperToken() {
         final ParameterAssignmentCheck check = new ParameterAssignmentCheck();
 
         final DetailAST classDefAst = new DetailAST();

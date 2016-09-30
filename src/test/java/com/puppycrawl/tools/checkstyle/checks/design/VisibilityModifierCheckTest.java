@@ -25,16 +25,15 @@ import static org.junit.Assert.assertArrayEquals;
 import java.io.File;
 import java.io.IOException;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.junit.Test;
 
 import antlr.CommonHiddenStreamToken;
-
 import com.puppycrawl.tools.checkstyle.BaseCheckTestSupport;
 import com.puppycrawl.tools.checkstyle.Checker;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
+import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
 public class VisibilityModifierCheckTest
     extends BaseCheckTestSupport {
@@ -63,7 +62,7 @@ public class VisibilityModifierCheckTest
 
     @Test
     public void testInner()
-        throws Exception {
+            throws Exception {
         final String[] expected = {
             "30:24: " + getCheckMessage(MSG_KEY, "rData"),
             "33:27: " + getCheckMessage(MSG_KEY, "protectedVariable"),
@@ -77,7 +76,7 @@ public class VisibilityModifierCheckTest
 
     @Test
     public void testIgnoreAccess()
-        throws Exception {
+            throws Exception {
         final DefaultConfiguration checkConfig =
             createCheckConfig(VisibilityModifierCheck.class);
         checkConfig.addAttribute("publicMemberPattern", "^r[A-Z]");
@@ -117,6 +116,7 @@ public class VisibilityModifierCheckTest
     public void testAllowPublicFinalFieldsInImmutableClass() throws Exception {
         final DefaultConfiguration checkConfig =
                 createCheckConfig(VisibilityModifierCheck.class);
+        checkConfig.addAttribute("allowPublicImmutableFields", "true");
         final String[] expected = {
             "12:39: " + getCheckMessage(MSG_KEY, "includes"),
             "13:39: " + getCheckMessage(MSG_KEY, "excludes"),
@@ -129,14 +129,50 @@ public class VisibilityModifierCheckTest
     }
 
     @Test
+    public void testDisAllowPublicFinalAndImmutableFieldsInImmutableClass() throws Exception {
+        final DefaultConfiguration checkConfig =
+            createCheckConfig(VisibilityModifierCheck.class);
+        final String[] expected = {
+            "11:22: " + getCheckMessage(MSG_KEY, "someIntValue"),
+            "12:39: " + getCheckMessage(MSG_KEY, "includes"),
+            "13:39: " + getCheckMessage(MSG_KEY, "excludes"),
+            "14:35: " + getCheckMessage(MSG_KEY, "notes"),
+            "15:29: " + getCheckMessage(MSG_KEY, "money"),
+            "16:23: " + getCheckMessage(MSG_KEY, "list"),
+            "30:28: " + getCheckMessage(MSG_KEY, "f"),
+            "31:30: " + getCheckMessage(MSG_KEY, "bool"),
+            "32:35: " + getCheckMessage(MSG_KEY, "uri"),
+            "33:35: " + getCheckMessage(MSG_KEY, "file"),
+            "34:20: " + getCheckMessage(MSG_KEY, "value"),
+            "35:35: " + getCheckMessage(MSG_KEY, "url"),
+            "36:24: " + getCheckMessage(MSG_KEY, "bValue"),
+            "37:31: " + getCheckMessage(MSG_KEY, "longValue"),
+            };
+        verify(checkConfig, getPath("InputImmutable.java"), expected);
+    }
+
+    @Test
+    public void testAllowPublicFinalFieldsInNonFinalClass() throws Exception {
+        final DefaultConfiguration checkConfig =
+                createCheckConfig(VisibilityModifierCheck.class);
+        checkConfig.addAttribute("allowPublicFinalFields", "true");
+        final String[] expected = {
+            "34:20: " + getCheckMessage(MSG_KEY, "value"),
+            "36:24: " + getCheckMessage(MSG_KEY, "bValue"),
+            "37:31: " + getCheckMessage(MSG_KEY, "longValue"),
+        };
+        verify(checkConfig, getPath("InputImmutable.java"), expected);
+    }
+
+    @Test
     public void testUserSpecifiedImmutableClassesList() throws Exception {
         final DefaultConfiguration checkConfig =
                 createCheckConfig(VisibilityModifierCheck.class);
+        checkConfig.addAttribute("allowPublicImmutableFields", "true");
         checkConfig.addAttribute("immutableClassCanonicalNames", "java.util.List,"
-                + "com.google.common.collect.ImmutableSet");
+                + "com.google.common.collect.ImmutableSet, java.lang.String");
         final String[] expected = {
-            "14:35: " + getCheckMessage(MSG_KEY, "notes"),
-            "15:29: " + getCheckMessage(MSG_KEY, "value"),
+            "15:29: " + getCheckMessage(MSG_KEY, "money"),
             "32:35: " + getCheckMessage(MSG_KEY, "uri"),
             "33:35: " + getCheckMessage(MSG_KEY, "file"),
             "34:20: " + getCheckMessage(MSG_KEY, "value"),
@@ -151,6 +187,7 @@ public class VisibilityModifierCheckTest
     public void testImmutableSpecifiedSameTypeName() throws Exception {
         final DefaultConfiguration checkConfig =
                 createCheckConfig(VisibilityModifierCheck.class);
+        checkConfig.addAttribute("allowPublicImmutableFields", "true");
         checkConfig.addAttribute("immutableClassCanonicalNames",
                  "com.puppycrawl.tools.checkstyle.checks.coding.InputGregorianCalendar,"
                  + "com.puppycrawl.tools.checkstyle.checks.design.InetSocketAddress");
@@ -162,9 +199,10 @@ public class VisibilityModifierCheckTest
     }
 
     @Test
-    public void testImmutableDefaultValueSameTypeName() throws Exception {
+    public void testImmutableValueSameTypeName() throws Exception {
         final DefaultConfiguration checkConfig =
                 createCheckConfig(VisibilityModifierCheck.class);
+        checkConfig.addAttribute("allowPublicImmutableFields", "true");
         final String[] expected = {
             "7:46: " + getCheckMessage(MSG_KEY, "calendar"),
             "8:41: " + getCheckMessage(MSG_KEY, "calendar2"),
@@ -178,8 +216,9 @@ public class VisibilityModifierCheckTest
     public void testImmutableStarImportFalseNegative() throws Exception {
         final DefaultConfiguration checkConfig =
                 createCheckConfig(VisibilityModifierCheck.class);
+        checkConfig.addAttribute("allowPublicImmutableFields", "true");
         checkConfig.addAttribute("immutableClassCanonicalNames", "java.util.Arrays");
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
         verify(checkConfig, getPath("InputImmutableStarImport.java"), expected);
     }
 
@@ -187,9 +226,10 @@ public class VisibilityModifierCheckTest
     public void testImmutableStarImportNoWarn() throws Exception {
         final DefaultConfiguration checkConfig =
                 createCheckConfig(VisibilityModifierCheck.class);
+        checkConfig.addAttribute("allowPublicImmutableFields", "true");
         checkConfig.addAttribute("immutableClassCanonicalNames",
-                 "com.google.common.collect.ImmutableSet");
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
+            "java.lang.String, com.google.common.collect.ImmutableSet");
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
         verify(checkConfig, getPath("InputImmutableStarImport2.java"), expected);
     }
 
@@ -198,12 +238,12 @@ public class VisibilityModifierCheckTest
         final DefaultConfiguration checkConfig =
             createCheckConfig(VisibilityModifierCheck.class);
         final String[] expected = {
-            "39:19: " + getCheckMessage(MSG_KEY, "customAnnotatedPublic"),
-            "42:12: " + getCheckMessage(MSG_KEY, "customAnnotatedPackage"),
-            "45:22: " + getCheckMessage(MSG_KEY, "customAnnotatedProtected"),
-            "47:19: " + getCheckMessage(MSG_KEY, "unannotatedPublic"),
-            "48:12: " + getCheckMessage(MSG_KEY, "unannotatedPackage"),
-            "49:22: " + getCheckMessage(MSG_KEY, "unannotatedProtected"),
+            "40:19: " + getCheckMessage(MSG_KEY, "customAnnotatedPublic"),
+            "43:12: " + getCheckMessage(MSG_KEY, "customAnnotatedPackage"),
+            "46:22: " + getCheckMessage(MSG_KEY, "customAnnotatedProtected"),
+            "48:19: " + getCheckMessage(MSG_KEY, "unannotatedPublic"),
+            "49:12: " + getCheckMessage(MSG_KEY, "unannotatedPackage"),
+            "50:22: " + getCheckMessage(MSG_KEY, "unannotatedProtected"),
         };
         verify(checkConfig, getPath("InputAnnotatedVisibility.java"), expected);
     }
@@ -216,17 +256,19 @@ public class VisibilityModifierCheckTest
                 "com.puppycrawl.tools.checkstyle.checks.design."
                     + "InputAnnotatedVisibility.CustomAnnotation");
         final String[] expected = {
-            "15:28: " + getCheckMessage(MSG_KEY, "publicJUnitRule"),
-            "18:28: " + getCheckMessage(MSG_KEY, "fqPublicJUnitRule"),
-            "21:19: " + getCheckMessage(MSG_KEY, "googleCommonsAnnotatedPublic"),
-            "24:12: " + getCheckMessage(MSG_KEY, "googleCommonsAnnotatedPackage"),
-            "27:22: " + getCheckMessage(MSG_KEY, "googleCommonsAnnotatedProtected"),
-            "30:19: " + getCheckMessage(MSG_KEY, "fqGoogleCommonsAnnotatedPublic"),
-            "33:12: " + getCheckMessage(MSG_KEY, "fqGoogleCommonsAnnotatedPackage"),
-            "36:22: " + getCheckMessage(MSG_KEY, "fqGoogleCommonsAnnotatedProtected"),
-            "47:19: " + getCheckMessage(MSG_KEY, "unannotatedPublic"),
-            "48:12: " + getCheckMessage(MSG_KEY, "unannotatedPackage"),
-            "49:22: " + getCheckMessage(MSG_KEY, "unannotatedProtected"),
+            "16:28: " + getCheckMessage(MSG_KEY, "publicJUnitRule"),
+            "19:28: " + getCheckMessage(MSG_KEY, "fqPublicJUnitRule"),
+            "22:19: " + getCheckMessage(MSG_KEY, "googleCommonsAnnotatedPublic"),
+            "25:12: " + getCheckMessage(MSG_KEY, "googleCommonsAnnotatedPackage"),
+            "28:22: " + getCheckMessage(MSG_KEY, "googleCommonsAnnotatedProtected"),
+            "31:19: " + getCheckMessage(MSG_KEY, "fqGoogleCommonsAnnotatedPublic"),
+            "34:12: " + getCheckMessage(MSG_KEY, "fqGoogleCommonsAnnotatedPackage"),
+            "37:22: " + getCheckMessage(MSG_KEY, "fqGoogleCommonsAnnotatedProtected"),
+            "48:19: " + getCheckMessage(MSG_KEY, "unannotatedPublic"),
+            "49:12: " + getCheckMessage(MSG_KEY, "unannotatedPackage"),
+            "50:22: " + getCheckMessage(MSG_KEY, "unannotatedProtected"),
+            "59:35: " + getCheckMessage(MSG_KEY, "publicJUnitClassRule"),
+            "62:35: " + getCheckMessage(MSG_KEY, "fqPublicJUnitClassRule"),
         };
         verify(checkConfig, getPath("InputAnnotatedVisibility.java"), expected);
     }
@@ -237,20 +279,22 @@ public class VisibilityModifierCheckTest
             createCheckConfig(VisibilityModifierCheck.class);
         checkConfig.addAttribute("ignoreAnnotationCanonicalNames", "");
         final String[] expected = {
-            "15:28: " + getCheckMessage(MSG_KEY, "publicJUnitRule"),
-            "18:28: " + getCheckMessage(MSG_KEY, "fqPublicJUnitRule"),
-            "21:19: " + getCheckMessage(MSG_KEY, "googleCommonsAnnotatedPublic"),
-            "24:12: " + getCheckMessage(MSG_KEY, "googleCommonsAnnotatedPackage"),
-            "27:22: " + getCheckMessage(MSG_KEY, "googleCommonsAnnotatedProtected"),
-            "30:19: " + getCheckMessage(MSG_KEY, "fqGoogleCommonsAnnotatedPublic"),
-            "33:12: " + getCheckMessage(MSG_KEY, "fqGoogleCommonsAnnotatedPackage"),
-            "36:22: " + getCheckMessage(MSG_KEY, "fqGoogleCommonsAnnotatedProtected"),
-            "39:19: " + getCheckMessage(MSG_KEY, "customAnnotatedPublic"),
-            "42:12: " + getCheckMessage(MSG_KEY, "customAnnotatedPackage"),
-            "45:22: " + getCheckMessage(MSG_KEY, "customAnnotatedProtected"),
-            "47:19: " + getCheckMessage(MSG_KEY, "unannotatedPublic"),
-            "48:12: " + getCheckMessage(MSG_KEY, "unannotatedPackage"),
-            "49:22: " + getCheckMessage(MSG_KEY, "unannotatedProtected"),
+            "16:28: " + getCheckMessage(MSG_KEY, "publicJUnitRule"),
+            "19:28: " + getCheckMessage(MSG_KEY, "fqPublicJUnitRule"),
+            "22:19: " + getCheckMessage(MSG_KEY, "googleCommonsAnnotatedPublic"),
+            "25:12: " + getCheckMessage(MSG_KEY, "googleCommonsAnnotatedPackage"),
+            "28:22: " + getCheckMessage(MSG_KEY, "googleCommonsAnnotatedProtected"),
+            "31:19: " + getCheckMessage(MSG_KEY, "fqGoogleCommonsAnnotatedPublic"),
+            "34:12: " + getCheckMessage(MSG_KEY, "fqGoogleCommonsAnnotatedPackage"),
+            "37:22: " + getCheckMessage(MSG_KEY, "fqGoogleCommonsAnnotatedProtected"),
+            "40:19: " + getCheckMessage(MSG_KEY, "customAnnotatedPublic"),
+            "43:12: " + getCheckMessage(MSG_KEY, "customAnnotatedPackage"),
+            "46:22: " + getCheckMessage(MSG_KEY, "customAnnotatedProtected"),
+            "48:19: " + getCheckMessage(MSG_KEY, "unannotatedPublic"),
+            "49:12: " + getCheckMessage(MSG_KEY, "unannotatedPackage"),
+            "50:22: " + getCheckMessage(MSG_KEY, "unannotatedProtected"),
+            "59:35: " + getCheckMessage(MSG_KEY, "publicJUnitClassRule"),
+            "62:35: " + getCheckMessage(MSG_KEY, "fqPublicJUnitClassRule"),
         };
         verify(checkConfig, getPath("InputAnnotatedVisibility.java"), expected);
     }
@@ -260,7 +304,8 @@ public class VisibilityModifierCheckTest
         final DefaultConfiguration checkConfig =
             createCheckConfig(VisibilityModifierCheck.class);
         final String[] expected = {
-            "10:28: " + getCheckMessage(MSG_KEY, "publicJUnitRule"),
+            "11:28: " + getCheckMessage(MSG_KEY, "publicJUnitRule"),
+            "14:28: " + getCheckMessage(MSG_KEY, "publicJUnitClassRule"),
         };
         verify(checkConfig, getPath("InputAnnotatedVisibilitySameTypeName.java"), expected);
     }
@@ -279,7 +324,6 @@ public class VisibilityModifierCheckTest
     public void testPublicImmutableFieldsNotAllowed() throws Exception {
         final DefaultConfiguration checkConfig =
             createCheckConfig(VisibilityModifierCheck.class);
-        checkConfig.addAttribute("allowPublicImmutableFields", "false");
         final String[] expected = {
             "10:22: " + getCheckMessage(MSG_KEY, "someIntValue"),
             "11:39: " + getCheckMessage(MSG_KEY, "includes"),
@@ -288,6 +332,42 @@ public class VisibilityModifierCheckTest
             "14:23: " + getCheckMessage(MSG_KEY, "list"),
         };
         verify(checkConfig, getPath("InputPublicImmutable.java"), expected);
+    }
+
+    @Test
+    public void testPublicFinalFieldsNotAllowed() throws Exception {
+        final DefaultConfiguration checkConfig =
+            createCheckConfig(VisibilityModifierCheck.class);
+        final String[] expected = {
+            "10:22: " + getCheckMessage(MSG_KEY, "someIntValue"),
+            "11:39: " + getCheckMessage(MSG_KEY, "includes"),
+            "12:35: " + getCheckMessage(MSG_KEY, "notes"),
+            "13:29: " + getCheckMessage(MSG_KEY, "value"),
+            "14:23: " + getCheckMessage(MSG_KEY, "list"),
+        };
+        verify(checkConfig, getPath("InputPublicImmutable.java"), expected);
+    }
+
+    @Test
+    public void testPublicFinalFieldsAllowed() throws Exception {
+        final DefaultConfiguration checkConfig =
+            createCheckConfig(VisibilityModifierCheck.class);
+        checkConfig.addAttribute("allowPublicFinalFields", "true");
+        checkConfig.addAttribute("immutableClassCanonicalNames",
+            "com.google.common.collect.ImmutableSet");
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        verify(checkConfig, getPath("InputPublicImmutable.java"), expected);
+    }
+
+    @Test
+    public void testPublicFinalFieldInEnum() throws Exception {
+        final DefaultConfiguration checkConfig =
+            createCheckConfig(VisibilityModifierCheck.class);
+        checkConfig.addAttribute("allowPublicImmutableFields", "true");
+        final String[] expected = {
+            "15:23: " + getCheckMessage(MSG_KEY, "hole"),
+        };
+        verify(checkConfig, getPath("InputEnumIsSealed.java"), expected);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -302,9 +382,44 @@ public class VisibilityModifierCheckTest
     public void testNullModifiers() throws Exception {
         final DefaultConfiguration checkConfig =
             createCheckConfig(VisibilityModifierCheck.class);
+        checkConfig.addAttribute("allowPublicImmutableFields", "true");
         final String[] expected = {
             "11:50: " + getCheckMessage(MSG_KEY, "i"),
         };
         verify(checkConfig, getPath("InputNullModifiers.java"), expected);
+    }
+
+    @Test
+    public void testVisibilityModifiersOfGenericFields() throws Exception {
+        final DefaultConfiguration checkConfig =
+            createCheckConfig(VisibilityModifierCheck.class);
+        checkConfig.addAttribute("allowPublicImmutableFields", "true");
+        checkConfig.addAttribute("immutableClassCanonicalNames",
+            "com.google.common.collect.ImmutableMap,"
+            + "java.lang.String,"
+            + "java.util.Optional,"
+            + "java.math.BigDecimal");
+        final String[] expected = {
+            "16:56: " + getCheckMessage(MSG_KEY, "perfSeries"),
+            "17:66: " + getCheckMessage(MSG_KEY, "peopleMap"),
+            "18:66: " + getCheckMessage(MSG_KEY, "someMap"),
+            "19:76: " + getCheckMessage(MSG_KEY, "newMap"),
+            "21:45: " + getCheckMessage(MSG_KEY, "optionalOfObject"),
+            "22:35: " + getCheckMessage(MSG_KEY, "obj"),
+            "24:19: " + getCheckMessage(MSG_KEY, "rqUID"),
+            "25:29: " + getCheckMessage(MSG_KEY, "rqTime"),
+            "26:45: " + getCheckMessage(MSG_KEY, "rates"),
+            "27:50: " + getCheckMessage(MSG_KEY, "loans"),
+            "28:60: " + getCheckMessage(MSG_KEY, "cards"),
+            "29:60: " + getCheckMessage(MSG_KEY, "values"),
+            "30:70: " + getCheckMessage(MSG_KEY, "permissions"),
+            "32:38: " + getCheckMessage(MSG_KEY, "mapOfStrings"),
+            "33:48: " + getCheckMessage(MSG_KEY, "names"),
+            "34:48: " + getCheckMessage(MSG_KEY, "links"),
+            "35:38: " + getCheckMessage(MSG_KEY, "presentations"),
+            "36:48: " + getCheckMessage(MSG_KEY, "collection"),
+            "39:73: " + getCheckMessage(MSG_KEY, "exceptions"),
+        };
+        verify(checkConfig, getPath("InputVisibilityModifierGenerics.java"), expected);
     }
 }

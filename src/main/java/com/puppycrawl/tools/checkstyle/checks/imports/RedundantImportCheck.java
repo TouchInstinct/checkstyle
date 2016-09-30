@@ -19,10 +19,10 @@
 
 package com.puppycrawl.tools.checkstyle.checks.imports;
 
+import java.util.HashSet;
 import java.util.Set;
 
-import com.google.common.collect.Sets;
-import com.puppycrawl.tools.checkstyle.api.Check;
+import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.FullIdent;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
@@ -51,7 +51,7 @@ import com.puppycrawl.tools.checkstyle.api.TokenTypes;
  * @author Oliver Burn
  */
 public class RedundantImportCheck
-    extends Check {
+    extends AbstractCheck {
 
     /**
      * A key is pointing to the warning message text in "messages.properties"
@@ -72,9 +72,9 @@ public class RedundantImportCheck
     public static final String MSG_DUPLICATE = "import.duplicate";
 
     /** Set of the imports. */
-    private final Set<FullIdent> imports = Sets.newHashSet();
+    private final Set<FullIdent> imports = new HashSet<>();
     /** Set of static imports. */
-    private final Set<FullIdent> staticImports = Sets.newHashSet();
+    private final Set<FullIdent> staticImports = new HashSet<>();
 
     /** Name of package in file. */
     private String pkgName;
@@ -123,13 +123,10 @@ public class RedundantImportCheck
                     imp.getText());
             }
             // Check for a duplicate import
-            for (FullIdent full : imports) {
-                if (imp.getText().equals(full.getText())) {
-                    log(ast.getLineNo(), ast.getColumnNo(),
-                            MSG_DUPLICATE, full.getLineNo(),
-                            imp.getText());
-                }
-            }
+            imports.stream().filter(full -> imp.getText().equals(full.getText()))
+                .forEach(full -> log(ast.getLineNo(), ast.getColumnNo(),
+                    MSG_DUPLICATE, full.getLineNo(),
+                    imp.getText()));
 
             imports.add(imp);
         }
@@ -138,12 +135,9 @@ public class RedundantImportCheck
             final FullIdent imp =
                 FullIdent.createFullIdent(
                     ast.getLastChild().getPreviousSibling());
-            for (FullIdent full : staticImports) {
-                if (imp.getText().equals(full.getText())) {
-                    log(ast.getLineNo(), ast.getColumnNo(),
-                        MSG_DUPLICATE, full.getLineNo(), imp.getText());
-                }
-            }
+            staticImports.stream().filter(full -> imp.getText().equals(full.getText()))
+                .forEach(full -> log(ast.getLineNo(), ast.getColumnNo(),
+                    MSG_DUPLICATE, full.getLineNo(), imp.getText()));
 
             staticImports.add(imp);
         }

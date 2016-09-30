@@ -20,10 +20,10 @@
 package com.puppycrawl.tools.checkstyle.checks.coding;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
-import com.google.common.collect.Sets;
-import com.puppycrawl.tools.checkstyle.api.Check;
+import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
 
@@ -58,7 +58,7 @@ import com.puppycrawl.tools.checkstyle.api.TokenTypes;
  * @author Travis Schneeberger
  * @author Vladislav Lisetskiy
  */
-public class EqualsAvoidNullCheck extends Check {
+public class EqualsAvoidNullCheck extends AbstractCheck {
 
     /**
      * A key is pointing to the warning message text in "messages.properties"
@@ -258,9 +258,7 @@ public class EqualsAvoidNullCheck extends Check {
                 traverseFieldFrameTree(child);
             }
             currentFrame = child;
-            for (DetailAST methodCall: child.getMethodCalls()) {
-                checkMethodCall(methodCall);
-            }
+            child.getMethodCalls().forEach(this::checkMethodCall);
         }
     }
 
@@ -337,7 +335,7 @@ public class EqualsAvoidNullCheck extends Check {
      * @param expr the argument expression
      * @return - true if any child matches the set of tokens, false if not
      */
-    private boolean containsAllSafeTokens(final DetailAST expr) {
+    private static boolean containsAllSafeTokens(final DetailAST expr) {
         DetailAST arg = expr.getFirstChild();
         arg = skipVariableAssign(arg);
 
@@ -507,13 +505,13 @@ public class EqualsAvoidNullCheck extends Check {
         private final FieldFrame parent;
 
         /** Set of frame's children. */
-        private final Set<FieldFrame> children = Sets.newHashSet();
+        private final Set<FieldFrame> children = new HashSet<>();
 
         /** Set of fields. */
-        private final Set<DetailAST> fields = Sets.newHashSet();
+        private final Set<DetailAST> fields = new HashSet<>();
 
         /** Set of equals calls. */
-        private final Set<DetailAST> methodCalls = Sets.newHashSet();
+        private final Set<DetailAST> methodCalls = new HashSet<>();
 
         /** Name of the class, enum or enum constant declaration. */
         private String frameName;

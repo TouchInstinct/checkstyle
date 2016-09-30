@@ -25,16 +25,15 @@ import static com.puppycrawl.tools.checkstyle.checks.coding.RequireThisCheck.MSG
 import java.io.File;
 import java.io.IOException;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
 import antlr.CommonHiddenStreamToken;
-
 import com.puppycrawl.tools.checkstyle.BaseCheckTestSupport;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
+import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
 public class RequireThisCheckTest extends BaseCheckTestSupport {
     @Override
@@ -47,6 +46,7 @@ public class RequireThisCheckTest extends BaseCheckTestSupport {
     public void testIt() throws Exception {
         final DefaultConfiguration checkConfig =
             createCheckConfig(RequireThisCheck.class);
+        checkConfig.addAttribute("validateOnlyOverlapping", "false");
         final String[] expected = {
             "11:9: " + getCheckMessage(MSG_VARIABLE, "i", ""),
             "17:9: " + getCheckMessage(MSG_METHOD, "method1", ""),
@@ -70,6 +70,7 @@ public class RequireThisCheckTest extends BaseCheckTestSupport {
         final DefaultConfiguration checkConfig =
             createCheckConfig(RequireThisCheck.class);
         checkConfig.addAttribute("checkFields", "false");
+        checkConfig.addAttribute("validateOnlyOverlapping", "false");
         final String[] expected = {
             "17:9: " + getCheckMessage(MSG_METHOD, "method1", ""),
             "115:9: " + getCheckMessage(MSG_METHOD, "instanceMethod", ""),
@@ -86,6 +87,7 @@ public class RequireThisCheckTest extends BaseCheckTestSupport {
         final DefaultConfiguration checkConfig =
             createCheckConfig(RequireThisCheck.class);
         checkConfig.addAttribute("checkMethods", "false");
+        checkConfig.addAttribute("validateOnlyOverlapping", "false");
         final String[] expected = {
             "11:9: " + getCheckMessage(MSG_VARIABLE, "i", ""),
             "31:9: " + getCheckMessage(MSG_VARIABLE, "i", ""),
@@ -104,7 +106,8 @@ public class RequireThisCheckTest extends BaseCheckTestSupport {
     public void testGenerics() throws Exception {
         final DefaultConfiguration checkConfig =
             createCheckConfig(RequireThisCheck.class);
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
+        checkConfig.addAttribute("validateOnlyOverlapping", "false");
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
         verify(checkConfig, getPath("Input15Extensions.java"), expected);
     }
 
@@ -112,6 +115,7 @@ public class RequireThisCheckTest extends BaseCheckTestSupport {
     public void testGithubIssue41() throws Exception {
         final DefaultConfiguration checkConfig =
                 createCheckConfig(RequireThisCheck.class);
+        checkConfig.addAttribute("validateOnlyOverlapping", "false");
         final String[] expected = {
             "7:19: " + getCheckMessage(MSG_VARIABLE, "number", ""),
             "8:16: " + getCheckMessage(MSG_METHOD, "other", ""),
@@ -132,7 +136,8 @@ public class RequireThisCheckTest extends BaseCheckTestSupport {
     @Test
     public void testWithAnonymousClass() throws Exception {
         final DefaultConfiguration checkConfig = createCheckConfig(RequireThisCheck.class);
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
+        checkConfig.addAttribute("validateOnlyOverlapping", "false");
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
         verify(checkConfig,
                 getPath("InputRequireThis3.java"),
                 expected);
@@ -144,5 +149,103 @@ public class RequireThisCheckTest extends BaseCheckTestSupport {
         final DetailAST ast = new DetailAST();
         ast.initialize(new CommonHiddenStreamToken(TokenTypes.ENUM, "ENUM"));
         check.visitToken(ast);
+    }
+
+    @Test
+    public void testValidateOnlyOverlappingFalse() throws Exception {
+        final DefaultConfiguration checkConfig = createCheckConfig(RequireThisCheck.class);
+        checkConfig.addAttribute("validateOnlyOverlapping", "false");
+        final String[] expected = {
+            "20:9: " + getCheckMessage(MSG_VARIABLE, "field1", ""),
+            "21:9: " + getCheckMessage(MSG_VARIABLE, "fieldFinal1", ""),
+            "22:9: " + getCheckMessage(MSG_VARIABLE, "fieldFinal2", ""),
+            "23:9: " + getCheckMessage(MSG_VARIABLE, "fieldFinal3", ""),
+            "27:9: " + getCheckMessage(MSG_VARIABLE, "fieldFinal1", ""),
+            "28:9: " + getCheckMessage(MSG_VARIABLE, "fieldFinal2", ""),
+            "29:9: " + getCheckMessage(MSG_VARIABLE, "fieldFinal3", ""),
+            "33:9: " + getCheckMessage(MSG_VARIABLE, "fieldFinal1", ""),
+            "37:9: " + getCheckMessage(MSG_VARIABLE, "fieldFinal3", ""),
+            "41:9: " + getCheckMessage(MSG_VARIABLE, "fieldFinal1", ""),
+            "43:9: " + getCheckMessage(MSG_VARIABLE, "field1", ""),
+            "45:9: " + getCheckMessage(MSG_VARIABLE, "fieldFinal3", ""),
+            "49:9: " + getCheckMessage(MSG_VARIABLE, "fieldFinal2", ""),
+            "50:9: " + getCheckMessage(MSG_VARIABLE, "fieldFinal3", ""),
+            "60:9: " + getCheckMessage(MSG_VARIABLE, "fieldFinal1", ""),
+            "61:9: " + getCheckMessage(MSG_VARIABLE, "fieldFinal2", ""),
+            "80:9: " + getCheckMessage(MSG_VARIABLE, "field1", ""),
+            "119:9: " + getCheckMessage(MSG_VARIABLE, "field1", ""),
+            "128:9: " + getCheckMessage(MSG_VARIABLE, "field1", ""),
+            "132:9: " + getCheckMessage(MSG_METHOD, "method1", ""),
+            "168:9: " + getCheckMessage(MSG_VARIABLE, "fieldFinal1", ""),
+            "169:9: " + getCheckMessage(MSG_VARIABLE, "fieldFinal2", ""),
+            "170:9: " + getCheckMessage(MSG_VARIABLE, "fieldFinal3", ""),
+            "172:9: " + getCheckMessage(MSG_VARIABLE, "field1", ""),
+            "176:9: " + getCheckMessage(MSG_VARIABLE, "fieldFinal1", ""),
+            "177:9: " + getCheckMessage(MSG_VARIABLE, "fieldFinal2", ""),
+            "178:9: " + getCheckMessage(MSG_VARIABLE, "fieldFinal3", ""),
+            "180:9: " + getCheckMessage(MSG_VARIABLE, "field1", ""),
+            "185:9: " + getCheckMessage(MSG_VARIABLE, "field1", ""),
+            "189:9: " + getCheckMessage(MSG_VARIABLE, "field1", ""),
+            "210:9: " + getCheckMessage(MSG_VARIABLE, "field1", ""),
+            "215:9: " + getCheckMessage(MSG_VARIABLE, "field1", ""),
+            "225:21: " + getCheckMessage(MSG_VARIABLE, "field1", ""),
+            "228:21: " + getCheckMessage(MSG_VARIABLE, "field1", ""),
+            "238:9: " + getCheckMessage(MSG_VARIABLE, "field1", ""),
+            "253:9: " + getCheckMessage(MSG_VARIABLE, "booleanField", ""),
+            "262:9: " + getCheckMessage(MSG_VARIABLE, "field1", ""),
+            "270:18: " + getCheckMessage(MSG_METHOD, "addSuffixToField", ""),
+            "275:9: " + getCheckMessage(MSG_VARIABLE, "field1", ""),
+            "275:18: " + getCheckMessage(MSG_METHOD, "addSuffixToField", ""),
+            "301:9: " + getCheckMessage(MSG_VARIABLE, "field1", ""),
+            "340:9: " + getCheckMessage(MSG_VARIABLE, "field1", ""),
+            "374:40: " + getCheckMessage(MSG_METHOD, "getServletRelativeAction", ""),
+            "376:20: " + getCheckMessage(MSG_METHOD, "processAction", ""),
+            "383:9: " + getCheckMessage(MSG_VARIABLE, "servletRelativeAction", ""),
+            "384:16: " + getCheckMessage(MSG_METHOD, "processAction", ""),
+        };
+        verify(checkConfig, getPath("InputValidateOnlyOverlappingFalse.java"), expected);
+    }
+
+    @Test
+    public void testValidateOnlyOverlappingTrue() throws Exception {
+        final DefaultConfiguration checkConfig = createCheckConfig(RequireThisCheck.class);
+        final String[] expected = {
+            "20:9: " + getCheckMessage(MSG_VARIABLE, "field1", ""),
+            "43:9: " + getCheckMessage(MSG_VARIABLE, "field1", ""),
+            "80:9: " + getCheckMessage(MSG_VARIABLE, "field1", ""),
+            "119:9: " + getCheckMessage(MSG_VARIABLE, "field1", ""),
+            "172:9: " + getCheckMessage(MSG_VARIABLE, "field1", ""),
+            "180:9: " + getCheckMessage(MSG_VARIABLE, "field1", ""),
+            "238:9: " + getCheckMessage(MSG_VARIABLE, "field1", ""),
+            "253:9: " + getCheckMessage(MSG_VARIABLE, "booleanField", ""),
+            "262:9: " + getCheckMessage(MSG_VARIABLE, "field1", ""),
+            "275:9: " + getCheckMessage(MSG_VARIABLE, "field1", ""),
+            "301:9: " + getCheckMessage(MSG_VARIABLE, "field1", ""),
+            "339:9: " + getCheckMessage(MSG_VARIABLE, "field1", ""),
+        };
+        verify(checkConfig, getPath("InputValidateOnlyOverlappingTrue.java"), expected);
+    }
+
+    @Test
+    public void testReceiverParameter() throws Exception {
+        final DefaultConfiguration checkConfig = createCheckConfig(RequireThisCheck.class);
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        verify(checkConfig, getPath("InputRequireThisReceiver.java"), expected);
+    }
+
+    @Test
+    public void testBraceAlone() throws Exception {
+        final DefaultConfiguration checkConfig = createCheckConfig(RequireThisCheck.class);
+        checkConfig.addAttribute("validateOnlyOverlapping", "false");
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        verify(checkConfig, getPath("InputRequireThisBraceAlone.java"), expected);
+    }
+
+    @Test
+    public void testStatic() throws Exception {
+        final DefaultConfiguration checkConfig = createCheckConfig(RequireThisCheck.class);
+        checkConfig.addAttribute("validateOnlyOverlapping", "false");
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        verify(checkConfig, getPath("InputRequireThisStatic.java"), expected);
     }
 }

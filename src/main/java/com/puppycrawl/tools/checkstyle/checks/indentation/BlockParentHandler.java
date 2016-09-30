@@ -92,14 +92,12 @@ public class BlockParentHandler extends AbstractExpressionHandler {
     protected void checkTopLevelToken() {
         final DetailAST topLevel = getTopLevelAst();
 
-        if (topLevel == null
-            || getIndent().isAcceptable(expandedTabsColumnNo(topLevel)) || hasLabelBefore()) {
-            return;
+        if (topLevel != null
+                && !getIndent().isAcceptable(expandedTabsColumnNo(topLevel))
+                && !hasLabelBefore()
+                && (shouldTopLevelStartLine() || isOnStartOfLine(topLevel))) {
+            logError(topLevel, "", expandedTabsColumnNo(topLevel));
         }
-        if (!shouldTopLevelStartLine() && !isOnStartOfLine(topLevel)) {
-            return;
-        }
-        logError(topLevel, "", expandedTabsColumnNo(topLevel));
     }
 
     /**
@@ -158,11 +156,9 @@ public class BlockParentHandler extends AbstractExpressionHandler {
         final DetailAST lcurly = getLCurly();
         final int lcurlyPos = expandedTabsColumnNo(lcurly);
 
-        if (curlyIndent().isAcceptable(lcurlyPos) || !isOnStartOfLine(lcurly)) {
-            return;
+        if (!curlyIndent().isAcceptable(lcurlyPos) && isOnStartOfLine(lcurly)) {
+            logError(lcurly, "lcurly", lcurlyPos, curlyIndent());
         }
-
-        logError(lcurly, "lcurly", lcurlyPos);
     }
 
     /**
@@ -172,15 +168,6 @@ public class BlockParentHandler extends AbstractExpressionHandler {
      */
     protected IndentLevel curlyIndent() {
         return new IndentLevel(getIndent(), getBraceAdjustment());
-    }
-
-    /**
-     * Determines if the right curly brace must be at the start of the line.
-     *
-     * @return true
-     */
-    protected boolean shouldStartWithRCurly() {
-        return true;
     }
 
     /**
@@ -196,18 +183,13 @@ public class BlockParentHandler extends AbstractExpressionHandler {
      * Check the indentation of the right curly brace.
      */
     protected void checkRCurly() {
-        // the rcurly can either be at the correct indentation, or
-        // on the same line as the lcurly
-        final DetailAST lcurly = getLCurly();
         final DetailAST rcurly = getRCurly();
         final int rcurlyPos = expandedTabsColumnNo(rcurly);
 
-        if (curlyIndent().isAcceptable(rcurlyPos)
-            || !shouldStartWithRCurly() && !isOnStartOfLine(rcurly)
-            || areOnSameLine(rcurly, lcurly)) {
-            return;
+        if (!curlyIndent().isAcceptable(rcurlyPos)
+                && isOnStartOfLine(rcurly)) {
+            logError(rcurly, "rcurly", rcurlyPos, curlyIndent());
         }
-        logError(rcurly, "rcurly", rcurlyPos, curlyIndent());
     }
 
     /**
@@ -224,12 +206,10 @@ public class BlockParentHandler extends AbstractExpressionHandler {
      */
     private void checkNonListChild() {
         final DetailAST nonList = getNonListChild();
-        if (nonList == null) {
-            return;
+        if (nonList != null) {
+            final IndentLevel expected = new IndentLevel(getIndent(), getBasicOffset());
+            checkExpressionSubtree(nonList, expected, false, false);
         }
-
-        final IndentLevel expected = new IndentLevel(getIndent(), getBasicOffset());
-        checkExpressionSubtree(nonList, expected, false, false);
     }
 
     /**

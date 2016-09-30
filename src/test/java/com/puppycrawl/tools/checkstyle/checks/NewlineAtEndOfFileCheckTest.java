@@ -31,18 +31,19 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.junit.Test;
 
-import com.google.common.collect.Lists;
 import com.puppycrawl.tools.checkstyle.BaseCheckTestSupport;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
 import com.puppycrawl.tools.checkstyle.api.CheckstyleException;
 import com.puppycrawl.tools.checkstyle.api.Configuration;
 import com.puppycrawl.tools.checkstyle.api.LocalizedMessage;
+import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
 public class NewlineAtEndOfFileCheckTest
     extends BaseCheckTestSupport {
@@ -64,7 +65,7 @@ public class NewlineAtEndOfFileCheckTest
         final DefaultConfiguration checkConfig =
             createCheckConfig(NewlineAtEndOfFileCheck.class);
         checkConfig.addAttribute("lineSeparator", LineSeparatorOption.LF.toString());
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
         verify(
             createChecker(checkConfig),
             getPath("InputNewlineLfAtEndOfFile.java"),
@@ -76,7 +77,7 @@ public class NewlineAtEndOfFileCheckTest
         final DefaultConfiguration checkConfig =
             createCheckConfig(NewlineAtEndOfFileCheck.class);
         checkConfig.addAttribute("lineSeparator", LineSeparatorOption.CRLF.toString());
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
         verify(
             createChecker(checkConfig),
             getPath("InputNewlineCrlfAtEndOfFile.java"),
@@ -88,7 +89,7 @@ public class NewlineAtEndOfFileCheckTest
         final DefaultConfiguration checkConfig =
             createCheckConfig(NewlineAtEndOfFileCheck.class);
         checkConfig.addAttribute("lineSeparator", LineSeparatorOption.CR.toString());
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
         verify(
             createChecker(checkConfig),
             getPath("InputNewlineCrAtEndOfFile.java"),
@@ -100,7 +101,7 @@ public class NewlineAtEndOfFileCheckTest
         final DefaultConfiguration checkConfig =
             createCheckConfig(NewlineAtEndOfFileCheck.class);
         checkConfig.addAttribute("lineSeparator", LineSeparatorOption.LF_CR_CRLF.toString());
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
         verify(
             createChecker(checkConfig),
             getPath("InputNewlineCrlfAtEndOfFile.java"),
@@ -145,7 +146,7 @@ public class NewlineAtEndOfFileCheckTest
 
     @Test(expected = CheckstyleException.class)
     public void testSetLineSeparatorFailure()
-        throws Exception {
+            throws Exception {
         final DefaultConfiguration checkConfig =
             createCheckConfig(NewlineAtEndOfFileCheck.class);
         checkConfig.addAttribute("lineSeparator", "ct");
@@ -171,9 +172,10 @@ public class NewlineAtEndOfFileCheckTest
         final DefaultConfiguration checkConfig = createCheckConfig(NewlineAtEndOfFileCheck.class);
         final NewlineAtEndOfFileCheck check = new NewlineAtEndOfFileCheck();
         check.configure(checkConfig);
+        final List<String> lines = new ArrayList<>(1);
+        lines.add("txt");
         final File impossibleFile = new File("");
-        final Set<LocalizedMessage> messages = check.process(impossibleFile,
-            Lists.newArrayList("txt"));
+        final Set<LocalizedMessage> messages = check.process(impossibleFile, lines);
         assertEquals(1, messages.size());
         final Iterator<LocalizedMessage> iterator = messages.iterator();
         assertEquals("Unable to open ''.", iterator.next().getMessage());
@@ -189,7 +191,7 @@ public class NewlineAtEndOfFileCheckTest
                 .getDeclaredMethod("endsWithNewline", RandomAccessFile.class);
         method.setAccessible(true);
         final RandomAccessFile file = mock(RandomAccessFile.class);
-        when(file.length()).thenReturn(2000000L);
+        when(file.length()).thenReturn(2_000_000L);
         try {
             method.invoke(new NewlineAtEndOfFileCheck(), file);
         }

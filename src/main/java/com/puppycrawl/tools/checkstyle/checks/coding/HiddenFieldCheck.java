@@ -19,16 +19,17 @@
 
 package com.puppycrawl.tools.checkstyle.checks.coding;
 
+import java.util.HashSet;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-import com.google.common.collect.Sets;
-import com.puppycrawl.tools.checkstyle.api.Check;
+import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.Scope;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
+import com.puppycrawl.tools.checkstyle.utils.CheckUtils;
 import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 import com.puppycrawl.tools.checkstyle.utils.ScopeUtils;
 
@@ -129,7 +130,7 @@ import com.puppycrawl.tools.checkstyle.utils.ScopeUtils;
  * @author Dmitri Priimak
  */
 public class HiddenFieldCheck
-    extends Check {
+    extends AbstractCheck {
     /**
      * A key is pointing to the warning message text in "messages.properties"
      * file.
@@ -299,6 +300,7 @@ public class HiddenFieldCheck
      */
     private void processVariable(DetailAST ast) {
         if (!ScopeUtils.isInInterfaceOrAnnotationBlock(ast)
+            && !CheckUtils.isReceiverParameter(ast)
             && (ScopeUtils.isLocalVariableDef(ast)
                 || ast.getType() == TokenTypes.PARAMETER_DEF)) {
             // local variable or parameter. Does it shadow a field?
@@ -575,10 +577,10 @@ public class HiddenFieldCheck
         private final FieldFrame parent;
 
         /** Set of instance field names. */
-        private final Set<String> instanceFields = Sets.newHashSet();
+        private final Set<String> instanceFields = new HashSet<>();
 
         /** Set of static field names. */
-        private final Set<String> staticFields = Sets.newHashSet();
+        private final Set<String> staticFields = new HashSet<>();
 
         /**
          * Creates new frame.

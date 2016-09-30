@@ -23,7 +23,7 @@ import java.util.Locale;
 
 import org.apache.commons.beanutils.ConversionException;
 
-import com.puppycrawl.tools.checkstyle.api.Check;
+import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
 
@@ -101,7 +101,7 @@ import com.puppycrawl.tools.checkstyle.api.TokenTypes;
  *
  * @author Travis Schneeberger
  */
-public final class AnnotationUseStyleCheck extends Check {
+public final class AnnotationUseStyleCheck extends AbstractCheck {
 
     /**
      * Defines the styles for defining elements in an annotation.
@@ -435,26 +435,24 @@ public final class AnnotationUseStyleCheck extends Check {
      * @param annotation the annotation token
      */
     private void checkTrailingComma(final DetailAST annotation) {
-        if (trailingArrayComma == TrailingArrayComma.IGNORE) {
-            return;
-        }
+        if (trailingArrayComma != TrailingArrayComma.IGNORE) {
+            DetailAST child = annotation.getFirstChild();
 
-        DetailAST child = annotation.getFirstChild();
+            while (child != null) {
+                DetailAST arrayInit = null;
 
-        while (child != null) {
-            DetailAST arrayInit = null;
+                if (child.getType() == TokenTypes.ANNOTATION_MEMBER_VALUE_PAIR) {
+                    arrayInit = child.findFirstToken(TokenTypes.ANNOTATION_ARRAY_INIT);
+                }
+                else if (child.getType() == TokenTypes.ANNOTATION_ARRAY_INIT) {
+                    arrayInit = child;
+                }
 
-            if (child.getType() == TokenTypes.ANNOTATION_MEMBER_VALUE_PAIR) {
-                arrayInit = child.findFirstToken(TokenTypes.ANNOTATION_ARRAY_INIT);
+                if (arrayInit != null) {
+                    logCommaViolation(arrayInit);
+                }
+                child = child.getNextSibling();
             }
-            else if (child.getType() == TokenTypes.ANNOTATION_ARRAY_INIT) {
-                arrayInit = child;
-            }
-
-            if (arrayInit != null) {
-                logCommaViolation(arrayInit);
-            }
-            child = child.getNextSibling();
         }
     }
 
@@ -489,23 +487,21 @@ public final class AnnotationUseStyleCheck extends Check {
      * @param ast the annotation token
      */
     private void checkCheckClosingParens(final DetailAST ast) {
-        if (closingParens == ClosingParens.IGNORE) {
-            return;
-        }
+        if (closingParens != ClosingParens.IGNORE) {
+            final DetailAST paren = ast.getLastChild();
+            final boolean parenExists = paren.getType() == TokenTypes.RPAREN;
 
-        final DetailAST paren = ast.getLastChild();
-        final boolean parenExists = paren.getType() == TokenTypes.RPAREN;
-
-        if (closingParens == ClosingParens.ALWAYS
-            && !parenExists) {
-            log(ast.getLineNo(), MSG_KEY_ANNOTATION_PARENS_MISSING);
-        }
-        else if (closingParens == ClosingParens.NEVER
-                 && parenExists
-                 && !ast.branchContains(TokenTypes.EXPR)
-                 && !ast.branchContains(TokenTypes.ANNOTATION_MEMBER_VALUE_PAIR)
-                 && !ast.branchContains(TokenTypes.ANNOTATION_ARRAY_INIT)) {
-            log(ast.getLineNo(), MSG_KEY_ANNOTATION_PARENS_PRESENT);
+            if (closingParens == ClosingParens.ALWAYS
+                && !parenExists) {
+                log(ast.getLineNo(), MSG_KEY_ANNOTATION_PARENS_MISSING);
+            }
+            else if (closingParens == ClosingParens.NEVER
+                     && parenExists
+                     && !ast.branchContains(TokenTypes.EXPR)
+                     && !ast.branchContains(TokenTypes.ANNOTATION_MEMBER_VALUE_PAIR)
+                     && !ast.branchContains(TokenTypes.ANNOTATION_ARRAY_INIT)) {
+                log(ast.getLineNo(), MSG_KEY_ANNOTATION_PARENS_PRESENT);
+            }
         }
     }
 }

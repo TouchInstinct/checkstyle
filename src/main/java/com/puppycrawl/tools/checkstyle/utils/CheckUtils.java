@@ -19,10 +19,10 @@
 
 package com.puppycrawl.tools.checkstyle.utils;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import com.google.common.collect.Lists;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.FullIdent;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
@@ -272,7 +272,7 @@ public final class CheckUtils {
         final DetailAST typeParameters =
             node.findFirstToken(TokenTypes.TYPE_PARAMETERS);
 
-        final List<String> typeParameterNames = Lists.newArrayList();
+        final List<String> typeParameterNames = new ArrayList<>();
         if (typeParameters != null) {
             final DetailAST typeParam =
                 typeParameters.findFirstToken(TokenTypes.TYPE_PARAMETER);
@@ -301,7 +301,7 @@ public final class CheckUtils {
         final DetailAST typeParameters =
             node.findFirstToken(TokenTypes.TYPE_PARAMETERS);
 
-        final List<DetailAST> typeParams = Lists.newArrayList();
+        final List<DetailAST> typeParams = new ArrayList<>();
         if (typeParameters != null) {
             final DetailAST typeParam =
                 typeParameters.findFirstToken(TokenTypes.TYPE_PARAMETER);
@@ -407,6 +407,21 @@ public final class CheckUtils {
             if (typeAST.findFirstToken(TokenTypes.LITERAL_VOID) == null) {
                 returnValue = true;
             }
+        }
+        return returnValue;
+    }
+
+    /**
+     * Checks whether a parameter is a receiver.
+     *
+     * @param parameterDefAst the parameter node.
+     * @return true if the parameter is a receiver.
+     */
+    public static boolean isReceiverParameter(DetailAST parameterDefAst) {
+        boolean returnValue = false;
+        if (parameterDefAst.getType() == TokenTypes.PARAMETER_DEF
+                && parameterDefAst.findFirstToken(TokenTypes.IDENT) == null) {
+            returnValue = parameterDefAst.branchContains(TokenTypes.LITERAL_THIS);
         }
         return returnValue;
     }

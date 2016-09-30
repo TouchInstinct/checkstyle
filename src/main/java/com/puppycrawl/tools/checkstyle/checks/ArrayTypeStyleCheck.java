@@ -19,7 +19,7 @@
 
 package com.puppycrawl.tools.checkstyle.checks;
 
-import com.puppycrawl.tools.checkstyle.api.Check;
+import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
 
@@ -31,7 +31,7 @@ import com.puppycrawl.tools.checkstyle.api.TokenTypes;
  * <p>By default the Check enforces Java style.
  * @author lkuehne
  */
-public class ArrayTypeStyleCheck extends Check {
+public class ArrayTypeStyleCheck extends AbstractCheck {
     /**
      * A key is pointing to the warning message text in "messages.properties"
      * file.
@@ -59,24 +59,19 @@ public class ArrayTypeStyleCheck extends Check {
     @Override
     public void visitToken(DetailAST ast) {
         final DetailAST typeAST = ast.getParent();
-        if (typeAST.getType() != TokenTypes.TYPE) {
-            return;
-        }
-        final DetailAST parentAst = typeAST.getParent();
-        if (parentAst.getType() == TokenTypes.METHOD_DEF) {
-            // Do not check method's return type.
-            // We have no alternatives here.
-            return;
-        }
+        if (typeAST.getType() == TokenTypes.TYPE
+                // Do not check method's return type.
+                // We have no alternatives here.
+                && typeAST.getParent().getType() != TokenTypes.METHOD_DEF) {
+            final DetailAST variableAST = typeAST.getNextSibling();
+            if (variableAST != null) {
+                final boolean isJavaStyle =
+                    variableAST.getLineNo() > ast.getLineNo()
+                    || variableAST.getColumnNo() > ast.getColumnNo();
 
-        final DetailAST variableAST = typeAST.getNextSibling();
-        if (variableAST != null) {
-            final boolean isJavaStyle =
-                variableAST.getLineNo() > ast.getLineNo()
-                || variableAST.getColumnNo() > ast.getColumnNo();
-
-            if (isJavaStyle != javaStyle) {
-                log(ast.getLineNo(), ast.getColumnNo(), MSG_KEY);
+                if (isJavaStyle != javaStyle) {
+                    log(ast.getLineNo(), ast.getColumnNo(), MSG_KEY);
+                }
             }
         }
     }

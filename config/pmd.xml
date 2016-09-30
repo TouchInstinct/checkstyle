@@ -21,14 +21,16 @@
     <properties>
       <property name="showClassesComplexity" value="false"/>
       <property name="reportLevel" value="11"/>
-      <!-- validateCli is not reasonable to split as encapsulation of logic will be damaged
+      <!-- DeclarationOrder - 'visitToken' has just big SWITCH block which contains IF blocks.
+           If we split the block to several methods it will demage readibility.
+           validateCli is not reasonable to split as encapsulation of logic will be damaged
            getDetails - huge Switch, it has to be monolithic
            JavadocMethodCheck, JavadocStyleCheck, JavadocUtils.getJavadocTags() - deprecated
            FinalLocalVariableCheck.visitToken() - it is just big switch , not could be done
            GenericWhitespaceCheck.processSingleGeneric() - it contains a lot of similar to each other and very simple condition
            VariableDeclarationUsageDistanceCheck, CustomImportOrderCheck - it is not OK to have such a complicated logic need to be refactored.
       -->
-      <property name="violationSuppressXPath" value="//MethodDeclaration[@Name='validateCli' and ../../..[@Image='Main']] | //MethodDeclaration[@Name='processSingleGeneric' and ../../..[@Image='GenericWhitespaceCheck']] | //MethodDeclaration[@Name='visitToken' and ../../..[@Image='FinalLocalVariableCheck']] | //MethodDeclaration[@Name='getJavadocTags' and ../../..[@Image='JavadocUtils']] | //MethodDeclaration[@Name='getDetails' and ../../..[@Image='RightCurlyCheck']] | //ClassOrInterfaceDeclaration[@Image='JavadocMethodCheck' or @Image='JavadocStyleCheck' or @Image='VariableDeclarationUsageDistanceCheck' or @Image='CustomImportOrderCheck']"/>
+      <property name="violationSuppressXPath" value="//DeclarationOrder[@Name='visitToken'] and //MethodDeclaration[@Name='validateCli' and ../../..[@Image='Main']] | //MethodDeclaration[@Name='processSingleGeneric' and ../../..[@Image='GenericWhitespaceCheck']] | //MethodDeclaration[@Name='visitToken' and ../../..[@Image='FinalLocalVariableCheck']] | //MethodDeclaration[@Name='getJavadocTags' and ../../..[@Image='JavadocUtils']] | //MethodDeclaration[@Name='getDetails' and ../../..[@Image='RightCurlyCheck']] | //ClassOrInterfaceDeclaration[@Image='JavadocMethodCheck' or @Image='JavadocStyleCheck' or @Image='VariableDeclarationUsageDistanceCheck' or @Image='CustomImportOrderCheck']"/>
     </properties>
   </rule>
   <rule ref="rulesets/java/codesize.xml/NPathComplexity">
@@ -52,7 +54,7 @@
     <properties>
       <!-- *TokenTypes are special classes that a big due to a lot of description comments -->
       <!-- JavadocMethodCheck is deprecated class, till it is redone to use JavadocAst -->
-      <property name="violationSuppressXPath" value="//ClassOrInterfaceDeclaration[@Image='JavadocTokenTypes' or @Image='TokenTypes' or @Image='JavadocMethodCheck']"/>
+      <property name="violationSuppressXPath" value="//ClassOrInterfaceDeclaration[@Image='JavadocTokenTypes' or @Image='TokenTypes' or @Image='JavadocMethodCheck' or @Image='RequireThisCheck']"/>
     </properties>
   </rule>
   <rule ref="rulesets/java/codesize.xml/ExcessiveMethodLength">
@@ -93,8 +95,6 @@
     <exclude name="AtLeastOneConstructor"/>
     <!-- deprecated by PMD -->
     <exclude name="BooleanInversion"/>
-    <!-- till #957 -->
-    <exclude name="DefaultPackage"/>
     <!-- that rule is too buggy, too much false positives-->
     <exclude name="DataflowAnomalyAnalysis"/>
     <!-- turning local variables to fields create design problems and extend scope of variable -->
@@ -120,8 +120,9 @@
   </rule>
   <rule ref="rulesets/java/coupling.xml/ExcessiveImports">
     <properties>
-      <!-- TreeWalker integrates Checkstyle and antlr and CheckstyleAntTask integrates Checkstyle with Ant -->
-      <property name="violationSuppressXPath" value="//ClassOrInterfaceDeclaration[@Image='TreeWalker' or @Image='CheckstyleAntTask']"/>
+      <!-- TreeWalker integrates Checkstyle and antlr and CheckstyleAntTask integrates Checkstyle
+       with Ant. Checker collects external resource locations and setup configuration. -->
+      <property name="violationSuppressXPath" value="//ClassOrInterfaceDeclaration[@Image='TreeWalker' or @Image='CheckstyleAntTask' or @Image='Checker']"/>
     </properties>
   </rule>
   <rule ref="rulesets/java/coupling.xml/CouplingBetweenObjects">
@@ -166,8 +167,14 @@
   <rule ref="rulesets/java/design.xml/EmptyMethodInAbstractClassShouldBeAbstract">
     <properties>
      <!-- Can not change API -->
-    <property name="violationSuppressXPath" value="//ClassOrInterfaceDeclaration[@Image='AbstractFileSetCheck' 
-    or @Image='Check' or @Image='AbstractJavadocCheck']"/>
+    <property name="violationSuppressXPath" value="//ClassOrInterfaceDeclaration[@Image='AbstractFileSetCheck'
+    or @Image='AbstractCheck' or @Image='AbstractJavadocCheck']"/>
+    </properties>
+  </rule>
+  <rule ref="rulesets/java/design.xml/AbstractClassWithoutAnyMethod">
+    <properties>
+     <!-- Can not change API -->
+    <property name="violationSuppressXPath" value="//ClassOrInterfaceDeclaration[@Image='Check']"/>
     </properties>
   </rule>
 
@@ -203,7 +210,13 @@
   </rule>
 
   <rule ref="rulesets/java/migrating.xml"/>
-  
+  <rule ref="rulesets/java/migrating.xml/JUnit4TestShouldUseTestAnnotation">
+    <properties>
+      <!-- False positive of PMD. Non-test methods can be named as 'test' -->
+      <property name="violationSuppressXPath" value="//ClassOrInterfaceDeclaration[@Image='PackageObjectFactory']"/>
+    </properties>
+  </rule>
+
   <rule ref="rulesets/java/naming.xml">
     <!-- we use CheckstyleCustomShortVariable, to control lenght (will be fixed in PMD 5.4) and skip Override methods -->
     <exclude name="ShortVariable"/>
@@ -249,7 +262,7 @@
       <property name="violationSuppressXPath" value="//ClassOrInterfaceDeclaration[@Image='Main' or @Image='Tag']"/>
     </properties>
   </rule>
-  
+
   <rule ref="rulesets/java/optimizations.xml">
     <!--produces more false-positives than real problems-->
     <exclude name="AvoidInstantiatingObjectsInLoops"/>
@@ -260,17 +273,18 @@
     <!--not configurable, decreases readability-->
     <exclude name="UseStringBufferForStringAppends"/>
   </rule>
-  <rule ref="rulesets/java/strictexception.xml"/>
-  <rule ref="rulesets/java/strictexception.xml/ExceptionAsFlowControl">
-    <properties>
-      <!-- till #1159 -->
-      <property name="violationSuppressXPath" value="//ClassOrInterfaceDeclaration[@Image='PackageObjectFactory']"/>
-    </properties>
-  </rule>
   <rule ref="rulesets/java/strictexception.xml/AvoidCatchingGenericException">
     <properties>
-      <!-- There is no other way to deliver filename that was under processing -->
-      <property name="violationSuppressXPath" value="//MethodDeclaration[@Name='process' and ../../..[@Image='Checker']]"/>
+      <!-- There is no other way to deliver filename that was under processing.
+           See https://github.com/checkstyle/checkstyle/issues/2285-->
+      <property name="violationSuppressXPath" value="//MethodDeclaration[@Name='processFiles' and ../../..[@Image='Checker']]"/>
+    </properties>
+  </rule>
+  <rule ref="rulesets/java/strictexception.xml/AvoidThrowingRawExceptionTypes">
+    <properties>
+      <!-- There is no other way to deliver filename that was under processing.
+           See https://github.com/checkstyle/checkstyle/issues/2285-->
+      <property name="violationSuppressXPath" value="//MethodDeclaration[@Name='processFiles' and ../../..[@Image='Checker']]"/>
     </properties>
   </rule>
 

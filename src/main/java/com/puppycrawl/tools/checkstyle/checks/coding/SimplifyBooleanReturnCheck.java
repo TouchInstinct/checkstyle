@@ -21,7 +21,7 @@ package com.puppycrawl.tools.checkstyle.checks.coding;
 
 import antlr.collections.AST;
 
-import com.puppycrawl.tools.checkstyle.api.Check;
+import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
 
@@ -39,7 +39,7 @@ import com.puppycrawl.tools.checkstyle.api.TokenTypes;
  * @author Lars Kühne
  */
 public class SimplifyBooleanReturnCheck
-    extends Check {
+    extends AbstractCheck {
 
     /**
      * A key is pointing to the warning message text in "messages.properties"
@@ -74,18 +74,17 @@ public class SimplifyBooleanReturnCheck
         // don't bother if this is not if then else
         final AST elseLiteral =
             ast.findFirstToken(TokenTypes.LITERAL_ELSE);
-        if (elseLiteral == null) {
-            return;
-        }
-        final AST elseStatement = elseLiteral.getFirstChild();
+        if (elseLiteral != null) {
+            final AST elseStatement = elseLiteral.getFirstChild();
 
-        // skip '(' and ')'
-        final AST condition = ast.getFirstChild().getNextSibling();
-        final AST thenStatement = condition.getNextSibling().getNextSibling();
+            // skip '(' and ')'
+            final AST condition = ast.getFirstChild().getNextSibling();
+            final AST thenStatement = condition.getNextSibling().getNextSibling();
 
-        if (canReturnOnlyBooleanLiteral(thenStatement)
-            && canReturnOnlyBooleanLiteral(elseStatement)) {
-            log(ast.getLineNo(), ast.getColumnNo(), MSG_KEY);
+            if (canReturnOnlyBooleanLiteral(thenStatement)
+                && canReturnOnlyBooleanLiteral(elseStatement)) {
+                log(ast.getLineNo(), ast.getColumnNo(), MSG_KEY);
+            }
         }
     }
 

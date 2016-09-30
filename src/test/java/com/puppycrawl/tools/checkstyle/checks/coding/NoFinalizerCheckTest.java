@@ -24,11 +24,11 @@ import static com.puppycrawl.tools.checkstyle.checks.coding.NoFinalizerCheck.MSG
 import java.io.File;
 import java.io.IOException;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.junit.Test;
 
 import com.puppycrawl.tools.checkstyle.BaseCheckTestSupport;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
+import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
 /**
  * NoFinalizerCheck test.
@@ -45,7 +45,7 @@ public class NoFinalizerCheckTest
 
     @Test
     public void testHasFinalizer()
-        throws Exception {
+            throws Exception {
         final DefaultConfiguration checkConfig =
             createCheckConfig(NoFinalizerCheck.class);
         final String[] expected = {
@@ -56,10 +56,10 @@ public class NoFinalizerCheckTest
 
     @Test
     public void testHasNoFinalizer()
-        throws Exception {
+            throws Exception {
         final DefaultConfiguration checkConfig =
             createCheckConfig(NoFinalizerCheck.class);
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
         verify(checkConfig, getPath("InputFallThrough.java"), expected);
     }
 }

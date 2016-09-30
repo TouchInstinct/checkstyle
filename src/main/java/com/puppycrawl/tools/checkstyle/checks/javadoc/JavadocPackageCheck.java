@@ -20,10 +20,10 @@
 package com.puppycrawl.tools.checkstyle.checks.javadoc;
 
 import java.io.File;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.google.common.collect.Sets;
 import com.puppycrawl.tools.checkstyle.api.AbstractFileSetCheck;
 
 /**
@@ -46,7 +46,7 @@ public class JavadocPackageCheck extends AbstractFileSetCheck {
     public static final String MSG_PACKAGE_INFO = "javadoc.packageInfo";
 
     /** The directories checked. */
-    private final Set<File> directoriesChecked = Sets.newHashSet();
+    private final Set<File> directoriesChecked = new HashSet<>();
 
     /** Indicates if allow legacy "package.html" file to be used. */
     private boolean allowLegacy;
@@ -70,22 +70,21 @@ public class JavadocPackageCheck extends AbstractFileSetCheck {
     protected void processFiltered(File file, List<String> lines) {
         // Check if already processed directory
         final File dir = file.getParentFile();
-        if (directoriesChecked.contains(dir)) {
-            return;
-        }
-        directoriesChecked.add(dir);
+        if (!directoriesChecked.contains(dir)) {
+            directoriesChecked.add(dir);
 
-        // Check for the preferred file.
-        final File packageInfo = new File(dir, "package-info.java");
-        final File packageHtml = new File(dir, "package.html");
+            // Check for the preferred file.
+            final File packageInfo = new File(dir, "package-info.java");
+            final File packageHtml = new File(dir, "package.html");
 
-        if (packageInfo.exists()) {
-            if (packageHtml.exists()) {
-                log(0, MSG_LEGACY_PACKAGE_HTML);
+            if (packageInfo.exists()) {
+                if (packageHtml.exists()) {
+                    log(0, MSG_LEGACY_PACKAGE_HTML);
+                }
             }
-        }
-        else if (!allowLegacy || !packageHtml.exists()) {
-            log(0, MSG_PACKAGE_INFO);
+            else if (!allowLegacy || !packageHtml.exists()) {
+                log(0, MSG_PACKAGE_INFO);
+            }
         }
     }
 

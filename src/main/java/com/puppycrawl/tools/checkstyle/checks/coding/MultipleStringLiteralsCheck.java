@@ -19,14 +19,14 @@
 
 package com.puppycrawl.tools.checkstyle.checks.coding;
 
+import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.puppycrawl.tools.checkstyle.api.Check;
+import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
 import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
@@ -38,7 +38,7 @@ import com.puppycrawl.tools.checkstyle.utils.TokenUtils;
  *
  * @author Daniel Grenner
  */
-public class MultipleStringLiteralsCheck extends Check {
+public class MultipleStringLiteralsCheck extends AbstractCheck {
 
     /**
      * A key is pointing to the warning message text in "messages.properties"
@@ -51,7 +51,7 @@ public class MultipleStringLiteralsCheck extends Check {
      * {@code <String, ArrayList>}, with the ArrayList containing StringInfo
      * objects.
      */
-    private final Map<String, List<StringInfo>> stringMap = Maps.newHashMap();
+    private final Map<String, List<StringInfo>> stringMap = new HashMap<>();
 
     /**
      * Marks the TokenTypes where duplicate strings should be ignored.
@@ -130,19 +130,18 @@ public class MultipleStringLiteralsCheck extends Check {
 
     @Override
     public void visitToken(DetailAST ast) {
-        if (isInIgnoreOccurrenceContext(ast)) {
-            return;
-        }
-        final String currentString = ast.getText();
-        if (pattern == null || !pattern.matcher(currentString).find()) {
-            List<StringInfo> hitList = stringMap.get(currentString);
-            if (hitList == null) {
-                hitList = Lists.newArrayList();
-                stringMap.put(currentString, hitList);
+        if (!isInIgnoreOccurrenceContext(ast)) {
+            final String currentString = ast.getText();
+            if (pattern == null || !pattern.matcher(currentString).find()) {
+                List<StringInfo> hitList = stringMap.get(currentString);
+                if (hitList == null) {
+                    hitList = new ArrayList<>();
+                    stringMap.put(currentString, hitList);
+                }
+                final int line = ast.getLineNo();
+                final int col = ast.getColumnNo();
+                hitList.add(new StringInfo(line, col));
             }
-            final int line = ast.getLineNo();
-            final int col = ast.getColumnNo();
-            hitList.add(new StringInfo(line, col));
         }
     }
 

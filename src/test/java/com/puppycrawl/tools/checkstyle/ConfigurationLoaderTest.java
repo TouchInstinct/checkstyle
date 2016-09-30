@@ -49,7 +49,7 @@ public class ConfigurationLoaderTest {
     }
 
     private static Configuration loadConfiguration(String name)
-        throws CheckstyleException {
+            throws CheckstyleException {
         return loadConfiguration(name, new Properties());
     }
 
@@ -59,6 +59,18 @@ public class ConfigurationLoaderTest {
 
         return ConfigurationLoader.loadConfiguration(
                 fName, new PropertiesExpander(props));
+    }
+
+    private static Method getReplacePropertiesMethod() throws Exception {
+        final Class<?>[] params = new Class<?>[3];
+        params[0] = String.class;
+        params[1] = PropertyResolver.class;
+        params[2] = String.class;
+        final Class<ConfigurationLoader> configurationLoaderClass = ConfigurationLoader.class;
+        final Method replacePropertiesMethod =
+            configurationLoaderClass.getDeclaredMethod("replaceProperties", params);
+        replacePropertiesMethod.setAccessible(true);
+        return replacePropertiesMethod;
     }
 
     @Test
@@ -92,10 +104,9 @@ public class ConfigurationLoaderTest {
             fail("missing property name");
         }
         catch (CheckstyleException ex) {
-            assertTrue(
-                ex.getMessage().endsWith(
-                    "Attribute \"name\" is required and must be specified "
-                        + "for element type \"property\".:8:41"));
+            assertTrue(ex.getMessage().contains("\"name\""));
+            assertTrue(ex.getMessage().contains("\"property\""));
+            assertTrue(ex.getMessage().endsWith(":8:41"));
         }
     }
 
@@ -106,10 +117,9 @@ public class ConfigurationLoaderTest {
             fail("missing property value");
         }
         catch (CheckstyleException ex) {
-            assertTrue(
-                ex.getMessage().endsWith(
-                    "Attribute \"value\" is required and must be specified "
-                        + "for element type \"property\".:8:41"));
+            assertTrue(ex.getMessage().contains("\"value\""));
+            assertTrue(ex.getMessage().contains("\"property\""));
+            assertTrue(ex.getMessage().endsWith(":8:41"));
         }
     }
 
@@ -120,10 +130,9 @@ public class ConfigurationLoaderTest {
             fail("missing module name");
         }
         catch (CheckstyleException ex) {
-            assertTrue(
-                ex.getMessage().endsWith(
-                    "Attribute \"name\" is required and must be specified "
-                        + "for element type \"module\".:7:23"));
+            assertTrue(ex.getMessage().contains("\"name\""));
+            assertTrue(ex.getMessage().contains("\"module\""));
+            assertTrue(ex.getMessage().endsWith(":7:23"));
         }
     }
 
@@ -134,10 +143,9 @@ public class ConfigurationLoaderTest {
             fail("missing module parent");
         }
         catch (CheckstyleException ex) {
-            assertTrue(
-                ex.getMessage().endsWith(
-                    "Document root element \"property\", must match DOCTYPE "
-                        + "root \"module\".:8:38"));
+            assertTrue(ex.getMessage().contains("\"property\""));
+            assertTrue(ex.getMessage().contains("\"module\""));
+            assertTrue(ex.getMessage().endsWith(":8:38"));
         }
     }
 
@@ -231,47 +239,45 @@ public class ConfigurationLoaderTest {
     }
 
     @Test
-    public void testReplacePropertiesNoReplace()
-        throws CheckstyleException {
+    public void testReplacePropertiesNoReplace() throws Exception {
         final String[] testValues = {null, "", "a", "$a", "{a",
                                      "{a}", "a}", "$a}", "$", "a$b", };
         final Properties props = initProperties();
         for (String testValue : testValues) {
-            final String value = ConfigurationLoader.replaceProperties(
-                testValue, new PropertiesExpander(props), null);
+            final String value = (String) getReplacePropertiesMethod().invoke(
+                null, testValue, new PropertiesExpander(props), null);
             assertEquals("\"" + testValue + "\"", value, testValue);
         }
     }
 
     @Test
-    public void testReplacePropertiesSyntaxError() {
+    public void testReplacePropertiesSyntaxError() throws Exception {
         final Properties props = initProperties();
         try {
-            final String value = ConfigurationLoader.replaceProperties(
-                "${a", new PropertiesExpander(props), null);
+            final String value = (String) getReplacePropertiesMethod().invoke(
+                null, "${a", new PropertiesExpander(props), null);
             fail("expected to fail, instead got: " + value);
         }
-        catch (CheckstyleException ex) {
-            assertEquals("Syntax error in property: ${a", ex.getMessage());
+        catch (InvocationTargetException ex) {
+            assertEquals("Syntax error in property: ${a", ex.getCause().getMessage());
         }
     }
 
     @Test
-    public void testReplacePropertiesMissingProperty() {
+    public void testReplacePropertiesMissingProperty() throws Exception {
         final Properties props = initProperties();
         try {
-            final String value = ConfigurationLoader.replaceProperties(
-                "${c}", new PropertiesExpander(props), null);
+            final String value = (String) getReplacePropertiesMethod().invoke(
+                null, "${c}", new PropertiesExpander(props), null);
             fail("expected to fail, instead got: " + value);
         }
-        catch (CheckstyleException ex) {
-            assertEquals("Property ${c} has not been set", ex.getMessage());
+        catch (InvocationTargetException ex) {
+            assertEquals("Property ${c} has not been set", ex.getCause().getMessage());
         }
     }
 
     @Test
-    public void testReplacePropertiesReplace()
-        throws CheckstyleException {
+    public void testReplacePropertiesReplace() throws Exception {
         final String[][] testValues = {
             {"${a}", "A"},
             {"x${a}", "xA"},
@@ -288,8 +294,8 @@ public class ConfigurationLoaderTest {
         };
         final Properties props = initProperties();
         for (String[] testValue : testValues) {
-            final String value = ConfigurationLoader.replaceProperties(
-                testValue[0], new PropertiesExpander(props), null);
+            final String value = (String) getReplacePropertiesMethod().invoke(
+                null, testValue[0], new PropertiesExpander(props), null);
             assertEquals("\"" + testValue[0] + "\"",
                 testValue[1], value);
         }
@@ -475,8 +481,8 @@ public class ConfigurationLoaderTest {
         final Properties props = new Properties();
         final String defaultValue = "defaultValue";
 
-        final String value = ConfigurationLoader.replaceProperties("${checkstyle.basedir}",
-                new PropertiesExpander(props), defaultValue);
+        final String value = (String) getReplacePropertiesMethod().invoke(
+            null, "${checkstyle.basedir}", new PropertiesExpander(props), defaultValue);
 
         assertEquals(defaultValue, value);
     }

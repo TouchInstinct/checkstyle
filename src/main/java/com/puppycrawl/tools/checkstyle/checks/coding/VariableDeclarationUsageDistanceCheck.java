@@ -28,7 +28,7 @@ import java.util.regex.Pattern;
 
 import antlr.collections.ASTEnumeration;
 
-import com.puppycrawl.tools.checkstyle.api.Check;
+import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.FullIdent;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
@@ -165,7 +165,7 @@ import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
  * @author <a href="mailto:rd.ryly@gmail.com">Ruslan Diachenko</a>
  * @author <a href="mailto:barataliba@gmail.com">Baratali Izmailov</a>
  */
-public class VariableDeclarationUsageDistanceCheck extends Check {
+public class VariableDeclarationUsageDistanceCheck extends AbstractCheck {
     /**
      * Warning message key.
      */
@@ -399,36 +399,7 @@ public class VariableDeclarationUsageDistanceCheck extends Check {
             if (currentAst.getFirstChild() != null) {
 
                 if (isChild(currentAst, variableIdentAst)) {
-
-                    switch (currentAst.getType()) {
-                        case TokenTypes.VARIABLE_DEF:
-                            dist++;
-                            break;
-                        case TokenTypes.SLIST:
-                            dist = 0;
-                            break;
-                        case TokenTypes.LITERAL_FOR:
-                        case TokenTypes.LITERAL_WHILE:
-                        case TokenTypes.LITERAL_DO:
-                        case TokenTypes.LITERAL_IF:
-                        case TokenTypes.LITERAL_SWITCH:
-                            if (isVariableInOperatorExpr(currentAst, variableIdentAst)) {
-                                dist++;
-                            }
-                            else {
-                                // variable usage is in inner scope
-                                // reset counters, because we can't determine distance
-                                dist = 0;
-                            }
-                            break;
-                        default:
-                            if (currentAst.branchContains(TokenTypes.SLIST)) {
-                                dist = 0;
-                            }
-                            else {
-                                dist++;
-                            }
-                    }
+                    dist = getDistToVariableUsageInChildNode(currentAst, variableIdentAst, dist);
                     variableUsageAst = currentAst;
                     firstUsageFound = true;
                 }
@@ -445,6 +416,48 @@ public class VariableDeclarationUsageDistanceCheck extends Check {
         }
 
         return new SimpleEntry<>(variableUsageAst, dist);
+    }
+
+    /**
+     * Returns the distance to variable usage for in the child node.
+     * @param childNode child node.
+     * @param varIdent variable variable identifier.
+     * @param currentDistToVarUsage current distance to the variable usage.
+     * @return the distance to variable usage for in the child node.
+     */
+    private static int getDistToVariableUsageInChildNode(DetailAST childNode, DetailAST varIdent,
+                                                         int currentDistToVarUsage) {
+        int resultDist = currentDistToVarUsage;
+        switch (childNode.getType()) {
+            case TokenTypes.VARIABLE_DEF:
+                resultDist++;
+                break;
+            case TokenTypes.SLIST:
+                resultDist = 0;
+                break;
+            case TokenTypes.LITERAL_FOR:
+            case TokenTypes.LITERAL_WHILE:
+            case TokenTypes.LITERAL_DO:
+            case TokenTypes.LITERAL_IF:
+            case TokenTypes.LITERAL_SWITCH:
+                if (isVariableInOperatorExpr(childNode, varIdent)) {
+                    resultDist++;
+                }
+                else {
+                    // variable usage is in inner scope
+                    // reset counters, because we can't determine distance
+                    resultDist = 0;
+                }
+                break;
+            default:
+                if (childNode.branchContains(TokenTypes.SLIST)) {
+                    resultDist = 0;
+                }
+                else {
+                    resultDist++;
+                }
+        }
+        return resultDist;
     }
 
     /**

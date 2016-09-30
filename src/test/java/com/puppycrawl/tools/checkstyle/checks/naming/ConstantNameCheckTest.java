@@ -27,7 +27,6 @@ import static org.junit.Assert.fail;
 import java.io.File;
 import java.io.IOException;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -35,6 +34,7 @@ import com.puppycrawl.tools.checkstyle.BaseCheckTestSupport;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
 import com.puppycrawl.tools.checkstyle.api.CheckstyleException;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
+import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
 public class ConstantNameCheckTest
     extends BaseCheckTestSupport {
@@ -59,7 +59,7 @@ public class ConstantNameCheckTest
 
     @Test
     public void testIllegalRegexp()
-        throws Exception {
+            throws Exception {
         final DefaultConfiguration checkConfig =
             createCheckConfig(ConstantNameCheck.class);
         checkConfig.addAttribute("format", "\\");
@@ -78,7 +78,7 @@ public class ConstantNameCheckTest
 
     @Test
     public void testDefault()
-        throws Exception {
+            throws Exception {
         final DefaultConfiguration checkConfig =
             createCheckConfig(ConstantNameCheck.class);
 
@@ -93,7 +93,7 @@ public class ConstantNameCheckTest
 
     @Test
     public void testAccessControlTuning()
-        throws Exception {
+            throws Exception {
         final DefaultConfiguration checkConfig =
             createCheckConfig(ConstantNameCheck.class);
         checkConfig.addAttribute("applyToPublic", "false");
@@ -110,7 +110,7 @@ public class ConstantNameCheckTest
 
     @Test
     public void testInterfaceAndAnnotation()
-        throws Exception {
+            throws Exception {
         final DefaultConfiguration checkConfig =
             createCheckConfig(ConstantNameCheck.class);
 
@@ -125,10 +125,10 @@ public class ConstantNameCheckTest
 
     @Test
     public void testDefault1()
-        throws Exception {
+            throws Exception {
         final DefaultConfiguration checkConfig =
             createCheckConfig(ConstantNameCheck.class);
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
         verify(checkConfig, getPath("InputConstantNames.java"), expected);
     }
 
@@ -154,11 +154,11 @@ public class ConstantNameCheckTest
 
     @Test
     public void testStaticMethodInInterface()
-        throws Exception {
+            throws Exception {
         final DefaultConfiguration checkConfig =
                 createCheckConfig(ConstantNameCheck.class);
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
-        verify(checkConfig, getNonCompilablePath("InputStaticModifierInInterface.java"), expected);
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        verify(checkConfig, getPath("InputStaticModifierInInterface.java"), expected);
     }
 
     @Test

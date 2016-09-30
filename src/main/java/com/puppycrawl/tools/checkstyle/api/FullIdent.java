@@ -22,8 +22,6 @@ package com.puppycrawl.tools.checkstyle.api;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.lang3.StringUtils;
-
 /**
  * Represents a full identifier, including dots, with associated
  * position information.
@@ -76,7 +74,7 @@ public final class FullIdent {
      * @return the text
      */
     public String getText() {
-        return StringUtils.join(elements, "");
+        return String.join("", elements);
     }
 
     /**
@@ -107,18 +105,16 @@ public final class FullIdent {
      * @param ast the node to recurse from
      */
     private static void extractFullIdent(FullIdent full, DetailAST ast) {
-        if (ast == null) {
-            return;
-        }
-
-        if (ast.getType() == TokenTypes.DOT) {
-            extractFullIdent(full, ast.getFirstChild());
-            full.append(".");
-            extractFullIdent(
-                full, ast.getFirstChild().getNextSibling());
-        }
-        else {
-            full.append(ast);
+        if (ast != null) {
+            if (ast.getType() == TokenTypes.DOT) {
+                extractFullIdent(full, ast.getFirstChild());
+                full.append(".");
+                extractFullIdent(
+                    full, ast.getFirstChild().getNextSibling());
+            }
+            else {
+                full.append(ast);
+            }
         }
     }
 

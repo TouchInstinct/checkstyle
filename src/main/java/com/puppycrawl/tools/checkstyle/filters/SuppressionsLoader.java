@@ -22,6 +22,7 @@ package com.puppycrawl.tools.checkstyle.filters;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.regex.PatternSyntaxException;
@@ -32,7 +33,6 @@ import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-import com.google.common.collect.Maps;
 import com.puppycrawl.tools.checkstyle.api.AbstractLoader;
 import com.puppycrawl.tools.checkstyle.api.CheckstyleException;
 import com.puppycrawl.tools.checkstyle.api.FilterSet;
@@ -71,7 +71,7 @@ public final class SuppressionsLoader
      * @throws SAXException if an error occurs
      */
     private SuppressionsLoader()
-        throws ParserConfigurationException, SAXException {
+            throws ParserConfigurationException, SAXException {
         super(createIdToResourceNameMap());
     }
 
@@ -80,7 +80,7 @@ public final class SuppressionsLoader
                              String localName,
                              String qName,
                              Attributes attributes)
-        throws SAXException {
+            throws SAXException {
         if ("suppress".equals(qName)) {
             //add SuppressElement filter to the filter chain
             final String checks = attributes.getValue("checks");
@@ -121,7 +121,7 @@ public final class SuppressionsLoader
      * @throws CheckstyleException if an error occurs.
      */
     public static FilterSet loadSuppressions(String filename)
-        throws CheckstyleException {
+            throws CheckstyleException {
         // figure out if this is a File or a URL
         final URI uri = CommonUtils.getUriByFilename(filename);
         final InputSource source = new InputSource(uri.toString());
@@ -137,7 +137,7 @@ public final class SuppressionsLoader
      */
     private static FilterSet loadSuppressions(
             InputSource source, String sourceName)
-        throws CheckstyleException {
+            throws CheckstyleException {
         try {
             final SuppressionsLoader suppressionsLoader =
                 new SuppressionsLoader();
@@ -167,7 +167,7 @@ public final class SuppressionsLoader
      * @return map between local resources and dtd ids.
      */
     private static Map<String, String> createIdToResourceNameMap() {
-        final Map<String, String> map = Maps.newHashMap();
+        final Map<String, String> map = new HashMap<>();
         map.put(DTD_PUBLIC_ID_1_0, DTD_RESOURCE_NAME_1_0);
         map.put(DTD_PUBLIC_ID_1_1, DTD_RESOURCE_NAME_1_1);
         return map;

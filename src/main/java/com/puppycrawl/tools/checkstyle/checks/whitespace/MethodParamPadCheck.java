@@ -22,9 +22,8 @@ package com.puppycrawl.tools.checkstyle.checks.whitespace;
 import java.util.Locale;
 
 import org.apache.commons.beanutils.ConversionException;
-import org.apache.commons.lang3.ArrayUtils;
 
-import com.puppycrawl.tools.checkstyle.api.Check;
+import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
 import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
@@ -68,7 +67,7 @@ import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
  */
 
 public class MethodParamPadCheck
-    extends Check {
+    extends AbstractCheck {
 
     /**
      * A key is pointing to the warning message text in "messages.properties"
@@ -116,7 +115,7 @@ public class MethodParamPadCheck
 
     @Override
     public int[] getRequiredTokens() {
-        return ArrayUtils.EMPTY_INT_ARRAY;
+        return CommonUtils.EMPTY_INT_ARRAY;
     }
 
     @Override
@@ -128,26 +127,25 @@ public class MethodParamPadCheck
         else {
             parenAST = ast.findFirstToken(TokenTypes.LPAREN);
             // array construction => parenAST == null
-            if (parenAST == null) {
-                return;
-            }
         }
 
-        final String line = getLines()[parenAST.getLineNo() - 1];
-        if (CommonUtils.hasWhitespaceBefore(parenAST.getColumnNo(), line)) {
-            if (!allowLineBreaks) {
-                log(parenAST, MSG_LINE_PREVIOUS, parenAST.getText());
+        if (parenAST != null) {
+            final String line = getLines()[parenAST.getLineNo() - 1];
+            if (CommonUtils.hasWhitespaceBefore(parenAST.getColumnNo(), line)) {
+                if (!allowLineBreaks) {
+                    log(parenAST, MSG_LINE_PREVIOUS, parenAST.getText());
+                }
             }
-        }
-        else {
-            final int before = parenAST.getColumnNo() - 1;
-            if (option == PadOption.NOSPACE
-                && Character.isWhitespace(line.charAt(before))) {
-                log(parenAST, MSG_WS_PRECEDED, parenAST.getText());
-            }
-            else if (option == PadOption.SPACE
-                     && !Character.isWhitespace(line.charAt(before))) {
-                log(parenAST, MSG_WS_NOT_PRECEDED, parenAST.getText());
+            else {
+                final int before = parenAST.getColumnNo() - 1;
+                if (option == PadOption.NOSPACE
+                    && Character.isWhitespace(line.charAt(before))) {
+                    log(parenAST, MSG_WS_PRECEDED, parenAST.getText());
+                }
+                else if (option == PadOption.SPACE
+                         && !Character.isWhitespace(line.charAt(before))) {
+                    log(parenAST, MSG_WS_NOT_PRECEDED, parenAST.getText());
+                }
             }
         }
     }

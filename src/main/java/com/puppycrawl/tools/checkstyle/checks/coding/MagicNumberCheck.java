@@ -21,12 +21,11 @@ package com.puppycrawl.tools.checkstyle.checks.coding;
 
 import java.util.Arrays;
 
-import org.apache.commons.lang3.ArrayUtils;
-
-import com.puppycrawl.tools.checkstyle.api.Check;
+import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
 import com.puppycrawl.tools.checkstyle.utils.CheckUtils;
+import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 import com.puppycrawl.tools.checkstyle.utils.ScopeUtils;
 import com.puppycrawl.tools.checkstyle.utils.TokenUtils;
 
@@ -138,7 +137,7 @@ import com.puppycrawl.tools.checkstyle.utils.TokenUtils;
  * @author Lars Kühne
  * @author Daniel Solano Gómez
  */
-public class MagicNumberCheck extends Check {
+public class MagicNumberCheck extends AbstractCheck {
 
     /**
      * A key is pointing to the warning message text in "messages.properties"
@@ -203,31 +202,26 @@ public class MagicNumberCheck extends Check {
 
     @Override
     public int[] getRequiredTokens() {
-        return ArrayUtils.EMPTY_INT_ARRAY;
+        return CommonUtils.EMPTY_INT_ARRAY;
     }
 
     @Override
     public void visitToken(DetailAST ast) {
-        if (ignoreAnnotation && isChildOf(ast, TokenTypes.ANNOTATION)) {
-            return;
-        }
+        if ((!ignoreAnnotation || !isChildOf(ast, TokenTypes.ANNOTATION))
+                && !isInIgnoreList(ast)
+                && (!ignoreHashCodeMethod || !isInHashCodeMethod(ast))) {
+            final DetailAST constantDefAST = findContainingConstantDef(ast);
 
-        if (isInIgnoreList(ast)
-            || ignoreHashCodeMethod && isInHashCodeMethod(ast)) {
-            return;
-        }
-
-        final DetailAST constantDefAST = findContainingConstantDef(ast);
-
-        if (constantDefAST == null) {
-            if (!ignoreFieldDeclaration || !isFieldDeclaration(ast)) {
-                reportMagicNumber(ast);
+            if (constantDefAST == null) {
+                if (!ignoreFieldDeclaration || !isFieldDeclaration(ast)) {
+                    reportMagicNumber(ast);
+                }
             }
-        }
-        else {
-            final boolean found = isMagicNumberExists(ast, constantDefAST);
-            if (found) {
-                reportMagicNumber(ast);
+            else {
+                final boolean found = isMagicNumberExists(ast, constantDefAST);
+                if (found) {
+                    reportMagicNumber(ast);
+                }
             }
         }
     }
@@ -399,7 +393,7 @@ public class MagicNumberCheck extends Check {
      */
     public void setIgnoreNumbers(double... list) {
         if (list.length == 0) {
-            ignoreNumbers = ArrayUtils.EMPTY_DOUBLE_ARRAY;
+            ignoreNumbers = CommonUtils.EMPTY_DOUBLE_ARRAY;
         }
         else {
             ignoreNumbers = new double[list.length];

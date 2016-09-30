@@ -24,15 +24,11 @@ import java.util.BitSet;
 import antlr.CommonASTWithHiddenTokens;
 import antlr.Token;
 import antlr.collections.AST;
-import com.google.common.annotations.VisibleForTesting;
 import com.puppycrawl.tools.checkstyle.utils.TokenUtils;
 
 /**
- * An extension of the CommonAST that records the line and column
- * number.  The idea was taken from <a target="_top"
- * href="http://www.jguru.com/faq/view.jsp?EID=62654">Java Guru
- * FAQ: How can I include line numbers in automatically generated
- * ASTs?</a>.
+ * An extension of the CommonAST that records the line and column number.
+ *
  * @author Oliver Burn
  * @author lkuehne
  * @see <a href="http://www.antlr.org/">ANTLR Website</a>
@@ -192,8 +188,7 @@ public final class DetailAST extends CommonASTWithHiddenTokens {
      * Set the parent token.
      * @param parent the parent token
      */
-    @VisibleForTesting
-    void setParent(DetailAST parent) {
+    private void setParent(DetailAST parent) {
         this.parent = parent;
         final DetailAST nextSibling = getNextSibling();
         if (nextSibling != null) {

@@ -154,14 +154,14 @@ public class InputInvalidMethodIndent { //indent:0 exp:0
 //            11); //indent:0 exp:0
 
 
-        System.out.toString() //indent:8 exp:8
+        String.CASE_INSENSITIVE_ORDER.toString() //indent:8 exp:8
       .equals("blah"); //indent:6 exp:12 warn
 
 
     } //indent:4 exp:4
 
     private void myFunc() //indent:4 exp:4
-      throws Exception //indent:6 exp:6
+        throws Exception //indent:8 exp:8
     { //indent:4 exp:4
     } //indent:4 exp:4
 

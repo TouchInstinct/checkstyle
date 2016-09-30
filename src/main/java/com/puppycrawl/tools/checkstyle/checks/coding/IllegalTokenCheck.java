@@ -19,11 +19,11 @@
 
 package com.puppycrawl.tools.checkstyle.checks.coding;
 
-import org.apache.commons.lang3.ArrayUtils;
-
-import com.puppycrawl.tools.checkstyle.api.Check;
+import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
+import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
+import com.puppycrawl.tools.checkstyle.utils.JavadocUtils;
 import com.puppycrawl.tools.checkstyle.utils.TokenUtils;
 
 /**
@@ -54,7 +54,7 @@ import com.puppycrawl.tools.checkstyle.utils.TokenUtils;
  * @author Rick Giles
  */
 public class IllegalTokenCheck
-    extends Check {
+    extends AbstractCheck {
 
     /**
      * A key is pointing to the warning message text in "messages.properties"
@@ -76,7 +76,12 @@ public class IllegalTokenCheck
 
     @Override
     public int[] getRequiredTokens() {
-        return ArrayUtils.EMPTY_INT_ARRAY;
+        return CommonUtils.EMPTY_INT_ARRAY;
+    }
+
+    @Override
+    public boolean isCommentNodesRequired() {
+        return true;
     }
 
     @Override
@@ -96,11 +101,17 @@ public class IllegalTokenCheck
      */
     private static String convertToString(DetailAST ast) {
         final String tokenText;
-        if (ast.getType() == TokenTypes.LABELED_STAT) {
-            tokenText = ast.getFirstChild().getText() + ast.getText();
-        }
-        else {
-            tokenText = ast.getText();
+        switch (ast.getType()) {
+            case TokenTypes.LABELED_STAT:
+                tokenText = ast.getFirstChild().getText() + ast.getText();
+                break;
+            // multyline tokens need to become singlelined
+            case TokenTypes.COMMENT_CONTENT:
+                tokenText = JavadocUtils.excapeAllControlChars(ast.getText());
+                break;
+            default:
+                tokenText = ast.getText();
+                break;
         }
         return tokenText;
     }

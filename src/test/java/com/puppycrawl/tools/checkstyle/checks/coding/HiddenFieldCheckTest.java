@@ -29,6 +29,7 @@ import org.junit.Test;
 
 import com.puppycrawl.tools.checkstyle.BaseCheckTestSupport;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
+import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
 public class HiddenFieldCheckTest
     extends BaseCheckTestSupport {
@@ -49,24 +50,24 @@ public class HiddenFieldCheckTest
         final DefaultConfiguration checkConfig =
             createCheckConfig(HiddenFieldCheck.class);
         final String[] expected = {
-            "16:34: " + getCheckMessage(MSG_KEY, "value"),
-            "48:31: " + getCheckMessage(MSG_KEY, "languageCode"),
-            "57:35: " + getCheckMessage(MSG_KEY, "number"),
-            "70:35: " + getCheckMessage(MSG_KEY, "id"),
-            "98:33: " + getCheckMessage(MSG_KEY, "note"),
-            "123:57: " + getCheckMessage(MSG_KEY, "stringValue"),
-            "123:78: " + getCheckMessage(MSG_KEY, "intValue"),
-            "134:74: " + getCheckMessage(MSG_KEY, "doubleValue"),
-            "146:51: " + getCheckMessage(MSG_KEY, "firstString"),
-            "146:64: " + getCheckMessage(MSG_KEY, "secondString"),
-            "162:49: " + getCheckMessage(MSG_KEY, "first"),
-            "188:62: " + getCheckMessage(MSG_KEY, "mPi"),
-            "204:27: " + getCheckMessage(MSG_KEY, "justSomeList"),
-            "204:61: " + getCheckMessage(MSG_KEY, "justSomeMap"),
-            "216:55: " + getCheckMessage(MSG_KEY, "someObject"),
-            "224:52: " + getCheckMessage(MSG_KEY, "someObject"),
+            "19:34: " + getCheckMessage(MSG_KEY, "value"),
+            "51:31: " + getCheckMessage(MSG_KEY, "languageCode"),
+            "60:35: " + getCheckMessage(MSG_KEY, "number"),
+            "73:35: " + getCheckMessage(MSG_KEY, "id"),
+            "101:33: " + getCheckMessage(MSG_KEY, "note"),
+            "126:57: " + getCheckMessage(MSG_KEY, "stringValue"),
+            "126:78: " + getCheckMessage(MSG_KEY, "intValue"),
+            "137:74: " + getCheckMessage(MSG_KEY, "doubleValue"),
+            "149:51: " + getCheckMessage(MSG_KEY, "firstString"),
+            "149:64: " + getCheckMessage(MSG_KEY, "secondString"),
+            "165:49: " + getCheckMessage(MSG_KEY, "first"),
+            "191:62: " + getCheckMessage(MSG_KEY, "mPi"),
+            "207:27: " + getCheckMessage(MSG_KEY, "justSomeList"),
+            "207:61: " + getCheckMessage(MSG_KEY, "justSomeMap"),
+            "219:55: " + getCheckMessage(MSG_KEY, "someObject"),
+            "227:52: " + getCheckMessage(MSG_KEY, "someObject"),
         };
-        verify(checkConfig, getNonCompilablePath("InputHiddenFieldLambdas.java"), expected);
+        verify(checkConfig, getPath("InputHiddenFieldLambdas.java"), expected);
     }
 
     @Test
@@ -85,7 +86,7 @@ public class HiddenFieldCheckTest
 
     @Test
     public void testNoParameters()
-        throws Exception {
+            throws Exception {
         final DefaultConfiguration checkConfig =
             createCheckConfig(HiddenFieldCheck.class);
         checkConfig.addAttribute("tokens", "VARIABLE_DEF");
@@ -114,7 +115,7 @@ public class HiddenFieldCheckTest
 
     @Test
     public void testDefault()
-        throws Exception {
+            throws Exception {
         final DefaultConfiguration checkConfig =
             createCheckConfig(HiddenFieldCheck.class);
         final String[] expected = {
@@ -160,7 +161,7 @@ public class HiddenFieldCheckTest
     /** Tests ignoreFormat property. */
     @Test
     public void testIgnoreFormat()
-        throws Exception {
+            throws Exception {
         final DefaultConfiguration checkConfig =
             createCheckConfig(HiddenFieldCheck.class);
         checkConfig.addAttribute("ignoreFormat", "^i.*$");
@@ -201,7 +202,7 @@ public class HiddenFieldCheckTest
     /** Tests ignoreSetter property. */
     @Test
     public void testIgnoreSetter()
-        throws Exception {
+            throws Exception {
         final DefaultConfiguration checkConfig =
             createCheckConfig(HiddenFieldCheck.class);
         checkConfig.addAttribute("ignoreSetter", "true");
@@ -244,7 +245,7 @@ public class HiddenFieldCheckTest
     /** Tests ignoreSetter and setterCanReturnItsClass properties. */
     @Test
     public void testIgnoreChainSetter()
-        throws Exception {
+            throws Exception {
         final DefaultConfiguration checkConfig =
             createCheckConfig(HiddenFieldCheck.class);
         checkConfig.addAttribute("ignoreSetter", "true");
@@ -286,7 +287,7 @@ public class HiddenFieldCheckTest
     /** Tests ignoreConstructorParameter property. */
     @Test
     public void testIgnoreConstructorParameter()
-        throws Exception {
+            throws Exception {
         final DefaultConfiguration checkConfig =
             createCheckConfig(HiddenFieldCheck.class);
         checkConfig.addAttribute("ignoreConstructorParameter", "true");
@@ -330,7 +331,7 @@ public class HiddenFieldCheckTest
     /** Test against a class with field declarations in different order. */
     @Test
     public void testReordered()
-        throws Exception {
+            throws Exception {
         final DefaultConfiguration checkConfig =
             createCheckConfig(HiddenFieldCheck.class);
         final String[] expected = {
@@ -401,5 +402,12 @@ public class HiddenFieldCheckTest
             "290:19: " + getCheckMessage(MSG_KEY, "i"),
         };
         verify(checkConfig, getPath("InputHiddenField.java"), expected);
+    }
+
+    @Test
+    public void testReceiverParameter() throws Exception {
+        final DefaultConfiguration checkConfig = createCheckConfig(HiddenFieldCheck.class);
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        verify(checkConfig, getPath("InputHiddenFieldReceiver.java"), expected);
     }
 }

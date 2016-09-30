@@ -20,14 +20,15 @@
 package com.puppycrawl.tools.checkstyle;
 
 import java.lang.reflect.Constructor;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Joiner;
-import com.google.common.collect.Sets;
 import com.puppycrawl.tools.checkstyle.api.CheckstyleException;
 import com.puppycrawl.tools.checkstyle.api.LocalizedMessage;
 
@@ -47,9 +48,11 @@ public class PackageObjectFactory implements ModuleFactory {
     private static final String UNABLE_TO_INSTANTIATE_EXCEPTION_MESSAGE =
         "PackageObjectFactory.unableToInstantiateExceptionMessage";
 
+    /** Separator to use in strings. */
+    private static final String STRING_SEPARATOR = ", ";
+
     /** A list of package names to prepend to class names. */
     private final Set<String> packages;
-
     /** The class loader used to load Checkstyle core and custom modules. */
     private final ClassLoader moduleClassLoader;
 
@@ -59,81 +62,15 @@ public class PackageObjectFactory implements ModuleFactory {
      * @param moduleClassLoader class loader used to load Checkstyle
      *          core and custom modules
      */
-    public PackageObjectFactory(Set<String> packageNames,
-            ClassLoader moduleClassLoader) {
+    public PackageObjectFactory(Set<String> packageNames, ClassLoader moduleClassLoader) {
         if (moduleClassLoader == null) {
             throw new IllegalArgumentException(
                     "moduleClassLoader must not be null");
         }
 
         //create a copy of the given set, but retain ordering
-        packages = Sets.newLinkedHashSet(packageNames);
+        packages = new LinkedHashSet<>(packageNames);
         this.moduleClassLoader = moduleClassLoader;
-    }
-
-    /**
-     * Registers a package name to use for shortName resolution.
-     * @param packageName the package name
-     */
-    @VisibleForTesting
-    void addPackage(String packageName) {
-        packages.add(packageName);
-    }
-
-    /**
-     * Creates a new instance of a class from a given name. If the name is
-     * a class name, creates an instance of the named class. Otherwise, creates
-     * an instance of a class name obtained by concatenating the given
-     * to a package name from a given list of package names.
-     * @param name the name of a class.
-     * @return the {@code Object}
-     * @throws CheckstyleException if an error occurs.
-     */
-    private Object doMakeObject(String name)
-        throws CheckstyleException {
-        //try name first
-        try {
-            return createObject(name);
-        }
-        catch (final CheckstyleException ex) {
-            LOG.debug(IGNORING_EXCEPTION_MESSAGE, ex);
-        }
-
-        //now try packages
-        for (String packageName : packages) {
-
-            final String className = packageName + name;
-            try {
-                return createObject(className);
-            }
-            catch (final CheckstyleException ex) {
-                LOG.debug(IGNORING_EXCEPTION_MESSAGE, ex);
-            }
-        }
-        final LocalizedMessage exceptionMessage = new LocalizedMessage(0,
-            Definitions.CHECKSTYLE_BUNDLE, UNABLE_TO_INSTANTIATE_EXCEPTION_MESSAGE,
-            new String[] {name, joinPackageNamesWithClassName(name)},
-            null, getClass(), null);
-        throw new CheckstyleException(exceptionMessage.getMessage());
-    }
-
-    /**
-     * Creates a new instance of a named class.
-     * @param className the name of the class to instantiate.
-     * @return the {@code Object} created by loader.
-     * @throws CheckstyleException if an error occurs.
-     */
-    private Object createObject(String className)
-        throws CheckstyleException {
-        try {
-            final Class<?> clazz = Class.forName(className, true, moduleClassLoader);
-            final Constructor<?> declaredConstructor = clazz.getDeclaredConstructor();
-            declaredConstructor.setAccessible(true);
-            return declaredConstructor.newInstance();
-        }
-        catch (final ReflectiveOperationException | NoClassDefFoundError exception) {
-            throw new CheckstyleException("Unable to find class for " + className, exception);
-        }
     }
 
     /**
@@ -147,33 +84,83 @@ public class PackageObjectFactory implements ModuleFactory {
      * @throws CheckstyleException if an error occurs.
      */
     @Override
-    public Object createModule(String name)
-        throws CheckstyleException {
-        try {
-            return doMakeObject(name);
-        }
-        catch (final CheckstyleException ignored) {
-            //try again with suffix "Check"
-            try {
-                return doMakeObject(name + "Check");
-            }
-            catch (final CheckstyleException ex) {
+    public Object createModule(String name) throws CheckstyleException {
+        Object instance = createObjectWithIgnoringProblems(name, getAllPossibleNames(name));
+        if (instance == null) {
+            final String nameCheck = name + "Check";
+            instance = createObjectWithIgnoringProblems(nameCheck, getAllPossibleNames(nameCheck));
+            if (instance == null) {
+
+                final String attemptedNames = joinPackageNamesWithClassName(name, packages)
+                        + STRING_SEPARATOR + nameCheck + STRING_SEPARATOR
+                        + joinPackageNamesWithClassName(nameCheck, packages);
                 final LocalizedMessage exceptionMessage = new LocalizedMessage(0,
                     Definitions.CHECKSTYLE_BUNDLE, UNABLE_TO_INSTANTIATE_EXCEPTION_MESSAGE,
-                    new String[] {name, joinPackageNamesWithClassName(name)},
-                    null, getClass(), null);
-                throw new CheckstyleException(exceptionMessage.getMessage(), ex);
+                    new String[] {name, attemptedNames}, null, getClass(), null);
+                throw new CheckstyleException(exceptionMessage.getMessage());
             }
         }
+        return instance;
+    }
+
+    /**
+     * Create a new instance of a named class.
+     * @param className the name of the class to instantiate.
+     * @param secondAttempt the set of names to attempt instantiation
+     *                      if usage of the className was not successful.
+     * @return the {@code Object} created by loader or null.
+     */
+    private Object createObjectWithIgnoringProblems(String className,
+                                                    Set<String> secondAttempt) {
+        Object instance = createObject(className);
+        if (instance == null) {
+            final Iterator<String> ite = secondAttempt.iterator();
+            while (instance == null && ite.hasNext()) {
+                instance = createObject(ite.next());
+            }
+        }
+        return instance;
+    }
+
+    /**
+     * Generate the set of all possible names for a class name.
+     * @param name the name of the class get possible names for.
+     * @return all possible name for a class.
+     */
+    private Set<String> getAllPossibleNames(String name) {
+        final Set<String> names = new HashSet<>();
+        names.addAll(packages.stream().map(packageName -> packageName + name)
+            .collect(Collectors.toList()));
+        return names;
     }
 
     /**
      * Creates a string by joining package names with a class name.
      * @param className name of the class for joining.
+     * @param packages packages names.
      * @return a string which is obtained by joining package names with a class name.
      */
-    private String joinPackageNamesWithClassName(String className) {
-        final Joiner joiner = Joiner.on(className + ", ").skipNulls();
-        return joiner.join(packages) + className;
+    private static String joinPackageNamesWithClassName(String className, Set<String> packages) {
+        return packages.stream().filter(name -> name != null)
+            .collect(Collectors.joining(className + STRING_SEPARATOR, "", className));
+    }
+
+    /**
+     * Creates a new instance of a named class.
+     * @param className the name of the class to instantiate.
+     * @return the {@code Object} created by loader or null.
+     */
+    private Object createObject(String className) {
+        Object instance = null;
+        try {
+            final Class<?> clazz = Class.forName(className, true, moduleClassLoader);
+            final Constructor<?> declaredConstructor = clazz.getDeclaredConstructor();
+            declaredConstructor.setAccessible(true);
+            instance = declaredConstructor.newInstance();
+        }
+        catch (final ReflectiveOperationException | NoClassDefFoundError exception) {
+            LOG.debug(IGNORING_EXCEPTION_MESSAGE, exception);
+        }
+        return instance;
     }
 }

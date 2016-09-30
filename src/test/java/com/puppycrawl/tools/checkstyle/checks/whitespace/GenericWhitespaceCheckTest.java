@@ -27,19 +27,19 @@ import static org.junit.Assert.assertArrayEquals;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.junit.Before;
 import org.junit.Test;
 
 import antlr.CommonHiddenStreamToken;
 
-import com.google.common.collect.Maps;
 import com.puppycrawl.tools.checkstyle.BaseCheckTestSupport;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
+import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
 public class GenericWhitespaceCheckTest
     extends BaseCheckTestSupport {
@@ -48,11 +48,8 @@ public class GenericWhitespaceCheckTest
     @Before
     public void setUp() {
         checkConfig = createCheckConfig(GenericWhitespaceCheck.class);
-        final Map<Class<?>, Integer> x = Maps.newHashMap();
-        for (final Map.Entry<Class<?>, Integer> entry : x.entrySet()) {
-            entry.getValue();
-        }
-        //for (final Entry<Class<?>, Integer> entry : entrySet())
+        final Map<Class<?>, Integer> x = new HashMap<>();
+        x.entrySet().forEach(Map.Entry::getValue);
     }
 
     @Override
@@ -112,35 +109,34 @@ public class GenericWhitespaceCheckTest
 
     @Test
     public void testGh47() throws Exception {
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
         verify(checkConfig, getPath("InputGh47.java"), expected);
     }
 
     @Test
     public void testInnerClass() throws Exception {
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
         verify(checkConfig, getPath("InputGenericWhitespaceInnerClass.java"), expected);
     }
 
     @Test
     public void testMethodReferences() throws Exception {
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
-        verify(checkConfig, getNonCompilablePath("InputMethodReferences3.java"), expected);
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        verify(checkConfig, getPath("InputMethodReferences3.java"), expected);
     }
 
     @Test
     public void testMethodReferences2() throws Exception {
         final String[] expected = {
-            "7:69: " + getCheckMessage(MSG_WS_FOLLOWED, ">"),
+            "10:70: " + getCheckMessage(MSG_WS_FOLLOWED, ">"),
         };
-        verify(checkConfig, getNonCompilablePath("InputGenericWhitespaceMethodRef.java"), expected);
+        verify(checkConfig, getPath("InputGenericWhitespaceMethodRef.java"), expected);
     }
 
     @Test
     public void testGenericEndsTheLine() throws Exception {
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
-        verify(checkConfig, getNonCompilablePath("InputGenericWhitespaceEndsTheLine.java"),
-                expected);
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        verify(checkConfig, getPath("InputGenericWhitespaceEndsTheLine.java"), expected);
     }
 
     @Test

@@ -3,6 +3,7 @@
 [![][teamcity img]][teamcity]
 [![][codeship img]][codeship]
 [![][circleci img]][circleci]
+[![][wercker img]][wercker]
 [![][coverage img]][coverage]
 
 [![][mavenbadge img]][mavenbadge]
@@ -17,7 +18,7 @@ Contributors chat: [![https://gitter.im/checkstyle/checkstyle](https://badges.gi
 Checkstyle is a tool for
 checking Java source code for adherence to a Code Standard or set of validation rules (best practices).
 
-The latest release version can be found at [SourceForge downloads](http://sourceforge.net/projects/checkstyle/files/checkstyle/) or at [Maven repo](http://repo1.maven.org/maven2/com/puppycrawl/tools/checkstyle/).
+The latest release version can be found at [SourceForge downloads](https://sourceforge.net/projects/checkstyle/files/checkstyle/) or at [Maven repo](http://repo1.maven.org/maven2/com/puppycrawl/tools/checkstyle/).
 
 Each-commit builds of maven artifacts can be found at [Maven Snapshot repository](https://oss.sonatype.org/content/repositories/snapshots/com/puppycrawl/tools/checkstyle/).
 
@@ -27,6 +28,7 @@ Continuous integration and Quality reports
 ======================
 Travis (Linux & MacOS build): [![][travis img]][travis]
 Appveyor (Windows build): [![][appveyor img]][appveyor]
+[Distelli CI](https://www.distelli.com/checkstyle/builds)
 
 Quality reports: http://checkstyle.sourceforge.net/project-reports.html
 
@@ -39,7 +41,7 @@ Please send any feedback to https://groups.google.com/forum/?hl=en#!forum/checks
 
 Questions and Answers from community: [![][stackoverflow img]][stackoverflow]
 
-Bugs and Feature requests: https://github.com/checkstyle/checkstyle/issues
+Bugs and Feature requests (not a questions): https://github.com/checkstyle/checkstyle/issues
 
 Licensing
 =========
@@ -71,8 +73,8 @@ directory.
 [appveyor]:https://ci.appveyor.com/project/checkstyle/checkstyle/history
 [appveyor img]:https://ci.appveyor.com/api/projects/status/rw6bw3dl9kph6ucc?svg=true
 
-[sonar]:http://nemo.sonarqube.org/dashboard/index/com.puppycrawl.tools:checkstyle
-[sonar img]:https://img.shields.io/sonar/http/nemo.sonarqube.org/com.puppycrawl.tools:checkstyle/tech_debt.svg?label=Sonarqube%20tech%20debt
+[sonar]:https://sonarqube.com/overview?id=com.puppycrawl.tools%3Acheckstyle
+[sonar img]:https://img.shields.io/sonar/http/sonarqube.com/com.puppycrawl.tools:checkstyle/tech_debt.svg?label=Sonarqube%20tech%20debt
 
 [codacy]:https://www.codacy.com/app/checkstyle/checkstyle
 [codacy img]:https://api.codacy.com/project/badge/3adf12d434314ba8b38277ea46d3c44b
@@ -106,3 +108,6 @@ directory.
 
 [circleci]: https://circleci.com/gh/checkstyle/checkstyle/tree/master
 [circleci img]: https://circleci.com/gh/checkstyle/checkstyle/tree/master.svg?style=svg
+
+[wercker]: https://app.wercker.com/project/bykey/cd383127330ff96f89f1a78e8fd1a557
+[wercker img]: https://app.wercker.com/status/cd383127330ff96f89f1a78e8fd1a557/s/master

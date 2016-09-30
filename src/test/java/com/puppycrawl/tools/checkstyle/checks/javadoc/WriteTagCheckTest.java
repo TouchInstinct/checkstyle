@@ -31,17 +31,17 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.google.common.collect.Lists;
 import com.puppycrawl.tools.checkstyle.BaseCheckTestSupport;
 import com.puppycrawl.tools.checkstyle.Checker;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
+import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
 /**
  * Unit test for WriteTagCheck.
@@ -63,7 +63,7 @@ public class WriteTagCheckTest extends BaseCheckTestSupport {
 
     @Test
     public void testDefaultSettings() throws Exception {
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
         verify(checkConfig, getPath("InputWriteTag.java"), expected);
     }
 
@@ -157,22 +157,22 @@ public class WriteTagCheckTest extends BaseCheckTestSupport {
         checkConfig.addAttribute("tag", "@todo2");
         checkConfig.addAttribute("tagFormat", "\\S");
         checkConfig.addAttribute("severity", "ignore");
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
         verify(checkConfig, getPath("InputWriteTag.java"), expected);
     }
 
     @Test
     public void testRegularEx()
-        throws Exception {
+            throws Exception {
         checkConfig.addAttribute("tag", "@author");
         checkConfig.addAttribute("tagFormat", "0*");
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
         verify(checkConfig, getPath("InputWriteTag.java"), expected);
     }
 
     @Test
     public void testRegularExError()
-        throws Exception {
+            throws Exception {
         checkConfig.addAttribute("tag", "@author");
         checkConfig.addAttribute("tagFormat", "ABC");
         final String[] expected = {
@@ -206,16 +206,16 @@ public class WriteTagCheckTest extends BaseCheckTestSupport {
                           File[] processedFiles,
                           String messageFileName,
                           String... expected)
-        throws Exception {
+            throws Exception {
         stream.flush();
-        final List<File> theFiles = Lists.newArrayList();
+        final List<File> theFiles = new ArrayList<>();
         Collections.addAll(theFiles, processedFiles);
         final int errs = checker.process(theFiles);
 
         // process each of the lines
         final ByteArrayInputStream localStream =
             new ByteArrayInputStream(stream.toByteArray());
-        try (final LineNumberReader lnr = new LineNumberReader(
+        try (LineNumberReader lnr = new LineNumberReader(
                 new InputStreamReader(localStream, StandardCharsets.UTF_8))) {
 
             for (int i = 0; i < expected.length; i++) {

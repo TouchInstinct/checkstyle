@@ -20,11 +20,11 @@
 package com.puppycrawl.tools.checkstyle.checks.coding;
 
 import java.util.Deque;
+import java.util.LinkedList;
 
 import antlr.collections.AST;
 
-import com.google.common.collect.Lists;
-import com.puppycrawl.tools.checkstyle.api.Check;
+import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
 import com.puppycrawl.tools.checkstyle.utils.ScopeUtils;
@@ -37,7 +37,7 @@ import com.puppycrawl.tools.checkstyle.utils.ScopeUtils;
  * @author Rick Giles
  */
 public abstract class AbstractSuperCheck
-        extends Check {
+        extends AbstractCheck {
 
     /**
      * A key is pointing to the warning message text in "messages.properties"
@@ -46,7 +46,7 @@ public abstract class AbstractSuperCheck
     public static final String MSG_KEY = "missing.super.call";
 
     /** Stack of methods. */
-    private final Deque<MethodNode> methodStack = Lists.newLinkedList();
+    private final Deque<MethodNode> methodStack = new LinkedList<>();
 
     /**
      * Returns the name of the overriding method.
@@ -101,8 +101,7 @@ public abstract class AbstractSuperCheck
             // dot operator?
             final DetailAST dotAst = literalSuperAst.getParent();
 
-            if (dotAst.getType() == TokenTypes.DOT
-                && !isSameNameMethod(literalSuperAst)
+            if (!isSameNameMethod(literalSuperAst)
                 && !hasArguments(dotAst)) {
                 superCall = isSuperCallInOverridingMethod(dotAst);
             }
@@ -120,8 +119,7 @@ public abstract class AbstractSuperCheck
         boolean inOverridingMethod = false;
         DetailAST dotAst = ast;
 
-        while (dotAst != null
-                && dotAst.getType() != TokenTypes.CTOR_DEF
+        while (dotAst.getType() != TokenTypes.CTOR_DEF
                 && dotAst.getType() != TokenTypes.INSTANCE_INIT) {
 
             if (dotAst.getType() == TokenTypes.METHOD_DEF) {
@@ -157,7 +155,7 @@ public abstract class AbstractSuperCheck
             && sibling.getType() == TokenTypes.TYPE_ARGUMENTS) {
             sibling = sibling.getNextSibling();
         }
-        if (sibling == null || sibling.getType() != TokenTypes.IDENT) {
+        if (sibling == null) {
             return true;
         }
         final String name = sibling.getText();

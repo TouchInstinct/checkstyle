@@ -24,11 +24,11 @@ import static com.puppycrawl.tools.checkstyle.checks.naming.AbstractNameCheck.MS
 import java.io.File;
 import java.io.IOException;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.junit.Test;
 
 import com.puppycrawl.tools.checkstyle.BaseCheckTestSupport;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
+import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
 public class LocalVariableNameCheckTest
     extends BaseCheckTestSupport {
@@ -40,7 +40,7 @@ public class LocalVariableNameCheckTest
 
     @Test
     public void testDefault()
-        throws Exception {
+            throws Exception {
         final DefaultConfiguration checkConfig =
             createCheckConfig(LocalVariableNameCheck.class);
 
@@ -57,16 +57,16 @@ public class LocalVariableNameCheckTest
 
     @Test
     public void testInnerClass()
-        throws Exception {
+            throws Exception {
         final DefaultConfiguration checkConfig =
             createCheckConfig(LocalVariableNameCheck.class);
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
         verify(checkConfig, getPath("InputInner.java"), expected);
     }
 
     @Test
     public void testLoopVariables()
-        throws Exception {
+            throws Exception {
         final DefaultConfiguration checkConfig =
             createCheckConfig(LocalVariableNameCheck.class);
         checkConfig.addAttribute("format", "^[a-z]{2,}[a-zA-Z0-9]*$");

@@ -24,21 +24,24 @@ import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.io.File;
-import java.io.IOException;
 
 import javax.swing.AbstractAction;
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTextArea;
+import javax.swing.SwingConstants;
 import javax.swing.filechooser.FileFilter;
 
-import antlr.ANTLRException;
-import com.puppycrawl.tools.checkstyle.api.DetailAST;
+import com.puppycrawl.tools.checkstyle.api.CheckstyleException;
+import com.puppycrawl.tools.checkstyle.gui.MainFrameModel.ParseMode;
 
 /**
  * Displays information about a parse tree.
@@ -51,12 +54,11 @@ import com.puppycrawl.tools.checkstyle.api.DetailAST;
 public class MainFrame extends JFrame {
 
     private static final long serialVersionUID = 7970053543351871890L;
+
     /** Checkstyle frame model. */
     private final transient MainFrameModel model = new MainFrameModel();
     /** Reload action. */
     private final ReloadAction reloadAction = new ReloadAction();
-    /** Parse tree model. */
-    private transient ParseTreeTableModel parseTreeTableModel;
     /** Code text area. */
     private JTextArea textArea;
     /** Tree table. */
@@ -75,8 +77,7 @@ public class MainFrame extends JFrame {
         textArea.setEditable(false);
         final JScrollPane textAreaScrollPane = new JScrollPane(textArea);
 
-        parseTreeTableModel = new ParseTreeTableModel(null);
-        treeTable = new JTreeTable(parseTreeTableModel);
+        treeTable = new JTreeTable(model.getParseTreeTableModel());
         treeTable.setEditor(textArea);
         treeTable.setLinePositionMap(model.getLinesToPosition());
         final JScrollPane treeTableScrollPane = new JScrollPane(treeTable);
@@ -105,12 +106,32 @@ public class MainFrame extends JFrame {
         reloadFileButton.setMnemonic(KeyEvent.VK_R);
         reloadFileButton.setText("Reload File");
 
+        final JComboBox<ParseMode> modesCombobox = new JComboBox<>(ParseMode.values());
+        modesCombobox.setSelectedIndex(0);
+        modesCombobox.addActionListener(e -> {
+            model.setParseMode((ParseMode) modesCombobox.getSelectedItem());
+            reloadAction.actionPerformed(null);
+        });
+
+        final JLabel modesLabel = new JLabel("Modes:", SwingConstants.RIGHT);
+        final int leftIndentation = 10;
+        modesLabel.setBorder(BorderFactory.createEmptyBorder(0, leftIndentation, 0, 0));
+
         final JPanel buttonPanel = new JPanel();
         buttonPanel.setLayout(new GridLayout(1, 2));
         buttonPanel.add(openFileButton);
         buttonPanel.add(reloadFileButton);
 
-        return buttonPanel;
+        final JPanel modesPanel = new JPanel();
+        modesPanel.add(modesLabel);
+        modesPanel.add(modesCombobox);
+
+        final JPanel mainPanel = new JPanel();
+        mainPanel.setLayout(new BorderLayout());
+        mainPanel.add(buttonPanel);
+        mainPanel.add(modesPanel, BorderLayout.LINE_END);
+
+        return mainPanel;
     }
 
     /**
@@ -118,35 +139,15 @@ public class MainFrame extends JFrame {
      * @param sourceFile the file to open.
      */
     public void openFile(File sourceFile) {
-        if (sourceFile != null) {
-            try {
-                setTitle("Checkstyle : " + sourceFile.getName());
-                final DetailAST parseTree = model.parseFile(sourceFile);
-                parseTreeTableModel.setParseTree(parseTree);
-                reloadAction.setEnabled(true);
-
-                final String[] sourceLines = model.getFileText(sourceFile).toLinesArray();
-
-                // clear for each new file
-                model.clearLinesToPosition();
-                // starts line counting at 1
-                model.addLineToPosition(0);
-
-                // clean the text area before inserting the lines of the new file
-                textArea.setText("");
-
-                // insert the contents of the file to the text area
-                for (final String element : sourceLines) {
-                    model.addLineToPosition(textArea.getText().length());
-                    textArea.append(element + System.lineSeparator());
-                }
-
-                treeTable.setLinePositionMap(model.getLinesToPosition());
-            }
-            catch (final IOException | ANTLRException ex) {
-                JOptionPane.showMessageDialog(this,
-                    "Could not parse" + sourceFile + ": " + ex.getMessage());
-            }
+        try {
+            model.openFile(sourceFile);
+            setTitle(model.getTitle());
+            reloadAction.setEnabled(model.isReloadActionEnabled());
+            textArea.setText(model.getText());
+            treeTable.setLinePositionMap(model.getLinesToPosition());
+        }
+        catch (final CheckstyleException ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage());
         }
     }
 
@@ -188,7 +189,7 @@ public class MainFrame extends JFrame {
     private static class JavaFileFilter extends FileFilter {
         @Override
         public boolean accept(File file) {
-            return file.isDirectory() || file.getName().endsWith(".java");
+            return MainFrameModel.shouldAcceptFile(file);
         }
 
         @Override

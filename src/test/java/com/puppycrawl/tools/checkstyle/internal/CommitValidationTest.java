@@ -19,15 +19,20 @@
 
 package com.puppycrawl.tools.checkstyle.internal;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.regex.Matcher;
+import java.util.Spliterator;
+import java.util.Spliterators;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -40,9 +45,6 @@ import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import com.google.common.collect.Iterators;
-import com.google.common.collect.Lists;
 
 /**
  * Validate commit message has proper structure.
@@ -73,10 +75,10 @@ public class CommitValidationTest {
     private static final List<String> USERS_EXCLUDED_FROM_VALIDATION =
             Collections.singletonList("Roman Ivanov");
 
-    private static final String ISSUE_COMMIT_MESSAGE_REGEX_PATTERN = "^Issue #\\d*: .*[^\\.]$";
-    private static final String PR_COMMIT_MESSAGE_REGEX_PATTERN = "^Pull #\\d*: .*[^\\.]$";
+    private static final String ISSUE_COMMIT_MESSAGE_REGEX_PATTERN = "^Issue #\\d+: .*$";
+    private static final String PR_COMMIT_MESSAGE_REGEX_PATTERN = "^Pull #\\d+: .*$";
     private static final String OTHER_COMMIT_MESSAGE_REGEX_PATTERN =
-            "^(minor|config|infra|doc|spelling): .*[^\\.]$";
+            "^(minor|config|infra|doc|spelling): .*$";
 
     private static final String ACCEPTED_COMMIT_MESSAGE_REGEX_PATTERN =
               "(" + ISSUE_COMMIT_MESSAGE_REGEX_PATTERN + ")|"
@@ -84,17 +86,11 @@ public class CommitValidationTest {
               + "(" + OTHER_COMMIT_MESSAGE_REGEX_PATTERN + ")";
 
     private static final Pattern ACCEPTED_COMMIT_MESSAGE_PATTERN =
-            Pattern.compile(ACCEPTED_COMMIT_MESSAGE_REGEX_PATTERN, Pattern.DOTALL);
+            Pattern.compile(ACCEPTED_COMMIT_MESSAGE_REGEX_PATTERN);
 
-    private static final String NEWLINE_REGEX_PATTERN = "\r\n?|\n";
-
-    private static final Pattern NEWLINE_PATTERN = Pattern.compile(NEWLINE_REGEX_PATTERN);
+    private static final Pattern INVALID_POSTFIX_PATTERN = Pattern.compile("^.*[. \\t]$");
 
     private static final int PREVIOUS_COMMITS_TO_CHECK_COUNT = 10;
-
-    private enum CommitsResolutionMode {
-        BY_COUNTER, BY_LAST_COMMIT_AUTHOR
-    }
 
     private static final CommitsResolutionMode COMMITS_RESOLUTION_MODE =
             CommitsResolutionMode.BY_LAST_COMMIT_AUTHOR;
@@ -107,34 +103,71 @@ public class CommitValidationTest {
     }
 
     @Test
-    public void testCommitMessageHasProperStructure() throws Exception {
-        for (RevCommit commit : filterValidCommits(lastCommits)) {
-            final String commitId = commit.getId().getName();
-            final String commitMessage = commit.getFullMessage();
-            final Matcher matcher = ACCEPTED_COMMIT_MESSAGE_PATTERN.matcher(commitMessage);
-            assertTrue(getInvalidCommitMessageFormattingError(commitId, commitMessage),
-                    matcher.matches());
-        }
+    public void testHasCommits() {
+        assertTrue("must have atleast one commit to validate",
+                lastCommits != null && !lastCommits.isEmpty());
     }
 
     @Test
-    public void testCommitMessageHasSingleLine() throws Exception {
+    public void testCommitMessage() {
+        assertEquals("should not accept commit message with periods on end", 3,
+                validateCommitMessage("minor: Test. Test."));
+        assertEquals("should not accept commit message with spaces on end", 3,
+                validateCommitMessage("minor: Test. "));
+        assertEquals("should not accept commit message with tabs on end", 3,
+                validateCommitMessage("minor: Test.\t"));
+        assertEquals("should not accept commit message with period on end, ignoring new line",
+                3, validateCommitMessage("minor: Test.\n"));
+        assertEquals("should not accept commit message with missing prefix", 1,
+                validateCommitMessage("Test. Test"));
+        assertEquals("should not accept commit message with missing prefix", 1,
+                validateCommitMessage("Test. Test\n"));
+        assertEquals("should not accept commit message with multiple lines with text", 2,
+                validateCommitMessage("minor: Test.\nTest"));
+        assertEquals("should accept commit message with a new line on end", 0,
+                validateCommitMessage("minor: Test\n"));
+        assertEquals("should accept commit message with multiple new lines on end", 0,
+                validateCommitMessage("minor: Test\n\n"));
+        assertEquals("should accept commit message that ends properly", 0,
+                validateCommitMessage("minor: Test. Test"));
+    }
+
+    @Test
+    public void testCommitMessageHasProperStructure() {
         for (RevCommit commit : filterValidCommits(lastCommits)) {
             final String commitId = commit.getId().getName();
             final String commitMessage = commit.getFullMessage();
-            final Matcher matcher = NEWLINE_PATTERN.matcher(commitMessage);
-            if (matcher.find()) {
-                /**
-                 * Git by default put newline character at the end of commit message. To check
-                 * if commit message has a single line we have to make sure that the only
-                 * newline character found is in the end of commit message.
-                 */
-                final boolean isFoundNewLineCharacterAtTheEndOfMessage =
-                        matcher.end() == commitMessage.length();
-                assertTrue(getInvalidCommitMessageFormattingError(commitId, commitMessage),
-                        isFoundNewLineCharacterAtTheEndOfMessage);
+            final int error = validateCommitMessage(commitMessage);
+
+            if (error != 0) {
+                fail(getInvalidCommitMessageFormattingError(commitId, commitMessage) + error);
             }
         }
+    }
+
+    private static int validateCommitMessage(String commitMessage) {
+        final String message = commitMessage.replace("\r", "").replace("\n", "");
+        final String trimRight = commitMessage.replaceAll("[\\r\\n]+$", "");
+        final int result;
+
+        if (!ACCEPTED_COMMIT_MESSAGE_PATTERN.matcher(message).matches()) {
+            // improper prefix
+            result = 1;
+        }
+        else if (!trimRight.equals(message)) {
+            // single line of text (multiple new lines are allowed on end because of
+            // git (1 new line) and github's web ui (2 new lines))
+            result = 2;
+        }
+        else if (INVALID_POSTFIX_PATTERN.matcher(message).matches()) {
+            // improper postfix
+            result = 3;
+        }
+        else {
+            result = 0;
+        }
+
+        return result;
     }
 
     private static List<RevCommit> getCommitsToCheck() throws Exception {
@@ -206,8 +239,10 @@ public class CommitValidationTest {
 
     private static List<RevCommit> getCommitsByCounter(
             Iterator<RevCommit> previousCommitsIterator) {
-        return Lists.newArrayList(Iterators.limit(previousCommitsIterator,
-                PREVIOUS_COMMITS_TO_CHECK_COUNT));
+        final Spliterator<RevCommit> spliterator =
+            Spliterators.spliteratorUnknownSize(previousCommitsIterator, Spliterator.ORDERED);
+        return StreamSupport.stream(spliterator, false).limit(PREVIOUS_COMMITS_TO_CHECK_COUNT)
+            .collect(Collectors.toList());
     }
 
     private static List<RevCommit> getCommitsByLastCommitAuthor(
@@ -220,8 +255,8 @@ public class CommitValidationTest {
             commits.add(lastCommit);
 
             boolean wasLastCheckedCommitAuthorSameAsLastCommit = true;
-            while (previousCommitsIterator.hasNext()
-                    && wasLastCheckedCommitAuthorSameAsLastCommit) {
+            while (wasLastCheckedCommitAuthorSameAsLastCommit
+                    && previousCommitsIterator.hasNext()) {
                 final RevCommit currentCommit = previousCommitsIterator.next();
                 final String currentCommitAuthor = currentCommit.getAuthorIdent().getName();
                 if (currentCommitAuthor.equals(lastCommitAuthor)) {
@@ -242,13 +277,21 @@ public class CommitValidationTest {
                 + "        " + ISSUE_COMMIT_MESSAGE_REGEX_PATTERN + "\n"
                 + "        " + PR_COMMIT_MESSAGE_REGEX_PATTERN + "\n"
                 + "        " + OTHER_COMMIT_MESSAGE_REGEX_PATTERN + "\n"
-                + "    2) It contains only one line";
+                + "    2) It contains only one line of text\n"
+                + "    3) Must not end with a period, space, or tab\n"
+                + "\n"
+                + "The rule broken was: ";
     }
 
     private static String getInvalidCommitMessageFormattingError(String commitId,
             String commitMessage) {
-        return "Commit " + commitId + " message: \"" + commitMessage + "\" is invalid\n"
-                + getRulesForCommitMessageFormatting();
+        return "Commit " + commitId + " message: \""
+                + commitMessage.replace("\r", "\\r").replace("\n", "\\n").replace("\t", "\\t")
+                + "\" is invalid\n" + getRulesForCommitMessageFormatting();
+    }
+
+    private enum CommitsResolutionMode {
+        BY_COUNTER, BY_LAST_COMMIT_AUTHOR
     }
 
     private static class RevCommitsPair {

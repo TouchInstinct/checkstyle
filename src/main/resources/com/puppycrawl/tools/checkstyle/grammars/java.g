@@ -100,7 +100,7 @@ tokens {
     // we need to put it to the end to maintain binary compatibility
     // with previous versions
     DO_WHILE;
-    
+
     //Tokens for Java 1.7 language enhancements
     RESOURCE_SPECIFICATION; RESOURCES; RESOURCE;
 
@@ -126,8 +126,8 @@ tokens {
      * typeArguments production. This is necessary because SR and BSR
      * tokens have significance (the extra '>' characters) not only for the production
      * that sees them but also productions higher in the stack (possibly right up to an outer-most
-     * typeParameters production). As the stack of the typeArguments/typeParameters productions unwind,
-     * any '>' characters seen prematurely through SRs or BSRs are reconciled.
+     * typeParameters production). As the stack of the typeArguments/typeParameters productions
+     * unwind, any '>' characters seen prematurely through SRs or BSRs are reconciled.
      */
     private int gtToReconcile = 0;
 
@@ -164,7 +164,8 @@ tokens {
         gtToReconcile -= 1;
         CommonHiddenStreamToken gtToken = new CommonHiddenStreamToken(GENERIC_END, ">");
         gtToken.setLine(currentGtSequence.getLineNo());
-        gtToken.setColumn(currentGtSequence.getColumnNo() + (currentGtSequence.getText().length() - gtToReconcile));
+        gtToken.setColumn(currentGtSequence.getColumnNo()
+                            + (currentGtSequence.getText().length() - gtToReconcile));
         return (DetailAST)astFactory.create(gtToken);
     }
 
@@ -227,7 +228,8 @@ packageDefinition
 // Import statement: import followed by a package or class name
 importDefinition
     options {defaultErrorHandler = true;}
-    :    i:"import"^ {#i.setType(IMPORT);} ( "static" {#i.setType(STATIC_IMPORT);} )? identifierStar SEMI
+    :    i:"import"^ {#i.setType(IMPORT);}
+           ( "static" {#i.setType(STATIC_IMPORT);} )? identifierStar SEMI
     |    SEMI
     ;
 
@@ -260,7 +262,10 @@ typeSpec[boolean addImagNode]
 // - generic type arguments after
 classTypeSpec[boolean addImagNode]
     :   classOrInterfaceType[addImagNode]
-        (options{greedy=true;}: lb:LBRACK^ {#lb.setType(ARRAY_DECLARATOR);} RBRACK)*
+        (options{greedy=true; }:
+            ({LA(1) == AT}? annotations
+            | )
+                lb:LBRACK^ {#lb.setType(ARRAY_DECLARATOR);} RBRACK)*
         {
             if ( addImagNode ) {
                 #classTypeSpec = #(#[TYPE,"TYPE"], #classTypeSpec);
@@ -269,21 +274,26 @@ classTypeSpec[boolean addImagNode]
     ;
 
 classOrInterfaceType[boolean addImagNode]
-    : ({LA(1) == AT}? annotations
-            | )
-    IDENT (options{warnWhenFollowAmbig=false;}: typeArguments[addImagNode])?
-        (options{greedy=true; }: // match as many as possible
-            DOT^
-            IDENT (options{warnWhenFollowAmbig=false;}: typeArguments[addImagNode])?
-        )*
-    ;
+    :   ({LA(1) == AT}? annotations
+             | )
+            IDENT
+            (options{warnWhenFollowAmbig=false;}: typeArguments[addImagNode])?
 
-// A generic type argument is a class type, a possibly bounded wildcard type or a built-in type array
+            (options{greedy=true; }: // match as many as possible
+                DOT^
+                ({LA(1) == AT}? annotations
+                    | )
+                    IDENT
+                    (options{warnWhenFollowAmbig=false;}: typeArguments[addImagNode])?
+            )*
+     ;
+
+// A generic type argument is a class type, a possibly bounded wildcard type or built-in type array
 typeArgument[boolean addImagNode]
 :   (   ({LA(1) == AT}? annotations
          | ) (
         classTypeSpec[addImagNode]
-        |   builtInTypeArraySpec[addImagNode]
+        |   builtInTypeSpec[addImagNode]
         |   wildcardType[addImagNode])
         )
         {#typeArgument = #(#[TYPE_ARGUMENT,"TYPE_ARGUMENT"], #typeArgument);}
@@ -299,7 +309,8 @@ typeArguments[boolean addImagNode]
     :
         {currentLtLevel = ltCounter;}
         lt:LT {#lt.setType(GENERIC_START); ;ltCounter++;}
-        // (Dinesh Bolkensteyn) Added support for Java 7 diamond notation (disabled ambiguous warnings since generated code seems to work)
+        // (Dinesh Bolkensteyn) Added support for Java 7 diamond notation
+        // (disabled ambiguous warnings since generated code seems to work)
         (options{generateAmbigWarnings=false;}:typeArgument[addImagNode]
         (options{greedy=true;}: // match as many as possible
             // If there are any '>' to reconcile
@@ -356,21 +367,15 @@ typeArgumentBounds[boolean addImagNode]
         (options{greedy=true;}: lb:LBRACK^ {#lb.setType(ARRAY_DECLARATOR);} RBRACK)*
     ;
 
-// A builtin type array specification is a builtin type with brackets afterwards
-builtInTypeArraySpec[boolean addImagNode]
-    :    builtInType
-        (options{greedy=true;}: lb:LBRACK^ {#lb.setType(ARRAY_DECLARATOR);} RBRACK)+
-        {
-            if ( addImagNode ) {
-                #builtInTypeArraySpec = #(#[TYPE,"TYPE"], #builtInTypeArraySpec);
-            }
-        }
-    ;
 
 // A builtin type specification is a builtin type with possible brackets
 // afterwards (which would make it an array type).
 builtInTypeSpec[boolean addImagNode]
-    :    builtInType (lb:LBRACK^ {#lb.setType(ARRAY_DECLARATOR);} RBRACK)*
+     :    builtInType
+         (options{greedy=true; }:
+            ({LA(1) == AT}? annotations
+            | )
+                lb:LBRACK^ {#lb.setType(ARRAY_DECLARATOR);} RBRACK)*
         {
             if ( addImagNode ) {
                 #builtInTypeSpec = #(#[TYPE,"TYPE"], #builtInTypeSpec);
@@ -435,8 +440,7 @@ modifiers
             //Semantic check that we aren't matching @interface as this is not an annotation
             //A nicer way to do this would be, um, nice
             {LA(1)==AT && !LT(2).getText().equals("interface")}? annotation
-            
-            
+
         )*
 
         {#modifiers = #([MODIFIERS, "MODIFIERS"], #modifiers);}
@@ -460,7 +464,11 @@ modifier
     ;
 
 annotation!
-    :   AT i:identifier (options {generateAmbigWarnings=false;}: l:LPAREN ( args:annotationArguments )? r:RPAREN )?
+    :   AT i:identifier
+             (options {generateAmbigWarnings=false;}:
+                l:LPAREN ( args:annotationArguments )?
+                r:RPAREN
+             )?
         {#annotation = #(#[ANNOTATION,"ANNOTATION"], AT, i, l, args, r);}
     ;
 
@@ -479,12 +487,13 @@ annotationMemberValuePairs
 
 annotationMemberValuePair!
     :   i:IDENT a:ASSIGN v:annotationMemberValueInitializer
-        {#annotationMemberValuePair = #(#[ANNOTATION_MEMBER_VALUE_PAIR,"ANNOTATION_MEMBER_VALUE_PAIR"], i, a, v);}
+        {#annotationMemberValuePair =
+            #(#[ANNOTATION_MEMBER_VALUE_PAIR,"ANNOTATION_MEMBER_VALUE_PAIR"], i, a, v);}
     ;
 
 annotationMemberValueInitializer
     :
-        annotationExpression | annotation | annotationMemberArrayInitializer
+        (annotationExpression)=>annotationExpression | annotation | annotationMemberArrayInitializer
     ;
 
 // This is an initializer used to set up an annotation member array.
@@ -510,7 +519,7 @@ annotationMemberArrayInitializer
 // The two things that can initialize an annotation array element are a conditional expression
 //   and an annotation (nested annotation array initialisers are not valid)
 annotationMemberArrayValueInitializer
-    :    annotationExpression
+    :    (annotationExpression)=>annotationExpression
     |   annotation
     ;
 
@@ -597,6 +606,7 @@ typeParameters
 typeParameter
     :
         // I'm pretty sure Antlr generates the right thing here:
+        ({LA(1) == AT}? annotations | )
         (id:IDENT) ( options{generateAmbigWarnings=false;}: typeParameterBounds )?
         {#typeParameter = #(#[TYPE_PARAMETER,"TYPE_PARAMETER"], #typeParameter);}
     ;
@@ -860,10 +870,12 @@ explicitConstructorInvocation
 
 variableDefinitions[AST mods, AST t]
     :    variableDeclarator[(AST) getASTFactory().dupTree(mods),
-                           (AST) getASTFactory().dupList(t)] //dupList as this also copies siblings (like TYPE_ARGUMENTS)
+                           //dupList as this also copies siblings (like TYPE_ARGUMENTS)
+                           (AST) getASTFactory().dupList(t)]
         (    COMMA
             variableDeclarator[(AST) getASTFactory().dupTree(mods),
-                               (AST) getASTFactory().dupList(t)] //dupList as this also copies siblings (like TYPE_ARGUMENTS)
+                               //dupList as this also copies siblings (like TYPE_ARGUMENTS)
+                               (AST) getASTFactory().dupList(t)]
         )*
     ;
 
@@ -933,7 +945,7 @@ ctorHead
 // This is a list of exception classes that the method is declared to throw
 throwsClause
     :    "throws"^ ({LA(1) == AT}? annotations
-                    | ) identifier ( COMMA identifier )*
+                    | ) identifier ( COMMA ({LA(1) == AT}? annotations | ) identifier )*
     ;
 
 
@@ -942,9 +954,11 @@ throwsClause
 //     If a parameter is variable length (e.g. String... myArg) it is the right-most parameter
 parameterDeclarationList
     // The semantic check in ( .... )* block is flagged as superfluous, and seems superfluous but
-    // is the only way I could make this work. If my understanding is correct this is a known bug in Antlr
+    // is the only way I could make this work.
+    // If my understanding is correct this is a known bug in Antlr
     :   (   ( parameterDeclaration )=> parameterDeclaration
-            ( options {warnWhenFollowAmbig=false;} : ( COMMA parameterDeclaration ) => COMMA parameterDeclaration )*
+            ( options {warnWhenFollowAmbig=false;} :
+                ( COMMA parameterDeclaration ) => COMMA parameterDeclaration )*
             ( COMMA variableLengthParameterDeclaration )?
         |
             variableLengthParameterDeclaration
@@ -963,21 +977,28 @@ variableLengthParameterDeclaration!
 parameterModifier
     //final can appear amongst annotations in any order - greedily consume any preceding
     //annotations to shut nond-eterminism warnings off
-    :    (options{greedy=true;} : annotation)* (f:"final")? (options {warnWhenFollowAmbig=false;}: annotation)*
+    :    (options{greedy=true;} : annotation)* (f:"final")?
+         (options {warnWhenFollowAmbig=false;}: annotation)*
         {#parameterModifier = #(#[MODIFIERS,"MODIFIERS"], #parameterModifier);}
     ;
 
 // A formal parameter.
 parameterDeclaration!
-    :    pm:parameterModifier (t:typeSpec[false])? id:IDENT
-        pd:declaratorBrackets[#t]
+    :    pm:parameterModifier (t:typeSpec[false])?
+        id:parameterIdent pd:declaratorBrackets[#t]
         {#parameterDeclaration = #(#[PARAMETER_DEF,"PARAMETER_DEF"],
                                     pm, #([TYPE,"TYPE"],pd), id);}
     ;
+
+parameterIdent
+    :    LITERAL_this | (IDENT (DOT^ LITERAL_this)?)
+    ;
+
 //Added for support Java7's "multi-catch", several types separated by '|'
 catchParameterDeclaration!
     :   pm:parameterModifier mct:multiCatchTypes id:IDENT
-            {#catchParameterDeclaration = #(#[PARAMETER_DEF,"PARAMETER_DEF"], pm, #([TYPE,"TYPE"],mct), id);}
+            {#catchParameterDeclaration =
+                #(#[PARAMETER_DEF,"PARAMETER_DEF"], pm, #([TYPE,"TYPE"],mct), id);}
     ;
 
 multiCatchTypes
@@ -1024,7 +1045,7 @@ traditionalStatement
         // An expression statement.  This could be a method call,
         // assignment statement, or any other expression evaluated for
         // side-effects.
-        |    {LA(2) != COLON}? expression (SEMI)?
+        |    ({LA(2) != COLON}? expression (SEMI)?)=> {LA(2) != COLON}? expression (SEMI)?
 
         // class definition
         |    m:modifiers! classDefinition[#m]
@@ -1135,8 +1156,8 @@ aCase
 caseSList
     :
         (
-            //Here was nondeterministic warnig between default block into switch and default modifier
-             //on methods (Java8). But we have semantic check for this.
+            //Here was nondeterministic warnig between default block into switch
+            // and default modifier on methods (Java8). But we have semantic check for this.
             options {
                 warnWhenFollowAmbig = false;
             }
@@ -1182,7 +1203,8 @@ tryBlock
 
 resourceSpecification
     : LPAREN resources (SEMI)? RPAREN
-      {#resourceSpecification = #([RESOURCE_SPECIFICATION, "RESOURCE_SPECIFICATION"], #resourceSpecification);}
+      {#resourceSpecification =
+          #([RESOURCE_SPECIFICATION, "RESOURCE_SPECIFICATION"], #resourceSpecification);}
     ;
 
 resources
@@ -1192,10 +1214,11 @@ resources
 
 
 resource
-    : modifiers typeSpec[true] IDENT resource_assign
+    : IDENT
+      | modifiers typeSpec[true] IDENT resource_assign
       {#resource = #([RESOURCE, "RESOURCE"], #resource);}
 ;
- 
+
 resource_assign
     : ASSIGN^ expression
     ;
@@ -1351,7 +1374,8 @@ shiftExpression
 
 // binary addition/subtraction (level 3)
 additiveExpression
-    :    multiplicativeExpression (options{warnWhenFollowAmbig=false;} : (PLUS^ | MINUS^) multiplicativeExpression)*
+    :    multiplicativeExpression (options{warnWhenFollowAmbig=false;} :
+             (PLUS^ | MINUS^) multiplicativeExpression)*
     ;
 
 
@@ -1406,19 +1430,20 @@ typeCastParameters
 postfixExpression
     :    primaryExpression // start with a primary
 
-        (options{warnWhenFollowAmbig=false;} :     // qualified id (id.id.id.id...) -- build the name
+        (options{warnWhenFollowAmbig=false;} :    // qualified id (id.id.id.id...) -- build the name
             DOT^
             ( (typeArguments[false])?
-              ( IDENT ((typeArguments[false] DOUBLE_COLON)=>typeArguments[false])?
+              ( IDENT
               | "this"
               | "super" // ClassName.super.field
               )
             | "class"
             | newExpression
-            | annotations
             )
 
-            //Java 8 method references. For example: List<Integer> numbers = Arrays.asList(1,2,3,4,5,6); numbers.forEach(System.out::println);
+            //Java 8 method references.
+            // For example: List<Integer> numbers = Arrays.asList(1,2,3,4,5,6);
+            // numbers.forEach(System.out::println);
         |
             dc:DOUBLE_COLON^ {#dc.setType(METHOD_REF);}
             (
@@ -1431,7 +1456,8 @@ postfixExpression
             // is the _last_ qualifier.
 
             // allow ClassName[].class or just ClassName[]
-        |    (options{warnWhenFollowAmbig=false;} : lbc:LBRACK^ {#lbc.setType(ARRAY_DECLARATOR);} RBRACK )+
+        |    (options{warnWhenFollowAmbig=false;} :
+                 lbc:LBRACK^ {#lbc.setType(ARRAY_DECLARATOR);} RBRACK )+
             //Since java 8 here can be method reference
             (options{warnWhenFollowAmbig=false;} : DOT^ "class")?
 
@@ -1461,7 +1487,8 @@ postfixExpression
 
 // the basic element of an expression
 primaryExpression
-    :   IDENT ((typeArguments[false] DOUBLE_COLON)=>typeArguments[false])?
+    :   (typeSpec[false] DOUBLE_COLON) => typeSpec[false]
+    |    IDENT
     |    constant
     |    "true"
     |    "false"
@@ -1472,7 +1499,8 @@ primaryExpression
     |    "super"
         // look for int.class and int[].class and int[]
     |    builtInType
-        (options{warnWhenFollowAmbig=false;} : lbt:LBRACK^ {#lbt.setType(ARRAY_DECLARATOR);} RBRACK )*
+        (options{warnWhenFollowAmbig=false;} :
+            lbt:LBRACK^ {#lbt.setType(ARRAY_DECLARATOR);} RBRACK )*
         //Since java 8 here can be method reference
         (options{warnWhenFollowAmbig=false;} : DOT^ "class")?
     ;
@@ -1585,15 +1613,11 @@ lambdaExpression
 lambdaParameters
     :    IDENT
     |    LPAREN (parameterDeclarationList)? RPAREN
-    |    LPAREN inferredParameterList RPAREN
     ;
 
 lambdaBody
     :    (options{generateAmbigWarnings=false;}: expression
     |    statement)
-    ;
-inferredParameterList
-    :    IDENT (COMMA IDENT)*
     ;
 
 
@@ -1851,20 +1875,12 @@ BINARY_DIGIT
     :    ('0'|'1')
     ;
 
-
-// a dummy rule to force vocabulary to be all characters (except special
-//   ones that ANTLR uses internally (0 to 2)
-protected
-VOCAB
-    :    '\3'..'\377'
-    ;
-
 protected ID_START:
-        '_' | '$' | 
-        (            
+        '_' | '$' |
+        (
             {Character.isJavaIdentifierStart(LA(1))}?
             ~(
-                '_' | '$' | '/' | '*' | '0'..'9' | 
+                '_' | '$' | '/' | '*' | '0'..'9' |
                 '.' | '\'' | '\\' | '"' | '\t' | '\n' |
                 '\r' | ' ' | '\f' | '(' | ')' |
                 '{' | '}' | '[' | ']'| ';' | ',' | '=' |
@@ -1884,7 +1900,7 @@ protected ID_START:
     }
 
 protected ID_PART :
-        '_' | '$' | 
+        '_' | '$' |
         (
             {Character.isJavaIdentifierPart(LA(1))}?
             ~(
@@ -1942,21 +1958,29 @@ NUM_INT
 
 protected INT_LITERAL
     :   (    '0'
-             (  ('x'|'X')(HEX_DIGIT)((HEX_DIGIT|'_')*(HEX_DIGIT))?              // Hexa
-             |  ('b'|'B')(BINARY_DIGIT)((BINARY_DIGIT|'_')*(BINARY_DIGIT))?     // Binary
-             |  ((('0'..'7')|'_')*('0'..'7'))?                                  // If empty 0, otherwise octal (which may start with an underscore)
+             // Hexa
+             (  ('x'|'X')(HEX_DIGIT)((HEX_DIGIT|'_')*(HEX_DIGIT))?
+             // Binary
+             |  ('b'|'B')(BINARY_DIGIT)((BINARY_DIGIT|'_')*(BINARY_DIGIT))?
+             // If empty 0, otherwise octal (which may start with an underscore)
+             |  ((('0'..'7')|'_')*('0'..'7'))?
              )
-        |   ('1'..'9') (('0'..'9'|'_')*('0'..'9'))?                             // Non-zero decimal
+             // Non-zero decimal
+        |   ('1'..'9') (('0'..'9'|'_')*('0'..'9'))?
         )
     ;
 
 protected LONG_LITERAL
     :   (    '0'
-             (  ('x'|'X')(HEX_DIGIT)((HEX_DIGIT|'_')*(HEX_DIGIT))?              // Hexa
-             |  ('b'|'B')(BINARY_DIGIT)((BINARY_DIGIT|'_')*(BINARY_DIGIT))?     // Binary
-             |  ((('0'..'7')|'_')*('0'..'7'))?                                  // If empty 0, otherwise octal (which may start with an underscore)
+             // Hexa
+             (  ('x'|'X')(HEX_DIGIT)((HEX_DIGIT|'_')*(HEX_DIGIT))?
+             // Binary
+             |  ('b'|'B')(BINARY_DIGIT)((BINARY_DIGIT|'_')*(BINARY_DIGIT))?
+             // If empty 0, otherwise octal (which may start with an underscore)
+             |  ((('0'..'7')|'_')*('0'..'7'))?
              )
-        |   ('1'..'9') (('0'..'9'|'_')*('0'..'9'))?                             // Non-zero decimal
+             // Non-zero decimal
+        |   ('1'..'9') (('0'..'9'|'_')*('0'..'9'))?
         )
         // long signifier
         ('l'|'L')
@@ -1965,7 +1989,7 @@ protected LONG_LITERAL
 protected FLOAT_LITERAL
     :   (
             ((('0'..'9')(('0'..'9'|'_')*('0'..'9'))?)? '.')=>
-            (   (('0'..'9')(('0'..'9'|'_')*('0'..'9'))?) '.' (('0'..'9')(('0'..'9'|'_')*('0'..'9'))?)?
+            ( (('0'..'9')(('0'..'9'|'_')*('0'..'9'))?) '.' (('0'..'9')(('0'..'9'|'_')*('0'..'9'))?)?
             |   '.' (('0'..'9')(('0'..'9'|'_')*('0'..'9'))?)
             )
             (EXPONENT)? ('f'|'F')?
@@ -1977,7 +2001,7 @@ protected FLOAT_LITERAL
 protected DOUBLE_LITERAL
     :   (
             ((('0'..'9')(('0'..'9'|'_')*('0'..'9'))?)? '.')=>
-            (   (('0'..'9')(('0'..'9'|'_')*('0'..'9'))?) '.' (('0'..'9')(('0'..'9'|'_')*('0'..'9'))?)?
+            ( (('0'..'9')(('0'..'9'|'_')*('0'..'9'))?) '.' (('0'..'9')(('0'..'9'|'_')*('0'..'9'))?)?
             |   '.' (('0'..'9')(('0'..'9'|'_')*('0'..'9'))?)
             )
         |
@@ -1990,7 +2014,8 @@ protected HEX_FLOAT_LITERAL
     :   '0' ('x'|'X')
         (
             (((HEX_DIGIT)((HEX_DIGIT|'_')*(HEX_DIGIT))?)? '.')=>
-            (   ((HEX_DIGIT)((HEX_DIGIT|'_')*(HEX_DIGIT))?) '.' ((HEX_DIGIT)((HEX_DIGIT|'_')*(HEX_DIGIT))?)?
+            (   ((HEX_DIGIT)((HEX_DIGIT|'_')*(HEX_DIGIT))?) '.'
+                    ((HEX_DIGIT)((HEX_DIGIT|'_')*(HEX_DIGIT))?)?
             |   '.' ((HEX_DIGIT)((HEX_DIGIT|'_')*(HEX_DIGIT))?)
             )
         |
@@ -2003,7 +2028,8 @@ protected HEX_DOUBLE_LITERAL
     :   '0' ('x'|'X')
         (
             (((HEX_DIGIT)((HEX_DIGIT|'_')*(HEX_DIGIT))?)? '.')=>
-            (   ((HEX_DIGIT)((HEX_DIGIT|'_')*(HEX_DIGIT))?) '.' ((HEX_DIGIT)((HEX_DIGIT|'_')*(HEX_DIGIT))?)?
+            (   ((HEX_DIGIT)((HEX_DIGIT|'_')*(HEX_DIGIT))?) '.'
+                    ((HEX_DIGIT)((HEX_DIGIT|'_')*(HEX_DIGIT))?)?
             |   '.' ((HEX_DIGIT)((HEX_DIGIT|'_')*(HEX_DIGIT))?)
             )
         |
@@ -2029,11 +2055,6 @@ EXPONENT
 protected
 SIGNED_INTEGER
     :   ('+'|'-')? (('0'..'9')(('0'..'9'|'_')*('0'..'9'))?)
-    ;
-
-protected
-FLOAT_SUFFIX
-    :    'f'|'F'|'d'|'D'
     ;
 
 protected

@@ -27,11 +27,11 @@ import static com.puppycrawl.tools.checkstyle.checks.DescendantTokenCheck.MSG_KE
 import java.io.File;
 import java.io.IOException;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.junit.Test;
 
 import com.puppycrawl.tools.checkstyle.BaseCheckTestSupport;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
+import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
 public class DescendantTokenCheckTest extends BaseCheckTestSupport {
     @Override
@@ -41,16 +41,16 @@ public class DescendantTokenCheckTest extends BaseCheckTestSupport {
 
     @Test
     public void testDefault()
-        throws Exception {
+            throws Exception {
         final DefaultConfiguration checkConfig =
             createCheckConfig(DescendantTokenCheck.class);
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
         verify(checkConfig, getPath("InputIllegalTokens.java"), expected);
     }
 
     @Test
     public void testMaximumNumber()
-        throws Exception {
+            throws Exception {
         final DefaultConfiguration checkConfig =
             createCheckConfig(DescendantTokenCheck.class);
         checkConfig.addAttribute("tokens", "LITERAL_NATIVE");
@@ -64,7 +64,7 @@ public class DescendantTokenCheckTest extends BaseCheckTestSupport {
 
     @Test
     public void testMessage()
-        throws Exception {
+            throws Exception {
         final DefaultConfiguration checkConfig =
             createCheckConfig(DescendantTokenCheck.class);
         checkConfig.addAttribute("tokens", "LITERAL_NATIVE");
@@ -79,7 +79,7 @@ public class DescendantTokenCheckTest extends BaseCheckTestSupport {
 
     @Test
     public void testMinimumNumber()
-        throws Exception {
+            throws Exception {
         final DefaultConfiguration checkConfig =
             createCheckConfig(DescendantTokenCheck.class);
         checkConfig.addAttribute("tokens", "LITERAL_SWITCH");
@@ -93,33 +93,33 @@ public class DescendantTokenCheckTest extends BaseCheckTestSupport {
 
     @Test
     public void testMinimumDepth()
-        throws Exception {
+            throws Exception {
         final DefaultConfiguration checkConfig =
             createCheckConfig(DescendantTokenCheck.class);
         checkConfig.addAttribute("tokens", "LITERAL_SWITCH");
         checkConfig.addAttribute("limitedTokens", "LITERAL_DEFAULT");
         checkConfig.addAttribute("maximumNumber", "0");
         checkConfig.addAttribute("minimumDepth", "3");
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
         verify(checkConfig, getPath("InputIllegalTokens.java"), expected);
     }
 
     @Test
     public void testMaximumDepth()
-        throws Exception {
+            throws Exception {
         final DefaultConfiguration checkConfig =
             createCheckConfig(DescendantTokenCheck.class);
         checkConfig.addAttribute("tokens", "LITERAL_SWITCH");
         checkConfig.addAttribute("limitedTokens", "LITERAL_DEFAULT");
         checkConfig.addAttribute("maximumNumber", "0");
         checkConfig.addAttribute("maximumDepth", "1");
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
         verify(checkConfig, getPath("InputIllegalTokens.java"), expected);
     }
 
     @Test
     public void testEmptyStatements()
-        throws Exception {
+            throws Exception {
         final DefaultConfiguration checkConfig =
             createCheckConfig(DescendantTokenCheck.class);
         checkConfig.addAttribute("tokens", "EMPTY_STAT");
@@ -263,7 +263,7 @@ public class DescendantTokenCheckTest extends BaseCheckTestSupport {
         checkConfig.addAttribute("maximumNumber", "1");
         checkConfig.addAttribute("maximumMessage", "What are you doing?");
 
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
 
         verify(checkConfig, getPath("InputReturnFromFinally.java"), expected);
     }

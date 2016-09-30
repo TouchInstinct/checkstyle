@@ -19,57 +19,27 @@
 
 package com.puppycrawl.tools.checkstyle.api;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
+
 public class CheckTest {
-
+    @SuppressWarnings("deprecation")
     @Test
-    public void testGetRequiredTokens() {
-        final Check check = new Check() {
+    public void testInstanceOfCheck() {
+        final Object module = new Check() {
             @Override
             public int[] getDefaultTokens() {
-                return ArrayUtils.EMPTY_INT_ARRAY;
-            }
-
-        };
-        // Eventually it will become clear abstract method
-        Assert.assertArrayEquals(ArrayUtils.EMPTY_INT_ARRAY, check.getRequiredTokens());
-    }
-
-    @Test
-    public void testGetAcceptable() {
-        final Check check = new Check() {
-            @Override
-            public int[] getDefaultTokens() {
-                return ArrayUtils.EMPTY_INT_ARRAY;
-            }
-
-        };
-        // Eventually it will become clear abstract method
-        Assert.assertArrayEquals(ArrayUtils.EMPTY_INT_ARRAY, check.getAcceptableTokens());
-    }
-
-    @Test
-    public void testVisitToken() {
-        final Check check = new Check() {
-            @Override
-            public int[] getDefaultTokens() {
-                return  ArrayUtils.EMPTY_INT_ARRAY;
-            }
-
-            @Override
-            public int[] getAcceptableTokens() {
-                return  ArrayUtils.EMPTY_INT_ARRAY;
-            }
-
-            @Override
-            public int[] getRequiredTokens() {
-                return  ArrayUtils.EMPTY_INT_ARRAY;
+                return CommonUtils.EMPTY_INT_ARRAY;
             }
         };
-        // Eventually it will become clear abstract method
-        check.visitToken(null);
+
+        Assert.assertTrue("Check must be an instance of AbstractCheck - 1",
+                module instanceof AbstractCheck);
+        Assert.assertTrue("Check must be an instance of AbstractCheck - 2",
+                AbstractCheck.class.isInstance(module));
+        Assert.assertTrue("Check must be able to be assignable to AbstractCheck",
+                AbstractCheck.class.isAssignableFrom(Check.class));
     }
 }

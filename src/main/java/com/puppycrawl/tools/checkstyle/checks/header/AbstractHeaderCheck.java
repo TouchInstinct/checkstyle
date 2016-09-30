@@ -28,17 +28,18 @@ import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.apache.commons.beanutils.ConversionException;
-import org.apache.commons.lang3.StringUtils;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 import com.google.common.io.Closeables;
 import com.puppycrawl.tools.checkstyle.api.AbstractFileSetCheck;
 import com.puppycrawl.tools.checkstyle.api.CheckstyleException;
+import com.puppycrawl.tools.checkstyle.api.ExternalResourceHolder;
 import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
 /**
@@ -46,12 +47,13 @@ import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
  * Provides support for header and headerFile properties.
  * @author o_sukhosolsky
  */
-public abstract class AbstractHeaderCheck extends AbstractFileSetCheck {
+public abstract class AbstractHeaderCheck extends AbstractFileSetCheck
+    implements ExternalResourceHolder {
     /** Pattern to detect occurrences of '\n' in text. */
     private static final Pattern ESCAPED_LINE_FEED_PATTERN = Pattern.compile("\\\\n");
 
     /** The lines of the header file. */
-    private final List<String> readerLines = Lists.newArrayList();
+    private final List<String> readerLines = new ArrayList<>();
 
     /** The file that contains the header to check against. */
     private String headerFile;
@@ -69,8 +71,9 @@ public abstract class AbstractHeaderCheck extends AbstractFileSetCheck {
      * Return the header lines to check against.
      * @return the header lines to check against.
      */
-    protected ImmutableList<String> getHeaderLines() {
-        return ImmutableList.copyOf(readerLines);
+    protected List<String> getHeaderLines() {
+        final List<String> copy = new ArrayList<>(readerLines);
+        return Collections.unmodifiableList(copy);
     }
 
     /**
@@ -92,7 +95,7 @@ public abstract class AbstractHeaderCheck extends AbstractFileSetCheck {
      * @throws CheckstyleException if fileName is empty.
      */
     public void setHeaderFile(String fileName) throws CheckstyleException {
-        if (StringUtils.isBlank(fileName)) {
+        if (CommonUtils.isBlank(fileName)) {
             throw new CheckstyleException(
                 "property 'headerFile' is missing or invalid in module "
                     + getConfiguration().getName());
@@ -142,24 +145,22 @@ public abstract class AbstractHeaderCheck extends AbstractFileSetCheck {
      * @throws ConversionException if the header cannot be interpreted
      */
     public void setHeader(String header) {
-        if (StringUtils.isBlank(header)) {
-            return;
-        }
+        if (!CommonUtils.isBlank(header)) {
+            checkHeaderNotInitialized();
 
-        checkHeaderNotInitialized();
+            final String headerExpandedNewLines = ESCAPED_LINE_FEED_PATTERN
+                    .matcher(header).replaceAll("\n");
 
-        final String headerExpandedNewLines = ESCAPED_LINE_FEED_PATTERN
-                .matcher(header).replaceAll("\n");
-
-        final Reader headerReader = new StringReader(headerExpandedNewLines);
-        try {
-            loadHeader(headerReader);
-        }
-        catch (final IOException ex) {
-            throw new ConversionException("unable to load header", ex);
-        }
-        finally {
-            Closeables.closeQuietly(headerReader);
+            final Reader headerReader = new StringReader(headerExpandedNewLines);
+            try {
+                loadHeader(headerReader);
+            }
+            catch (final IOException ex) {
+                throw new ConversionException("unable to load header", ex);
+            }
+            finally {
+                Closeables.closeQuietly(headerReader);
+            }
         }
     }
 
@@ -169,8 +170,8 @@ public abstract class AbstractHeaderCheck extends AbstractFileSetCheck {
      * @throws IOException if
      */
     private void loadHeader(final Reader headerReader) throws IOException {
-        final LineNumberReader lnr = new LineNumberReader(headerReader);
         readerLines.clear();
+        final LineNumberReader lnr = new LineNumberReader(headerReader);
         while (true) {
             final String line = lnr.readLine();
             if (line == null) {
@@ -189,5 +190,10 @@ public abstract class AbstractHeaderCheck extends AbstractFileSetCheck {
         if (readerLines.isEmpty()) {
             setHeader(null);
         }
+    }
+
+    @Override
+    public Set<String> getExternalResourceLocations() {
+        return Collections.singleton(headerFile);
     }
 }

@@ -22,12 +22,13 @@ package com.puppycrawl.tools.checkstyle.checks.coding;
 import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.Deque;
+import java.util.HashSet;
 import java.util.Set;
 
-import com.google.common.collect.Sets;
-import com.puppycrawl.tools.checkstyle.api.Check;
+import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
+import com.puppycrawl.tools.checkstyle.utils.CheckUtils;
 
 /**
  * <p>
@@ -43,7 +44,7 @@ import com.puppycrawl.tools.checkstyle.api.TokenTypes;
  * </p>
  * @author <a href="mailto:simon@redhillconsulting.com.au">Simon Harris</a>
  */
-public final class ParameterAssignmentCheck extends Check {
+public final class ParameterAssignmentCheck extends AbstractCheck {
 
     /**
      * A key is pointing to the warning message text in "messages.properties"
@@ -217,7 +218,7 @@ public final class ParameterAssignmentCheck extends Check {
      */
     private void visitMethodDef(DetailAST ast) {
         parameterNamesStack.push(parameterNames);
-        parameterNames = Sets.newHashSet();
+        parameterNames = new HashSet<>();
 
         visitMethodParameters(ast.findFirstToken(TokenTypes.PARAMETERS));
     }
@@ -236,7 +237,8 @@ public final class ParameterAssignmentCheck extends Check {
             ast.findFirstToken(TokenTypes.PARAMETER_DEF);
 
         while (parameterDefAST != null) {
-            if (parameterDefAST.getType() == TokenTypes.PARAMETER_DEF) {
+            if (parameterDefAST.getType() == TokenTypes.PARAMETER_DEF
+                    && !CheckUtils.isReceiverParameter(parameterDefAST)) {
                 final DetailAST param =
                     parameterDefAST.findFirstToken(TokenTypes.IDENT);
                 parameterNames.add(param.getText());

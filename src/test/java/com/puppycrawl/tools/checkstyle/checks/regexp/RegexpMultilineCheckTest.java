@@ -26,17 +26,17 @@ import static com.puppycrawl.tools.checkstyle.checks.regexp.MultilineDetector.MS
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import com.google.common.base.Charsets;
-import com.google.common.io.Files;
 import com.puppycrawl.tools.checkstyle.BaseFileSetCheckTestSupport;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
+import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
 public class RegexpMultilineCheckTest extends BaseFileSetCheckTestSupport {
     @Rule
@@ -67,7 +67,7 @@ public class RegexpMultilineCheckTest extends BaseFileSetCheckTestSupport {
 
     @Test
     public void testMessageProperty()
-        throws Exception {
+            throws Exception {
         final String illegal = "System\\.(out)|(err)\\.print(ln)?\\(";
         checkConfig.addAttribute("format", illegal);
         final String message = "Bad line :(";
@@ -94,7 +94,7 @@ public class RegexpMultilineCheckTest extends BaseFileSetCheckTestSupport {
         final String illegal = "SYSTEM\\.(OUT)|(ERR)\\.PRINT(LN)?\\(";
         checkConfig.addAttribute("format", illegal);
         checkConfig.addAttribute("ignoreCase", "false");
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
         verify(checkConfig, getPath("InputSemantic.java"), expected);
     }
 
@@ -121,20 +121,30 @@ public class RegexpMultilineCheckTest extends BaseFileSetCheckTestSupport {
         };
 
         final File file = temporaryFolder.newFile();
-        Files.write("first line \r\n second line \n\r third line", file, Charsets.UTF_8);
+        Files.write(file.toPath(),
+            "first line \r\n second line \n\r third line".getBytes(StandardCharsets.UTF_8));
 
         verify(checkConfig, file.getPath(), expected);
     }
 
     @Test
     public void testDefaultConfiguration() throws Exception {
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        verify(checkConfig, getPath("InputSemantic.java"), expected);
+    }
+
+    @Test
+    public void testNullFormat() throws Exception {
+        checkConfig.addAttribute("format", null);
+        final String[] expected = {
+            "0: " + getCheckMessage(MSG_EMPTY),
+        };
         verify(checkConfig, getPath("InputSemantic.java"), expected);
     }
 
     @Test
     public void testEmptyFormat() throws Exception {
-        checkConfig.addAttribute("format", null);
+        checkConfig.addAttribute("format", "");
         final String[] expected = {
             "0: " + getCheckMessage(MSG_EMPTY),
         };
@@ -151,7 +161,7 @@ public class RegexpMultilineCheckTest extends BaseFileSetCheckTestSupport {
         };
 
         final File file = temporaryFolder.newFile();
-        Files.write(makeLargeXyString(), file, Charsets.UTF_8);
+        Files.write(file.toPath(), makeLargeXyString().toString().getBytes(StandardCharsets.UTF_8));
 
         verify(checkConfig, file.getPath(), expected);
     }
@@ -166,7 +176,7 @@ public class RegexpMultilineCheckTest extends BaseFileSetCheckTestSupport {
         };
 
         final File file = temporaryFolder.newFile();
-        Files.write("", file, Charsets.UTF_8);
+        Files.write(file.toPath(), "".getBytes(StandardCharsets.UTF_8));
 
         verify(checkConfig, file.getPath(), expected);
     }
@@ -202,7 +212,7 @@ public class RegexpMultilineCheckTest extends BaseFileSetCheckTestSupport {
         final String illegal = "^import";
         checkConfig.addAttribute("format", illegal);
         checkConfig.addAttribute("maximum", "5000");
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
         verify(checkConfig, getPath("InputSemantic.java"), expected);
     }
 }

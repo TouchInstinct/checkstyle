@@ -21,14 +21,12 @@ package com.puppycrawl.tools.checkstyle.utils;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.commons.lang3.ArrayUtils;
-
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.DetailNode;
 import com.puppycrawl.tools.checkstyle.api.JavadocTokenTypes;
@@ -81,6 +79,15 @@ public final class JavadocUtils {
     private static final Pattern INLINE_TAG_PATTERN = Pattern.compile(
         ".*?\\{@(\\p{Alpha}+)\\s+(.*?)\\}");
 
+    /** Newline pattern. */
+    private static final Pattern NEWLINE = Pattern.compile("\n");
+
+    /** Return pattern. */
+    private static final Pattern RETURN = Pattern.compile("\r");
+
+    /** Tab pattern. */
+    private static final Pattern TAB = Pattern.compile("\t");
+
     // Using reflection gets all token names and values from JavadocTokenTypes class
     // and saves to TOKEN_NAME_TO_VALUE and TOKEN_VALUE_TO_NAME collections.
     static {
@@ -88,7 +95,7 @@ public final class JavadocUtils {
 
         final Field[] fields = JavadocTokenTypes.class.getDeclaredFields();
 
-        String[] tempTokenValueToName = ArrayUtils.EMPTY_STRING_ARRAY;
+        String[] tempTokenValueToName = CommonUtils.EMPTY_STRING_ARRAY;
 
         for (final Field field : fields) {
 
@@ -134,8 +141,8 @@ public final class JavadocUtils {
     public static JavadocTags getJavadocTags(TextBlock textBlock,
             JavadocTagType tagType) {
         final String[] text = textBlock.getText();
-        final List<JavadocTag> tags = Lists.newArrayList();
-        final List<InvalidJavadocTag> invalidTags = Lists.newArrayList();
+        final List<JavadocTag> tags = new ArrayList<>();
+        final List<InvalidJavadocTag> invalidTags = new ArrayList<>();
         for (int i = 0; i < text.length; i++) {
             final String textValue = text[i];
             final Matcher blockTagMatcher = getBlockTagPattern(i).matcher(textValue);
@@ -450,4 +457,14 @@ public final class JavadocUtils {
         return javadocTagName;
     }
 
+    /**
+     * Replace all control chars with excaped symbols.
+     * @param text the String to process.
+     * @return the processed String with all control chars excaped.
+     */
+    public static String excapeAllControlChars(String text) {
+        final String textWithoutNewlines = NEWLINE.matcher(text).replaceAll("\\\\n");
+        final String textWithoutReturns = RETURN.matcher(textWithoutNewlines).replaceAll("\\\\r");
+        return TAB.matcher(textWithoutReturns).replaceAll("\\\\t");
+    }
 }

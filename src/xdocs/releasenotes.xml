@@ -15,6 +15,593 @@
 
   <body>
 
+    <!-- placeholder for a new section -->
+
+    <section name="Release 7.1.1">
+      <p>Bug fixes:</p>
+        <ul>
+          <li>
+            EqualsHashCode: hashCode without equals is not a violation. Author: rnveach <a href="https://github.com/checkstyle/checkstyle/issues/3308">#3308</a>
+          </li>
+          <li>
+            RedundantModifier : missed violations at interface and abstract class methods signatures with final parameters. Author: rnveach <a href="https://github.com/checkstyle/checkstyle/issues/3322">#3322</a>
+          </li>
+        </ul>
+      <p>Notes:</p>
+        <ul>
+          <li>
+            Remove usage of System.out.println in IT resources. Author: Andrei Selkin <a href="https://github.com/checkstyle/checkstyle/issues/2541">#2541</a>
+          </li>
+          <li>
+            Flaws in German translation. Author: Claas Augner <a href="https://github.com/checkstyle/checkstyle/issues/3403">#3403</a>
+          </li>
+          <li>
+            Add NonDex tool to pom.xml and .travis.yml. Author: Ben Lambeth <a href="https://github.com/checkstyle/checkstyle/issues/3378">#3378</a>
+          </li>
+        </ul>
+    </section>
+
+    <section name="Release 7.1">
+      <p>New:</p>
+        <ul>
+          <li>
+            new CLI option: exclude directories. Author: rnveach <a href="https://github.com/checkstyle/checkstyle/issues/3287">#3287</a>
+          </li>
+          <li>
+            ImportOrder: make static imports ordering as in Eclipse. Author: Andrei Selkin <a href="https://github.com/checkstyle/checkstyle/issues/3101">#3101</a>
+          </li>
+        </ul>
+      <p>Bug fixes:</p>
+        <ul>
+          <li>
+            Indentation: incorrect expectation for wrapped arguments of chained calls. Author: Kevin Conaway <a href="https://github.com/checkstyle/checkstyle/issues/3208">#3208</a>
+          </li>
+          <li>
+            RedundantModifier: miss violation on extra final in try-with-resources. Author: rnveach, Roman Ivanov <a href="https://github.com/checkstyle/checkstyle/issues/3323">#3323</a>
+          </li>
+          <li>
+            RequireThisCheck: false positive on static field. Author: rnveach <a href="https://github.com/checkstyle/checkstyle/issues/3335">#3335</a>
+          </li>
+          <li>
+            FinalLocalVariable: false positive when variable is assigned inside and outside switch-block. Author: Andrei Selkin <a href="https://github.com/checkstyle/checkstyle/issues/3074">#3074</a>
+          </li>
+          <li>
+            RequireThisCheck: NPE when surrounded by braces. Author: rnveach <a href="https://github.com/checkstyle/checkstyle/issues/3334">#3334</a>
+          </li>
+        </ul>
+      <p>Notes:</p>
+        <ul>
+          <li>
+            IndentationCheckTest makes assumption about the order of HashMap. Author: Ben Lambeth <a href="https://github.com/checkstyle/checkstyle/issues/3369">#3369</a>
+          </li>
+          <li>
+            Create web-page with instructions: how to create Javadoc Check. Author: Baratali Izmailov, Roman Ivanov <a href="https://github.com/checkstyle/checkstyle/issues/410">#410</a>
+          </li>
+          <li>
+            Update releasenotes generation. Author: Vladislav Lisetskii <a href="https://github.com/checkstyle/checkstyle/issues/3350">#3350</a>
+          </li>
+          <li>
+            Update releasenotes generation. Author: Vladislav Lisetskii <a href="https://github.com/checkstyle/checkstyle/issues/3349">#3349</a>
+          </li>
+          <li>
+            Update PULL_REQUEST_TEMPLATE.md. Author: Roman Ivanov
+          </li>
+          <li>
+            doc: Fix JavaDoc comments (#3338). Author: Michael Simons
+          </li>
+          <li>
+            Online docs: AST example for LITERAL_DO is missing the DO_WHILE node. Author: Roman Ivanov <a href="https://github.com/checkstyle/checkstyle/issues/3209">#3209</a>
+          </li>
+        </ul>
+    </section>
+
+    <section name="Release 7.0">
+      <p>Breaking backward compatibility:</p>
+        <ul>
+          <li>
+            update checkstyle to jdk8 as runtime jdk. Author: Roman Ivanov <a href="https://github.com/checkstyle/checkstyle/issues/3229">#3229</a>
+          </li>
+          <li>
+            Modules and XDocs: changed setter methods to recieve similar types with field type for easier xdoc validation. Author: rnveach <a href="https://github.com/checkstyle/checkstyle/issues/3212">#3212</a>
+          </li>
+        </ul>
+      <p>New:</p>
+        <ul>
+          <li>
+            VisibilityModifier: allow public final fields. Author: Andrei Selkin <a href="https://github.com/checkstyle/checkstyle/issues/2971">#2971</a>
+          </li>
+        </ul>
+      <p>Bug fixes:</p>
+        <ul>
+          <li>
+            Ability to differentiate annotation placement in for each loop from variable declaration.. Author: Andrei Selkin <a href="https://github.com/checkstyle/checkstyle/issues/3117">#3117</a>
+          </li>
+          <li>
+            Java 8 Grammar: Parsing of explicit receiver parameters. Author: rnveach <a href="https://github.com/checkstyle/checkstyle/issues/3239">#3239</a>
+          </li>
+          <li>
+            Java 8 Grammar: annotation on throws types. Author: rnveach <a href="https://github.com/checkstyle/checkstyle/issues/3237">#3237</a>
+          </li>
+          <li>
+            Java 8 Grammar: annotation on generic type. Author: rnveach <a href="https://github.com/checkstyle/checkstyle/issues/3240">#3240</a>
+          </li>
+          <li>
+            CommentsIndentation : Check incorrect work with subsequent comments. Author: Vladislav Lisetskii <a href="https://github.com/checkstyle/checkstyle/issues/3166">#3166</a>
+          </li>
+          <li>
+            CommentsIndentation : allow upper comments for following block at multi-block structures. Author: Vladislav Lisetskiy <a href="https://github.com/checkstyle/checkstyle/issues/3220">#3220</a>
+          </li>
+          <li>
+            CommentsIndentation : false-positive in empty array declarations. Author: Vladislav Lisetskiy <a href="https://github.com/checkstyle/checkstyle/issues/3127">#3127</a>
+          </li>
+          <li>
+            CommentsIndentation: false-positive when a singleline comment follows a block comment. Author: Vladislav Lisetskiy <a href="https://github.com/checkstyle/checkstyle/issues/3126">#3126</a>
+          </li>
+          <li>
+            RightCurly rule should properly enforce same rule for LITERAL_DO. Author: Andrei Selkin <a href="https://github.com/checkstyle/checkstyle/issues/3090">#3090</a>
+          </li>
+          <li>
+            Proper support for generics in visibility modifier check. Author: Andrei Selkin <a href="https://github.com/checkstyle/checkstyle/issues/3142">#3142</a>
+          </li>
+          <li>
+            Indentation: incorrect validation for imports and package. Author: rnveach <a href="https://github.com/checkstyle/checkstyle/issues/2618">#2618</a>
+          </li>
+          <li>
+            Indentation: remove requirement right curlies to be first on line. Author: rnveach <a href="https://github.com/checkstyle/checkstyle/issues/3116">#3116</a>
+          </li>
+        </ul>
+      <p>Notes:</p>
+        <ul>
+          <li>
+            doc: fixed checkstyle download url (#3304). Author: rnveach
+          </li>
+          <li>
+            Reduce the number of tasks performed by Travis CI. Author: Andrei Selkin, Roman Ivanov <a href="https://github.com/checkstyle/checkstyle/issues/3159">#3159</a>
+          </li>
+          <li>
+            Cut down on Checkstyle&#39;s dependencies on Guava. Author: Andrei Selkin <a href="https://github.com/checkstyle/checkstyle/issues/3293">#3293</a>
+          </li>
+          <li>
+            doc: update for AnnotationLocation examples to be more exact. Author: Roman Ivanov
+          </li>
+          <li>
+            6 tests in Checkstyle master branch fail at clean Ubuntu 14.04 Docker container (Java 8, Maven 3). Author: Andrei Selkin <a href="https://github.com/checkstyle/checkstyle/issues/3177">#3177</a>
+          </li>
+          <li>
+            Avoid catching of InvalidPathException and AccessDeniedException in PropertyCacheFile#persist. Author: Andrei Selkin <a href="https://github.com/checkstyle/checkstyle/issues/3259">#3259</a>
+          </li>
+          <li>
+            Review all French translations. Author: Vincent Privat <a href="https://github.com/checkstyle/checkstyle/issues/3282">#3282</a>
+          </li>
+          <li>
+            Improve French translation for annotations warnings. Author: Vincent Privat <a href="https://github.com/checkstyle/checkstyle/issues/3278">#3278</a>
+          </li>
+          <li>
+            Create web-page with instructions: how to create Javadoc Check. Author: Baratali Izmailov, Roman Ivanov <a href="https://github.com/checkstyle/checkstyle/issues/410">#410</a>
+          </li>
+          <li>
+            corrected alphabetical order of the checks. Author: Claus Schrammel <a href="https://github.com/checkstyle/checkstyle/issues/3263">#3263</a>
+          </li>
+          <li>
+            CommitValidationTest.testCommitMessageHasSingleLine to support github default format. Author: rnveach <a href="https://github.com/checkstyle/checkstyle/issues/3266">#3266</a>
+          </li>
+          <li>
+            XDoc Config: create unit test to verify property types and default values. Author: rnveach <a href="https://github.com/checkstyle/checkstyle/issues/3187">#3187</a>
+          </li>
+        </ul>
+    </section>
+
+    <section name="Release 6.19">
+      <p>Breaking backward compatibility:</p>
+        <ul>
+          <li>
+           Aligned setters with String collection fields and broke old compatibility. Author: rnveach <a href="https://github.com/checkstyle/checkstyle/issues/3189">#3189</a>
+          </li>
+        </ul>
+      <p>New:</p>
+        <ul>
+          <li>
+            new Check: SingleSpaceSeparator. Author: rnveach <a href="https://github.com/checkstyle/checkstyle/issues/3173">#3173</a>
+          </li>
+          <li>
+            ReturnCount: special option for methods with void return type. Author: rnveach <a href="https://github.com/checkstyle/checkstyle/issues/3143">#3143</a>
+          </li>
+          <li>
+            new CLI argument: provide abililty to show debug level of logs from checkstyle code. Author: rnveach <a href="https://github.com/checkstyle/checkstyle/issues/3086">#3086</a>
+          </li>
+          <li>
+            Fix cache usage in presence of filters. Author: Andrei Selkin <a href="https://github.com/checkstyle/checkstyle/issues/407">#407</a>
+          </li>
+        </ul>
+      <p>Bug fixes:</p>
+        <ul>
+          <li>
+            CLI Javadoc tree printer doesn&#39;t show errors. Author: Baratali Izmailov <a href="https://github.com/checkstyle/checkstyle/issues/3219">#3219</a>
+          </li>
+          <li>
+            Block Comments: CR lines not handled the same as LF lines. Author: rnveach <a href="https://github.com/checkstyle/checkstyle/issues/3225">#3225</a>
+          </li>
+          <li>
+            IllegalTokenTextCheck and IllegalTokenCheck does not work with COMMENT_CONTENT token. Author: Roman Ivanov <a href="https://github.com/checkstyle/checkstyle/issues/3153">#3153</a>
+          </li>
+          <li>
+            Indentation: throwsIndent should configure indentation of `throws` on next line. Author: rnveach <a href="https://github.com/checkstyle/checkstyle/issues/2763">#2763</a>
+          </li>
+          <li>
+            UnusedImports: value javadoc tag does not reference imports. Author: Konstantin Lutovich <a href="https://github.com/checkstyle/checkstyle/issues/3157">#3157</a>
+          </li>
+        </ul>
+      <p>Notes:</p>
+        <ul>
+          <li>
+            FileContents confused about number of lines in comment separated by &#39;\r&#39;. Author: rnveach <a href="https://github.com/checkstyle/checkstyle/issues/3066">#3066</a>
+          </li>
+          <li>
+            Create web-page with instructions: how to create Javadoc Check. Author: Baratali Izmailov, Roman Ivanov <a href="https://github.com/checkstyle/checkstyle/issues/410">#410</a>
+          </li>
+          <li>
+            XDoc Config: create unit test to verify property types and default values. Author: rnveach <a href="https://github.com/checkstyle/checkstyle/issues/3187">#3187</a>
+          </li>
+          <li>
+            Some PullRequests validation for commit mesage miss some cases. Author: rnveach <a href="https://github.com/checkstyle/checkstyle/issues/3168">#3168</a>
+          </li>
+          <li>
+            AnnotationLocation: unclear behavior when annotation is among modifiers. Author: Roman Ivanov <a href="https://github.com/checkstyle/checkstyle/issues/3164">#3164</a>
+          </li>
+          <li>
+            Documentation for ANT property config is incorrect. Author: Roman Ivanov <a href="https://github.com/checkstyle/checkstyle/issues/3119">#3119</a>
+          </li>
+          <li>
+            Sevntu CS not running on all CS code. Author: rnveach, Roman Ivanov <a href="https://github.com/checkstyle/checkstyle/issues/3175">#3175</a>
+          </li>
+          <li>
+            Update version of commons-collections to 3.2.2(from 3.2.1) to fix security vulnerability CVE-2015-6420. Author: akhil <a href="https://github.com/checkstyle/checkstyle/issues/3162">#3162</a>
+          </li>
+          <li>
+            doc: Indentation property description become worded in the same way. Author: Roman Ivanov
+          </li>
+        </ul>
+    </section>
+
+    <section name="Release 6.18">
+      <p>New:</p>
+        <ul>
+          <li>
+            Make CLI option to print full parsing tree (java + comments + javadoc comments). Author: Baratali Izmailov <a href="https://github.com/checkstyle/checkstyle/issues/3040">#3040</a>
+          </li>
+          <li>
+            Add the ability to validate language codes by TranslationCheck. Author: Andrei Selkin <a href="https://github.com/checkstyle/checkstyle/issues/2969">#2969</a>
+          </li>
+          <li>
+            EmptyLineSeparator to check empty lines inside methods. Author: Vladislav Lisetskiy <a href="https://github.com/checkstyle/checkstyle/issues/2944">#2944</a>
+          </li>
+        </ul>
+      <p>Bug fixes:</p>
+        <ul>
+          <li>
+            NullPointerException in FinalLocalVariableCheck with Lambdas. Author: rnveach <a href="https://github.com/checkstyle/checkstyle/issues/3144">#3144</a>
+          </li>
+          <li>
+            Serious performance problem in All Javadoc Check that are based on ANTLR parser. Author: rnveach <a href="https://github.com/checkstyle/checkstyle/issues/1064">#1064</a>
+          </li>
+          <li>
+            CommentsIndentation Check - False Positive at End-of-Method. Author: Vladislav Lisetskiy <a href="https://github.com/checkstyle/checkstyle/issues/2998">#2998</a>
+          </li>
+          <li>
+            Indentation: fix line wrap hanlding. Author: rnveach <a href="https://github.com/checkstyle/checkstyle/issues/2950">#2950</a>
+          </li>
+          <li>
+            Indentation module regression in 6.16 and 6.17.. Author: rnveach <a href="https://github.com/checkstyle/checkstyle/issues/3103">#3103</a>
+          </li>
+          <li>
+            NPE in AnnotationLocationCheck.hasAnnotations. Author: rnveach <a href="https://github.com/checkstyle/checkstyle/issues/3106">#3106</a>
+          </li>
+          <li>
+            Execution of checkstyle audit failed caused by inherited javadoc tag. Author: rnveach <a href="https://github.com/checkstyle/checkstyle/issues/3065">#3065</a>
+          </li>
+          <li>
+            AvoidEscapedUnicodeCharacters: Tail comment check failed if there&#39;s tabs before tail comment.. Author: Vladislav Lisetskiy <a href="https://github.com/checkstyle/checkstyle/issues/3005">#3005</a>
+          </li>
+          <li>
+            FinalLocalVariable: false positive when variable is assigned multiple times. Author: Andrei Selkin <a href="https://github.com/checkstyle/checkstyle/issues/3006">#3006</a>
+          </li>
+          <li>
+            Support for LAMDA token in WhitespaceAround check. Author: Vladislav Lisetskiy <a href="https://github.com/checkstyle/checkstyle/issues/2924">#2924</a>
+          </li>
+        </ul>
+      <p>Notes:</p>
+        <ul>
+          <li>
+            maven-site-plugin:3.5 has problem to build our website. Author: Vladislav Lisetskiy, Roman Ivanov <a href="https://github.com/checkstyle/checkstyle/issues/2966">#2966</a>
+          </li>
+          <li>
+            RegexpOnFilename example from documentation does not work on checkstyle source. Author: rnveach <a href="https://github.com/checkstyle/checkstyle/issues/3085">#3085</a>
+          </li>
+          <li>
+            Create web-page with instructions: how to create Javadoc Check. Author: Baratali Izmailov <a href="https://github.com/checkstyle/checkstyle/issues/410">#410</a>
+          </li>
+          <li>
+            IndentationCheckTest: &#39;exp&#39; in input files are out of sync with test. Author: rnveach <a href="https://github.com/checkstyle/checkstyle/issues/3105">#3105</a>
+          </li>
+          <li>
+            Some redundant messages.. Author: rnveach <a href="https://github.com/checkstyle/checkstyle/issues/3000">#3000</a>
+          </li>
+          <li>
+            doc: added Codacy to the list of active tools. Author: JosÃ© Castro
+          </li>
+          <li>
+            Fix all issues for Java found by Codacy static analysis tool. Author: Andrei Selkin <a href="https://github.com/checkstyle/checkstyle/issues/2271">#2271</a>
+          </li>
+          <li>
+            Use Distelli CI for testing of Javadoc Checks. Author: Baratali Izmailov, Roman Ivanov <a href="https://github.com/checkstyle/checkstyle/issues/2825">#2825</a>
+          </li>
+          <li>
+            doc: DesignForExtension documentation is extended to warn user about possible misusage of this Check. Author: Roman Ivanov
+          </li>
+          <li>
+            Fund raising pages for checkstyle. Author: Roman Ivanov <a href="https://github.com/checkstyle/checkstyle/issues/3057">#3057</a>
+          </li>
+          <li>
+            Use DatatypeConverter#printHexBinary to convert byte array to hex String in PropertyCacheFile. Author: Andrei Selkin <a href="https://github.com/checkstyle/checkstyle/issues/3093">#3093</a>
+          </li>
+          <li>
+            SSLHandshakeException exception during linkcheck-maven-plugin . Author: Roman Ivanov <a href="https://github.com/checkstyle/checkstyle/issues/3080">#3080</a>
+          </li>
+          <li>
+            Speed up google_check validation test. Author: Vladislav Lisetskiy <a href="https://github.com/checkstyle/checkstyle/issues/3070">#3070</a>
+          </li>
+          <li>
+            Strive for 100% line coverage for java grammar. Author: rnveach <a href="https://github.com/checkstyle/checkstyle/issues/2973">#2973</a>
+          </li>
+        </ul>
+    </section>
+
+    <section name="Release 6.17">
+      <p>Breaking backward compatibility:</p>
+        <ul>
+          <li>
+            Add &#39;baseName&#39; option and remove &#39;basenameSeparator&#39; option of TranslationCheck. Author: Andrei Selkin <a href="https://github.com/checkstyle/checkstyle/issues/2204">#2204</a>
+          </li>
+        </ul>
+      <p>New:</p>
+        <ul>
+          <li>
+            Make CLI option to be able to print Javadoc tree as plain text. Author: Baratali Izmailov <a href="https://github.com/checkstyle/checkstyle/issues/652">#652</a>
+          </li>
+          <li>
+            java9: try structure is not parsable when only name is used. Author: Roman Ivanov <a href="https://github.com/checkstyle/checkstyle/issues/3025">#3025</a>
+          </li>
+          <li>
+            All messages translated to Chinese. Author: ybbpgfjtey <a href="https://github.com/checkstyle/checkstyle/issues/3001">#3001</a>
+          </li>
+          <li>
+            RequireThis: new option validateOnlyOverlapping. Author: Andrei Selkin <a href="https://github.com/checkstyle/checkstyle/issues/2362">#2362</a>
+          </li>
+        </ul>
+      <p>Bug fixes:</p>
+        <ul>
+          <li>
+            Bad german translation of summary.first.sentence. Author: Christian H. Kuhn <a href="https://github.com/checkstyle/checkstyle/issues/3013">#3013</a>
+          </li>
+          <li>
+            Ignored file extensions will output unterminated &lt;file&gt; tags in XML. Author: idarmans <a href="https://github.com/checkstyle/checkstyle/issues/3022">#3022</a>
+          </li>
+          <li>
+            NPE when running CS with cache with Maven plugin using NewlineAtEndOfFile. Author: Vladislav Lisetskiy <a href="https://github.com/checkstyle/checkstyle/issues/2218">#2218</a>
+          </li>
+          <li>
+            Exception when using method reference in lamba &quot;Class&lt;?&gt;[]::new&quot;. Author: Ilja Dubinin <a href="https://github.com/checkstyle/checkstyle/issues/2729">#2729</a>
+          </li>
+          <li>
+            ClassNotFoundException when using inherited exception (regression to issue #1192 fix). Author: Roman Ivanov <a href="https://github.com/checkstyle/checkstyle/issues/3008">#3008</a>
+          </li>
+        </ul>
+      <p>Notes:</p>
+        <ul>
+          <li>
+            doc: extending Rationale of NewlineAtEndOfFile with example. Author: Roman Ivanov
+          </li>
+          <li>
+            Fund raising pages for checkstyle. Author: Roman Ivanov <a href="https://github.com/checkstyle/checkstyle/issues/3057">#3057</a>
+          </li>
+          <li>
+            java8: Create compilable test inputs with all possible cases for method references. Author: rnveach <a href="https://github.com/checkstyle/checkstyle/issues/2968">#2968</a>
+          </li>
+          <li>
+            upgrade equalsverifier to version 2.0. Author: Vladislav Lisetskiy <a href="https://github.com/checkstyle/checkstyle/issues/3035">#3035</a>
+          </li>
+          <li>
+            remove dependency to commons-lang3 library. Author: Rasmus Kaj <a href="https://github.com/checkstyle/checkstyle/issues/2428">#2428</a>
+          </li>
+          <li>
+            reenable two sevntu checks. Author: Vladislav Lisetskiy <a href="https://github.com/checkstyle/checkstyle/issues/3042">#3042</a>
+          </li>
+          <li>
+            Use Collections.addAll() instead of adding elements individually. Author: Baratali Izmailov <a href="https://github.com/checkstyle/checkstyle/issues/625">#625</a>
+          </li>
+          <li>
+            Make coverage 100% for all classes at package com.puppycrawl.tools.checkstyle.ant. Author: Vladislav Lisetskiy, Roman Ivanov <a href="https://github.com/checkstyle/checkstyle/issues/1487">#1487</a>
+          </li>
+          <li>
+            Localed UTs are failing at CheckstyleAntTaskTest.testXmlOutput. Author: Roman Ivanov <a href="https://github.com/checkstyle/checkstyle/issues/3023">#3023</a>
+          </li>
+          <li>
+            Strive for 100% line coverage for java grammar. Author: rnveach <a href="https://github.com/checkstyle/checkstyle/issues/2973">#2973</a>
+          </li>
+        </ul>
+    </section>
+
+    <section name="Release 6.16.1">
+      <p>Bug fixes:</p>
+        <ul>
+          <li>
+            fix TokenTypes compatibility problems between 6.15 and 6.16. Author: rnveach <a href="https://github.com/checkstyle/checkstyle/issues/2997">#2997</a>
+          </li>
+          <li>
+            Allow JUnit ClassRule to be public. Author: Andrej Vano <a href="https://github.com/checkstyle/checkstyle/issues/2987">#2987</a>
+          </li>
+          <li>
+            FinalParameters should not warn for non-final parameters of native methods . Author: rnveach <a href="https://github.com/checkstyle/checkstyle/issues/2981">#2981</a>
+          </li>
+        </ul>
+      <p>Notes:</p>
+        <ul>
+          <li>
+            Revert &quot;Issue #2973: removed unused FLOAT_SUFFIX from java.g&quot;. Author: Roman Ivanov
+          </li>
+          <li>
+            all rows in coerage table google_style.html shoudl have anchor. Author: rnveach <a href="https://github.com/checkstyle/checkstyle/issues/2975">#2975</a>
+          </li>
+          <li>
+            Strive for 100% line coverage for java grammar. Author: rnveach <a href="https://github.com/checkstyle/checkstyle/issues/2973">#2973</a>
+          </li>
+        </ul>
+    </section>
+
+    <section name="Release 6.16">
+      <p>Breaking backward compatibility:</p>
+        <ul>
+          <li>
+            Move Treewalker cache to Checker. Author: Andrei Selkin <a href="https://github.com/checkstyle/checkstyle/issues/569">#569</a>
+          </li>
+        </ul>
+      <p>New:</p>
+        <ul>
+          <li>
+            Make CLI option to be able to print Javadoc tree as plain text. Author: Baratali Izmailov <a href="https://github.com/checkstyle/checkstyle/issues/652">#652</a>
+          </li>
+          <li>
+            copy Check class to AbstractCheck class to let deprecate Check class. Author: rnveach, Roman Ivanov <a href="https://github.com/checkstyle/checkstyle/issues/2551">#2551</a>
+          </li>
+          <li>
+            Print parse tree from CLI to terminal. Author: Vladislav Lisetskiy <a href="https://github.com/checkstyle/checkstyle/issues/2638">#2638</a>
+          </li>
+        </ul>
+      <p>Bug fixes:</p>
+        <ul>
+          <li>
+            Skip type annotations from validation of ModifierOrderCheck. Author: Andrei Selkin <a href="https://github.com/checkstyle/checkstyle/issues/903">#903</a>
+          </li>
+          <li>
+            Probable typo in com.puppycrawl.tools.checkstyle.checks.blocks.RightCurlyCheck. Author: Andrei Selkin <a href="https://github.com/checkstyle/checkstyle/issues/2762">#2762</a>
+          </li>
+          <li>
+            Indentation check reports some incorrect indentation levels on errors. Author: rnveach <a href="https://github.com/checkstyle/checkstyle/issues/2941">#2941</a>
+          </li>
+          <li>
+            6.15 complains about missing @return tag in a overridden method. Author: Vladislav Lisetskiy <a href="https://github.com/checkstyle/checkstyle/issues/2869">#2869</a>
+          </li>
+          <li>
+            Nesting Checks in each other in config does not produce any error. Author: rnveach <a href="https://github.com/checkstyle/checkstyle/issues/2773">#2773</a>
+          </li>
+          <li>
+            Forbid multiple violation for the same line in IndentaitonCheck. Author: liscju <a href="https://github.com/checkstyle/checkstyle/issues/676">#676</a>
+          </li>
+          <li>
+            LeftCurly not working correctly with lambdas. Author: liscju <a href="https://github.com/checkstyle/checkstyle/issues/2818">#2818</a>
+          </li>
+          <li>
+            Duplicate error message for static final field in DeclarationOrder check. Author: liscju <a href="https://github.com/checkstyle/checkstyle/issues/1048">#1048</a>
+          </li>
+          <li>
+            Translation Check: wrong support for resources with language, country, variant. Author: Andrei Selkin <a href="https://github.com/checkstyle/checkstyle/issues/2251">#2251</a>
+          </li>
+          <li>
+            Checkstyle internal exceptions lack contextual information. Author: Andrei Selkin <a href="https://github.com/checkstyle/checkstyle/issues/2285">#2285</a>
+          </li>
+          <li>
+            Changed semantics of PropertyExpander. Author: Petr Hejl <a href="https://github.com/checkstyle/checkstyle/issues/2886">#2886</a>
+          </li>
+          <li>
+            Indentation properties not applied properly to lambdas. Author: rnveach <a href="https://github.com/checkstyle/checkstyle/issues/281">#281</a>
+          </li>
+          <li>
+            VisibilityModifier.allowPublicImmutableFields should allow public immutable fields in enums. Author: Vladislav Lisetskiy <a href="https://github.com/checkstyle/checkstyle/issues/2887">#2887</a>
+          </li>
+          <li>
+            FinalClass is over aggressive when extending happen inside class. Author: liscju <a href="https://github.com/checkstyle/checkstyle/issues/2822">#2822</a>
+          </li>
+          <li>
+            WhitespaceAround should have an option allow double-brace initialization. Author: liscju <a href="https://github.com/checkstyle/checkstyle/issues/2838">#2838</a>
+          </li>
+          <li>
+            Exception when using method reference in lamba &quot;Class&lt;?&gt;[]::new&quot;. Author: Ilja Dubinin <a href="https://github.com/checkstyle/checkstyle/issues/2729">#2729</a>
+          </li>
+          <li>
+            Wasted disk access. Author: rnveach <a href="https://github.com/checkstyle/checkstyle/issues/2103">#2103</a>
+          </li>
+          <li>
+            JavadocType doesn&#39;t report unused param tag. Author: liscju <a href="https://github.com/checkstyle/checkstyle/issues/2811">#2811</a>
+          </li>
+          <li>
+            DeclarationOrder check enforces order that is not possible. Author: Andrei Selkin <a href="https://github.com/checkstyle/checkstyle/issues/924">#924</a>
+          </li>
+          <li>
+            Tabs are wrongly handled in Indentation check when line is wrapped. Author: rnveach <a href="https://github.com/checkstyle/checkstyle/issues/2795">#2795</a>
+          </li>
+          <li>
+            custom javadoc inline tags cause parse error. Author: rnveach <a href="https://github.com/checkstyle/checkstyle/issues/1184">#1184</a>
+          </li>
+          <li>
+            JavadocStyleCheck: String index out of range: -1. Author: rnveach <a href="https://github.com/checkstyle/checkstyle/issues/2788">#2788</a>
+          </li>
+        </ul>
+      <p>Notes:</p>
+        <ul>
+          <li>
+            Strive for 100% line coverage for java grammar. Author: rnveach <a href="https://github.com/checkstyle/checkstyle/issues/2973">#2973</a>
+          </li>
+          <li>
+            Refactor Comments AST Test. Author: rnveach <a href="https://github.com/checkstyle/checkstyle/issues/2396">#2396</a>
+          </li>
+          <li>
+            doc: example to checkstyle&#39;s Ant configuration was added to anttask.html. Author: Roman Ivanov
+          </li>
+          <li>
+            Travis: add xwiki project to regeression testing. Author: Vladislav Lisetskiy <a href="https://github.com/checkstyle/checkstyle/issues/2938">#2938</a>
+          </li>
+          <li>
+            PMD: resolve problems from DefaultPackage rule. Author: Vladislav Lisetskiy, Roman Ivanov <a href="https://github.com/checkstyle/checkstyle/issues/957">#957</a>
+          </li>
+          <li>
+            doc: Improve javadoc of parameters of AnnotationLocationCheck.. Author: liscju
+          </li>
+          <li>
+            fix java8 compilation broblems in Inputs. Author: rnveach <a href="https://github.com/checkstyle/checkstyle/issues/2904">#2904</a>
+          </li>
+          <li>
+            Create web-page with instructions: how to create Javadoc Check. Author: Baratali Izmailov <a href="https://github.com/checkstyle/checkstyle/issues/410">#410</a>
+          </li>
+          <li>
+            PMD ExceptionAsFlowControl: Do not use exceptions as flow control to create objects in PackageObjectFactory. Author: Vladislav Lisetskiy <a href="https://github.com/checkstyle/checkstyle/issues/1159">#1159</a>
+          </li>
+          <li>
+            ant with failOnViolation=&quot;false&quot; will FAIL. Author: Vladislav Lisetskiy <a href="https://github.com/checkstyle/checkstyle/issues/2185">#2185</a>
+          </li>
+          <li>
+            Checkstyle cannot be built using JDK9 as tools.jar has been dropped . Author: Peter Wong <a href="https://github.com/checkstyle/checkstyle/issues/2905">#2905</a>
+          </li>
+          <li>
+            CS&#39; java 8 code isn&#39;t compilable. Author: rnveach <a href="https://github.com/checkstyle/checkstyle/issues/2880">#2880</a>
+          </li>
+          <li>
+            doc: NPath documentation is extended. Author: Roman Ivanov
+          </li>
+          <li>
+            Refactor gui package. Author: Vladislav Lisetskiy <a href="https://github.com/checkstyle/checkstyle/issues/2609">#2609</a>
+          </li>
+          <li>
+            spelling: Correct spelling for fast-forward-merge.sh. Author: Thomas Paul Mann
+          </li>
+          <li>
+            UTs should be launched in default locale. Author: Vladislav Lisetskiy <a href="https://github.com/checkstyle/checkstyle/issues/2783">#2783</a>
+          </li>
+          <li>
+            Disallow usage of java.util.Stack and java.util.Vector in code. Author: Andrei Selkin <a href="https://github.com/checkstyle/checkstyle/issues/2859">#2859</a>
+          </li>
+        </ul>
+    </section>
+
     <section name="Release 6.15">
       <p>New:</p>
         <ul>
@@ -1283,7 +1870,7 @@
           Remove usage of deprecated methods from MainTest. Author: Michal Kordas <a href="https://github.com/checkstyle/checkstyle/issues/1325">#1325</a>
         </li>
         <li>
-          Restore checkstyle validation on nemo.sonarqube.org. Author: Roman Ivanov <a href="https://github.com/checkstyle/checkstyle/issues/1319">#1319</a>
+          Restore checkstyle validation on https://sonarqube.com. Author: Roman Ivanov <a href="https://github.com/checkstyle/checkstyle/issues/1319">#1319</a>
         </li>
         <li>
           Update Maven Shade Plugin, EqualsVerifier, antlr, system-rules and Maven PMD Plugin to latest versions. Author: Michal Kordas
@@ -2590,7 +3177,7 @@
       <p>Notes:</p>
       <ul>
         <li>
-          dsm-maven-plugin is used to show <a href="dsm/index.html">dependency structure of project</a> on site. Author: Ilja Dubinin.
+          dsm-maven-plugin is used to show dsm/index.html dependency structure of project on site. Author: Ilja Dubinin.
         </li>
         <li>
           Added and updated documentation/messages for number of Checks. Authors: Max Vetrenko, Thomas Jensen, Yuriy Chulovskyy, Jarmo Isotalo

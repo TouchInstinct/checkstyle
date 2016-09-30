@@ -24,11 +24,10 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Locale;
+import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.junit.Test;
 
-import com.google.common.collect.Lists;
 import com.puppycrawl.tools.checkstyle.BaseCheckTestSupport;
 import com.puppycrawl.tools.checkstyle.BriefUtLogger;
 import com.puppycrawl.tools.checkstyle.Checker;
@@ -42,6 +41,7 @@ import com.puppycrawl.tools.checkstyle.checks.javadoc.JavadocTypeCheck;
 import com.puppycrawl.tools.checkstyle.checks.naming.ConstantNameCheck;
 import com.puppycrawl.tools.checkstyle.checks.naming.MemberNameCheck;
 import com.puppycrawl.tools.checkstyle.checks.sizes.ParameterNumberCheck;
+import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
 public class SuppressWarningsFilterTest
     extends BaseCheckTestSupport {
@@ -78,7 +78,7 @@ public class SuppressWarningsFilterTest
     @Test
     public void testNone() throws Exception {
         final DefaultConfiguration filterConfig = null;
-        final String[] suppressed = ArrayUtils.EMPTY_STRING_ARRAY;
+        final String[] suppressed = CommonUtils.EMPTY_STRING_ARRAY;
         verifySuppressed(filterConfig, suppressed);
     }
 
@@ -114,7 +114,7 @@ public class SuppressWarningsFilterTest
 
     @Override
     public Checker createChecker(Configuration checkConfig)
-        throws Exception {
+            throws Exception {
         final DefaultConfiguration checkerConfig =
             new DefaultConfiguration("configuration");
         final DefaultConfiguration checksConfig =
@@ -155,8 +155,7 @@ public class SuppressWarningsFilterTest
     }
 
     private static String[] removeSuppressed(String[] from, String... remove) {
-        final Collection<String> coll =
-            Lists.newArrayList(Arrays.asList(from));
+        final Collection<String> coll = Arrays.stream(from).collect(Collectors.toList());
         coll.removeAll(Arrays.asList(remove));
         return coll.toArray(new String[coll.size()]);
     }

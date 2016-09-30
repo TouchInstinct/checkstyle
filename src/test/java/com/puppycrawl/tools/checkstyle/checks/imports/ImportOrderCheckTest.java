@@ -26,7 +26,6 @@ import static org.junit.Assert.assertEquals;
 import java.io.File;
 import java.io.IOException;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.internal.util.reflection.Whitebox;
@@ -40,6 +39,7 @@ import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
 import com.puppycrawl.tools.checkstyle.api.CheckstyleException;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
+import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(ImportOrderOption.class)
@@ -126,7 +126,7 @@ public class ImportOrderCheckTest extends BaseCheckTestSupport {
     public void testCaseInsensitive() throws Exception {
         final DefaultConfiguration checkConfig = createCheckConfig(ImportOrderCheck.class);
         checkConfig.addAttribute("caseSensitive", "false");
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
 
         verify(checkConfig, getPath("InputImportOrderCaseInsensitive.java"), expected);
     }
@@ -136,7 +136,7 @@ public class ImportOrderCheckTest extends BaseCheckTestSupport {
         final DefaultConfiguration checkConfig =
             createCheckConfig(ImportOrderCheck.class);
         checkConfig.addAttribute("option", "invalid_option");
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
 
         verify(checkConfig, getPath("InputImportOrder_Top.java"), expected);
     }
@@ -194,7 +194,7 @@ public class ImportOrderCheckTest extends BaseCheckTestSupport {
             createCheckConfig(ImportOrderCheck.class);
         checkConfig.addAttribute("option", "under");
         final String[] expected = {
-            "5: Wrong order for 'java.awt.Dialog' import.",
+            "5: " + getCheckMessage(MSG_ORDERING, "java.awt.Dialog"),
             "11: " + getCheckMessage(MSG_ORDERING, "java.awt.Button.ABORT"),
             "14: " + getCheckMessage(MSG_ORDERING, "java.io.File"),
         };
@@ -243,12 +243,8 @@ public class ImportOrderCheckTest extends BaseCheckTestSupport {
     public void testWildcardUnspecified() throws Exception {
         final DefaultConfiguration checkConfig = createCheckConfig(ImportOrderCheck.class);
 
-        /*
-        <property name="ordered" value="true"/>
-        <property name="separated" value="true"/>
-        */
         checkConfig.addAttribute("groups", "java,javax,org");
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
 
         verify(checkConfig, getPath("InputImportOrder_WildcardUnspecified.java"), expected);
     }
@@ -257,7 +253,7 @@ public class ImportOrderCheckTest extends BaseCheckTestSupport {
     public void testNoFailureForRedundantImports() throws Exception {
         final DefaultConfiguration checkConfig =
             createCheckConfig(ImportOrderCheck.class);
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
         verify(checkConfig, getPath("InputImportOrder_NoFailureForRedundantImports.java"),
             expected);
     }
@@ -269,7 +265,7 @@ public class ImportOrderCheckTest extends BaseCheckTestSupport {
         checkConfig.addAttribute("option", "top");
         checkConfig.addAttribute("groups", "org, java");
         checkConfig.addAttribute("sortStaticImportsAlphabetically", "true");
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
         verify(checkConfig, getPath("InputImportOrderStaticGroupOrder.java"), expected);
     }
 
@@ -292,7 +288,7 @@ public class ImportOrderCheckTest extends BaseCheckTestSupport {
         checkConfig.addAttribute("option", "bottom");
         checkConfig.addAttribute("groups", "org, java");
         checkConfig.addAttribute("sortStaticImportsAlphabetically", "true");
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
         verify(checkConfig, getPath("InputImportOrderStaticGroupOrderBottom.java"), expected);
     }
 
@@ -368,7 +364,7 @@ public class ImportOrderCheckTest extends BaseCheckTestSupport {
         checkConfig.addAttribute("option", "bottom");
         checkConfig.addAttribute("groups", "org, java");
         checkConfig.addAttribute("sortStaticImportsAlphabetically", "true");
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
         verify(checkConfig, getPath("InputImportOrderStaticOnDemandGroupOrderBottom.java"),
             expected);
     }
@@ -392,7 +388,7 @@ public class ImportOrderCheckTest extends BaseCheckTestSupport {
     public void testGroupWithSlashes() throws Exception {
         final DefaultConfiguration checkConfig = createCheckConfig(ImportOrderCheck.class);
         checkConfig.addAttribute("groups", "/^javax");
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
 
         verify(checkConfig, getPath("InputImportOrder.java"), expected);
     }
@@ -401,7 +397,7 @@ public class ImportOrderCheckTest extends BaseCheckTestSupport {
     public void testGroupWithDot() throws Exception {
         final DefaultConfiguration checkConfig = createCheckConfig(ImportOrderCheck.class);
         checkConfig.addAttribute("groups", "java.awt.");
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
 
         verify(checkConfig, getPath("InputImportOrder_NoFailureForRedundantImports.java"),
             expected);
@@ -411,14 +407,14 @@ public class ImportOrderCheckTest extends BaseCheckTestSupport {
     public void testMultiplePatternMatches() throws Exception {
         final DefaultConfiguration checkConfig = createCheckConfig(ImportOrderCheck.class);
         checkConfig.addAttribute("groups", "/java/,/rga/,/myO/,/org/,/organ./");
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
 
         verify(checkConfig, getNonCompilablePath("InputImportOrder_MultiplePatternMatches.java"),
             expected);
     }
 
     @Test(expected = IllegalStateException.class)
-    public void testVisitTokenSwitchReflection() throws Exception {
+    public void testVisitTokenSwitchReflection() {
         // Create mock ast
         final DetailAST astImport = mockAST(TokenTypes.IMPORT, "import", "mockfile", 0, 0);
         final DetailAST astIdent = mockAST(TokenTypes.IDENT, "myTestImport", "mockfile", 0, 0);
@@ -467,7 +463,7 @@ public class ImportOrderCheckTest extends BaseCheckTestSupport {
         checkConfig.addAttribute("separated", "true");
         checkConfig.addAttribute("option", "top");
         checkConfig.addAttribute("sortStaticImportsAlphabetically", "true");
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
 
         verify(checkConfig, getPath("InputImportOrder_EclipseDefaultPositive.java"), expected);
     }
@@ -486,5 +482,52 @@ public class ImportOrderCheckTest extends BaseCheckTestSupport {
             };
 
         verify(checkConfig, getPath("InputImportOrder_EclipseDefaultNegative.java"), expected);
+    }
+
+    @Test
+    public void testUseContainerOrderingForStaticTrue() throws Exception {
+        final DefaultConfiguration checkConfig = createCheckConfig(ImportOrderCheck.class);
+        checkConfig.addAttribute("groups", "/^javax?\\./,org");
+        checkConfig.addAttribute("ordered", "true");
+        checkConfig.addAttribute("separated", "true");
+        checkConfig.addAttribute("option", "top");
+        checkConfig.addAttribute("caseSensitive", "false");
+        checkConfig.addAttribute("sortStaticImportsAlphabetically", "true");
+        checkConfig.addAttribute("useContainerOrderingForStatic", "true");
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        verify(checkConfig, getNonCompilablePath("InputEclipseStaticImportsOrder.java"), expected);
+    }
+
+    @Test
+    public void testUseContainerOrderingForStaticFalse() throws Exception {
+        final DefaultConfiguration checkConfig = createCheckConfig(ImportOrderCheck.class);
+        checkConfig.addAttribute("groups", "/^javax?\\./,org");
+        checkConfig.addAttribute("ordered", "true");
+        checkConfig.addAttribute("separated", "true");
+        checkConfig.addAttribute("option", "top");
+        checkConfig.addAttribute("caseSensitive", "false");
+        checkConfig.addAttribute("sortStaticImportsAlphabetically", "true");
+        checkConfig.addAttribute("useContainerOrderingForStatic", "false");
+        final String[] expected = {
+            "6: " + getCheckMessage(MSG_ORDERING,
+                "io.netty.handler.codec.http.HttpHeaders.Names.addDate"),
+        };
+        verify(checkConfig, getNonCompilablePath("InputEclipseStaticImportsOrder.java"), expected);
+    }
+
+    @Test
+    public void testUseContainerOrderingForStaticTrueCaseSensitive() throws Exception {
+        final DefaultConfiguration checkConfig = createCheckConfig(ImportOrderCheck.class);
+        checkConfig.addAttribute("groups", "/^javax?\\./,org");
+        checkConfig.addAttribute("ordered", "true");
+        checkConfig.addAttribute("separated", "true");
+        checkConfig.addAttribute("option", "top");
+        checkConfig.addAttribute("sortStaticImportsAlphabetically", "true");
+        checkConfig.addAttribute("useContainerOrderingForStatic", "true");
+        final String[] expected = {
+            "7: " + getCheckMessage(MSG_ORDERING,
+                "io.netty.handler.codec.http.HttpHeaders.Names.DATE"),
+            };
+        verify(checkConfig, getNonCompilablePath("InputEclipseStaticImportsOrder.java"), expected);
     }
 }

@@ -26,13 +26,12 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Locale;
+import java.util.stream.Collectors;
 
 import org.apache.commons.beanutils.ConversionException;
-import org.apache.commons.lang3.ArrayUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.google.common.collect.Lists;
 import com.puppycrawl.tools.checkstyle.BaseCheckTestSupport;
 import com.puppycrawl.tools.checkstyle.BriefUtLogger;
 import com.puppycrawl.tools.checkstyle.Checker;
@@ -47,6 +46,7 @@ import com.puppycrawl.tools.checkstyle.checks.FileContentsHolder;
 import com.puppycrawl.tools.checkstyle.checks.coding.IllegalCatchCheck;
 import com.puppycrawl.tools.checkstyle.checks.naming.ConstantNameCheck;
 import com.puppycrawl.tools.checkstyle.checks.naming.MemberNameCheck;
+import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
 import nl.jqno.equalsverifier.EqualsVerifier;
 
@@ -80,7 +80,7 @@ public class SuppressionCommentFilterTest
     @Test
     public void testNone() throws Exception {
         final DefaultConfiguration filterConfig = null;
-        final String[] suppressed = ArrayUtils.EMPTY_STRING_ARRAY;
+        final String[] suppressed = CommonUtils.EMPTY_STRING_ARRAY;
         verifySuppressed(filterConfig, suppressed);
     }
 
@@ -204,7 +204,7 @@ public class SuppressionCommentFilterTest
 
     private void verifySuppressed(Configuration aFilterConfig,
             String... aSuppressed)
-        throws Exception {
+            throws Exception {
         verify(createChecker(aFilterConfig),
                getPath("InputSuppressionCommentFilter.java"),
                removeSuppressed(ALL_MESSAGES, aSuppressed));
@@ -240,8 +240,7 @@ public class SuppressionCommentFilterTest
     }
 
     private static String[] removeSuppressed(String[] from, String... remove) {
-        final Collection<String> coll =
-            Lists.newArrayList(Arrays.asList(from));
+        final Collection<String> coll = Arrays.stream(from).collect(Collectors.toList());
         coll.removeAll(Arrays.asList(remove));
         return coll.toArray(new String[coll.size()]);
     }
@@ -265,9 +264,9 @@ public class SuppressionCommentFilterTest
         final DefaultConfiguration filterConfig =
             createFilterConfig(SuppressionCommentFilter.class);
         filterConfig.addAttribute("checkFormat", "e[l");
-        final String[] suppressed = ArrayUtils.EMPTY_STRING_ARRAY;
 
         try {
+            final String[] suppressed = CommonUtils.EMPTY_STRING_ARRAY;
             verifySuppressed(filterConfig, suppressed);
         }
         catch (CheckstyleException ex) {
@@ -282,9 +281,9 @@ public class SuppressionCommentFilterTest
         final DefaultConfiguration filterConfig =
             createFilterConfig(SuppressionCommentFilter.class);
         filterConfig.addAttribute("messageFormat", "e[l");
-        final String[] suppressed = ArrayUtils.EMPTY_STRING_ARRAY;
 
         try {
+            final String[] suppressed = CommonUtils.EMPTY_STRING_ARRAY;
             verifySuppressed(filterConfig, suppressed);
         }
         catch (CheckstyleException ex) {

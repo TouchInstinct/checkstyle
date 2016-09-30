@@ -21,15 +21,16 @@ package com.puppycrawl.tools.checkstyle.checks.design;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import antlr.collections.AST;
-
-import com.google.common.collect.ImmutableList;
-import com.puppycrawl.tools.checkstyle.api.Check;
+import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.FullIdent;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
@@ -58,6 +59,7 @@ import com.puppycrawl.tools.checkstyle.utils.ScopeUtils;
  * </p>
  * <ul>
  * <li>org.junit.Rule</li>
+ * <li>org.junit.ClassRule</li>
  * <li>com.google.common.annotations.VisibleForTesting</li>
  * </ul>
  * <p>
@@ -71,8 +73,11 @@ import com.puppycrawl.tools.checkstyle.utils.ScopeUtils;
  * </pre>
  *
  * <p>
- * <b>allowPublicImmutableFields</b> - which allows immutable fields be
- * declared as public if defined in final class. Default value is <b>true</b>
+ * <b>allowPublicFinalFields</b> - which allows public final fields. Default value is <b>false</b>.
+ * </p>
+ * <p>
+ * <b>allowPublicImmutableFields</b> - which allows immutable fields to be
+ * declared as public if defined in final class. Default value is <b>false</b>
  * </p>
  * <p>
  * Field is known to be immutable if:
@@ -130,21 +135,21 @@ import com.puppycrawl.tools.checkstyle.utils.ScopeUtils;
  * </p>
  * Examples:
  * <p>
- * Default Check's configuration will pass the code below:
+ * The check will rise 3 violations if it is run with default configuration against the following
+ * code example:
  * </p>
  *
  * <pre>
  * {@code
- * public final class ImmutableClass
+ * public class ImmutableClass
  * {
- *     public final int intValue; // No warning
- *     public final java.lang.String notes; // No warning
- *     public final BigDecimal value; // No warning
+ *     public int intValue; // violation
+ *     public java.lang.String notes; // violation
+ *     public BigDecimal value; // violation
  *
  *     public ImmutableClass(int intValue, BigDecimal value, String notes)
  *     {
- *         this.includes = ImmutableSet.copyOf(includes);
- *         this.excludes = ImmutableSet.copyOf(excludes);
+ *         this.intValue = intValue;
  *         this.value = value;
  *         this.notes = notes;
  *     }
@@ -158,6 +163,7 @@ import com.puppycrawl.tools.checkstyle.utils.ScopeUtils;
  * </p>
  * <p>
  * &lt;module name=&quot;VisibilityModifier&quot;&gt;
+ *   &lt;property name=&quot;allowPublicImmutableFields&quot; value=&quot;true&quot;/&gt;
  *   &lt;property name=&quot;immutableClassCanonicalNames&quot; value=&quot;java.util.List,
  *   com.google.common.collect.ImmutableSet&quot;/&gt;
  * &lt;/module&gt;
@@ -233,7 +239,7 @@ import com.puppycrawl.tools.checkstyle.utils.ScopeUtils;
  * @author <a href="mailto:nesterenko-aleksey@list.ru">Aleksey Nesterenko</a>
  */
 public class VisibilityModifierCheck
-    extends Check {
+    extends AbstractCheck {
 
     /**
      * A key is pointing to the warning message text in "messages.properties"
@@ -242,34 +248,37 @@ public class VisibilityModifierCheck
     public static final String MSG_KEY = "variable.notPrivate";
 
     /** Default immutable types canonical names. */
-    private static final List<String> DEFAULT_IMMUTABLE_TYPES = ImmutableList.of(
-        "java.lang.String",
-        "java.lang.Integer",
-        "java.lang.Byte",
-        "java.lang.Character",
-        "java.lang.Short",
-        "java.lang.Boolean",
-        "java.lang.Long",
-        "java.lang.Double",
-        "java.lang.Float",
-        "java.lang.StackTraceElement",
-        "java.math.BigInteger",
-        "java.math.BigDecimal",
-        "java.io.File",
-        "java.util.Locale",
-        "java.util.UUID",
-        "java.net.URL",
-        "java.net.URI",
-        "java.net.Inet4Address",
-        "java.net.Inet6Address",
-        "java.net.InetSocketAddress"
-    );
+    private static final List<String> DEFAULT_IMMUTABLE_TYPES = Collections.unmodifiableList(
+        Stream.of(
+            "java.lang.String",
+            "java.lang.Integer",
+            "java.lang.Byte",
+            "java.lang.Character",
+            "java.lang.Short",
+            "java.lang.Boolean",
+            "java.lang.Long",
+            "java.lang.Double",
+            "java.lang.Float",
+            "java.lang.StackTraceElement",
+            "java.math.BigInteger",
+            "java.math.BigDecimal",
+            "java.io.File",
+            "java.util.Locale",
+            "java.util.UUID",
+            "java.net.URL",
+            "java.net.URI",
+            "java.net.Inet4Address",
+            "java.net.Inet6Address",
+            "java.net.InetSocketAddress"
+        ).collect(Collectors.toList()));
 
     /** Default ignore annotations canonical names. */
-    private static final List<String> DEFAULT_IGNORE_ANNOTATIONS = ImmutableList.of(
-        "org.junit.Rule",
-        "com.google.common.annotations.VisibleForTesting"
-    );
+    private static final List<String> DEFAULT_IGNORE_ANNOTATIONS = Collections.unmodifiableList(
+        Stream.of(
+            "org.junit.Rule",
+            "org.junit.ClassRule",
+            "com.google.common.annotations.VisibleForTesting"
+        ).collect(Collectors.toList()));
 
     /** Name for 'public' access modifier. */
     private static final String PUBLIC_ACCESS_MODIFIER = "public";
@@ -326,8 +335,11 @@ public class VisibilityModifierCheck
     /** Whether package visible members are allowed. */
     private boolean packageAllowed;
 
-    /** Allows immutable fields to be declared as public. */
-    private boolean allowPublicImmutableFields = true;
+    /** Allows immutable fields of final classes to be declared as public. */
+    private boolean allowPublicImmutableFields;
+
+    /** Allows final fields to be declared as public. */
+    private boolean allowPublicFinalFields;
 
     /** List of immutable classes canonical names. */
     private List<String> immutableClassCanonicalNames = new ArrayList<>(DEFAULT_IMMUTABLE_TYPES);
@@ -369,11 +381,19 @@ public class VisibilityModifierCheck
     }
 
     /**
-     * Sets whether public immutable are allowed.
+     * Sets whether public immutable fields are allowed.
      * @param allow user's value.
      */
     public void setAllowPublicImmutableFields(boolean allow) {
         allowPublicImmutableFields = allow;
+    }
+
+    /**
+     * Sets whether public final fields are allowed.
+     * @param allow user's value.
+     */
+    public void setAllowPublicFinalFields(boolean allow) {
+        allowPublicFinalFields = allow;
     }
 
     /**
@@ -538,8 +558,7 @@ public class VisibilityModifierCheck
                 || packageAllowed && PACKAGE_ACCESS_MODIFIER.equals(variableScope)
                 || protectedAllowed && PROTECTED_ACCESS_MODIFIER.equals(variableScope)
                 || isIgnoredPublicMember(variableName, variableScope)
-                   || allowPublicImmutableFields
-                      && isImmutableFieldDefinedInFinalClass(variableDef);
+                || isAllowedPublicField(variableDef);
         }
 
         return result;
@@ -568,6 +587,16 @@ public class VisibilityModifierCheck
     }
 
     /**
+     * Checks whether the variable satisfies the public field check.
+     * @param variableDef Variable definition node.
+     * @return true if allowed.
+     */
+    private boolean isAllowedPublicField(DetailAST variableDef) {
+        return allowPublicFinalFields && isFinalField(variableDef)
+            || allowPublicImmutableFields && isImmutableFieldDefinedInFinalClass(variableDef);
+    }
+
+    /**
      * Checks whether immutable field is defined in final class.
      * @param variableDef Variable definition node.
      * @return true if immutable field is defined in final class.
@@ -575,7 +604,8 @@ public class VisibilityModifierCheck
     private boolean isImmutableFieldDefinedInFinalClass(DetailAST variableDef) {
         final DetailAST classDef = variableDef.getParent().getParent();
         final Set<String> classModifiers = getModifiers(classDef);
-        return classModifiers.contains(FINAL_KEYWORD) && isImmutableField(variableDef);
+        return (classModifiers.contains(FINAL_KEYWORD) || classDef.getType() == TokenTypes.ENUM_DEF)
+                && isImmutableField(variableDef);
     }
 
     /**
@@ -594,7 +624,6 @@ public class VisibilityModifierCheck
             }
         }
         return modifiersSet;
-
     }
 
     /**
@@ -625,19 +654,96 @@ public class VisibilityModifierCheck
      */
     private boolean isImmutableField(DetailAST variableDef) {
         boolean result = false;
-
-        final DetailAST modifiers = variableDef.findFirstToken(TokenTypes.MODIFIERS);
-        final boolean isFinal = modifiers.branchContains(TokenTypes.FINAL);
-        if (isFinal) {
+        if (isFinalField(variableDef)) {
             final DetailAST type = variableDef.findFirstToken(TokenTypes.TYPE);
-            final boolean isCanonicalName = type.getFirstChild().getType() == TokenTypes.DOT;
+            final boolean isCanonicalName = isCanonicalName(type);
             final String typeName = getTypeName(type, isCanonicalName);
-
-            result = !isCanonicalName && isPrimitive(type)
-                     || immutableClassShortNames.contains(typeName)
-                     || isCanonicalName && immutableClassCanonicalNames.contains(typeName);
+            final DetailAST typeArgs = getGenericTypeArgs(type, isCanonicalName);
+            if (typeArgs == null) {
+                result = !isCanonicalName && isPrimitive(type)
+                    || immutableClassShortNames.contains(typeName)
+                    || isCanonicalName && immutableClassCanonicalNames.contains(typeName);
+            }
+            else {
+                final List<String> argsClassNames = getTypeArgsClassNames(typeArgs);
+                result = (immutableClassShortNames.contains(typeName)
+                    || isCanonicalName && immutableClassCanonicalNames.contains(typeName))
+                    && areImmutableTypeArguments(argsClassNames);
+            }
         }
         return result;
+    }
+
+    /**
+     * Checks whether type definition is in canonical form.
+     * @param type type definition token.
+     * @return true if type definition is in canonical form.
+     */
+    private static boolean isCanonicalName(DetailAST type) {
+        return type.getFirstChild().getType() == TokenTypes.DOT;
+    }
+
+    /**
+     * Returns generic type arguments token.
+     * @param type type token.
+     * @param isCanonicalName whether type name is in canonical form.
+     * @return generic type arguments token.
+     */
+    private static DetailAST getGenericTypeArgs(DetailAST type, boolean isCanonicalName) {
+        final DetailAST typeArgs;
+        if (isCanonicalName) {
+            // if type class name is in canonical form, abstract tree has specific structure
+            typeArgs = type.getFirstChild().findFirstToken(TokenTypes.TYPE_ARGUMENTS);
+        }
+        else {
+            typeArgs = type.findFirstToken(TokenTypes.TYPE_ARGUMENTS);
+        }
+        return typeArgs;
+    }
+
+    /**
+     * Returns a list of type parameters class names.
+     * @param typeArgs type arguments token.
+     * @return a list of type parameters class names.
+     */
+    private static List<String> getTypeArgsClassNames(DetailAST typeArgs) {
+        final List<String> typeClassNames = new ArrayList<>();
+        DetailAST type = typeArgs.findFirstToken(TokenTypes.TYPE_ARGUMENT);
+        boolean isCanonicalName = isCanonicalName(type);
+        String typeName = getTypeName(type, isCanonicalName);
+        typeClassNames.add(typeName);
+        DetailAST sibling = type.getNextSibling();
+        while (sibling.getType() == TokenTypes.COMMA) {
+            type = sibling.getNextSibling();
+            isCanonicalName = isCanonicalName(type);
+            typeName = getTypeName(type, isCanonicalName);
+            typeClassNames.add(typeName);
+            sibling = type.getNextSibling();
+        }
+        return typeClassNames;
+    }
+
+    /**
+     * Checks whether all of generic type arguments are immutable.
+     * If at least one argument is mutable, we assume that the whole list of type arguments
+     * is mutable.
+     * @param typeArgsClassNames type arguments class names.
+     * @return true if all of generic type arguments are immutable.
+     */
+    private boolean areImmutableTypeArguments(List<String> typeArgsClassNames) {
+        return !typeArgsClassNames.stream().filter(
+            typeName -> !immutableClassShortNames.contains(typeName)
+                && !immutableClassCanonicalNames.contains(typeName)).findFirst().isPresent();
+    }
+
+    /**
+     * Checks whether current field is final.
+     * @param variableDef field in consideration.
+     * @return true if current field is final.
+     */
+    private static boolean isFinalField(DetailAST variableDef) {
+        final DetailAST modifiers = variableDef.findFirstToken(TokenTypes.MODIFIERS);
+        return modifiers.branchContains(TokenTypes.FINAL);
     }
 
     /**
@@ -684,9 +790,11 @@ public class VisibilityModifierCheck
             toVisit = getNextSubTreeNode(toVisit, type);
             if (toVisit != null && toVisit.getType() == TokenTypes.IDENT) {
                 canonicalNameBuilder.append(toVisit.getText());
-                final DetailAST nextSubTreeNode = getNextSubTreeNode(toVisit,
-                         type);
+                final DetailAST nextSubTreeNode = getNextSubTreeNode(toVisit, type);
                 if (nextSubTreeNode != null) {
+                    if (nextSubTreeNode.getType() == TokenTypes.TYPE_ARGUMENTS) {
+                        break;
+                    }
                     canonicalNameBuilder.append('.');
                 }
             }

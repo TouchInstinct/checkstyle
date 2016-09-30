@@ -25,6 +25,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -42,7 +43,6 @@ import org.apache.tools.ant.types.FileSet;
 import org.apache.tools.ant.types.Path;
 import org.apache.tools.ant.types.Reference;
 
-import com.google.common.collect.Lists;
 import com.google.common.io.Closeables;
 import com.puppycrawl.tools.checkstyle.Checker;
 import com.puppycrawl.tools.checkstyle.ConfigurationLoader;
@@ -71,13 +71,13 @@ public class CheckstyleAntTask extends Task {
     private static final String TIME_SUFFIX = " ms.";
 
     /** Contains the filesets to process. */
-    private final List<FileSet> fileSets = Lists.newArrayList();
+    private final List<FileSet> fileSets = new ArrayList<>();
 
     /** Contains the formatters to log to. */
-    private final List<Formatter> formatters = Lists.newArrayList();
+    private final List<Formatter> formatters = new ArrayList<>();
 
     /** Contains the Properties to override. */
-    private final List<Property> overrideProps = Lists.newArrayList();
+    private final List<Property> overrideProps = new ArrayList<>();
 
     /** Class path to locate class files. */
     private Path classpath;
@@ -115,7 +115,7 @@ public class CheckstyleAntTask extends Task {
     ////////////////////////////////////////////////////////////////////////////
 
     /**
-     * Tells this task to set the named property to "true" when there
+     * Tells this task to write failure message to the named property when there
      * is a violation.
      * @param propertyName the name of the property to set
      *                      in the event of an failure.
@@ -226,6 +226,8 @@ public class CheckstyleAntTask extends Task {
      * @param url the URL of the configuration to use
      * @deprecated please use setConfigUrl instead
      */
+    // -@cs[AbbreviationAsWordInName] Should be removed at 7.0 version,
+    // we keep for some time to avoid braking compatibility.
     @Deprecated
     public void setConfigURL(URL url) {
         setConfigUrl(url);
@@ -283,7 +285,7 @@ public class CheckstyleAntTask extends Task {
         try {
             // output version info in debug mode
             final ResourceBundle compilationProperties = ResourceBundle
-                    .getBundle("checkstylecompilation");
+                    .getBundle("checkstylecompilation", Locale.ROOT);
             final String version = compilationProperties
                     .getString("checkstyle.compile.version");
             final String compileTimestamp = compilationProperties
@@ -331,9 +333,18 @@ public class CheckstyleAntTask extends Task {
             processFiles(checker, warningCounter, checkstyleVersion);
         }
         finally {
-            if (checker != null) {
-                checker.destroy();
-            }
+            destroyChecker(checker);
+        }
+    }
+
+    /**
+     * Destroy Checker. This method exists only due to bug in cobertura library
+     * https://github.com/cobertura/cobertura/issues/170
+     * @param checker Checker that was used to process files
+     */
+    private static void destroyChecker(Checker checker) {
+        if (checker != null) {
+            checker.destroy();
         }
     }
 
@@ -494,7 +505,7 @@ public class CheckstyleAntTask extends Task {
      * @return the list of files included via the filesets.
      */
     protected List<File> scanFileSets() {
-        final List<File> list = Lists.newArrayList();
+        final List<File> list = new ArrayList<>();
         if (fileName != null) {
             // oops we've got an additional one to process, don't
             // forget it. No sweat, it's fully resolved via the setter.
@@ -540,7 +551,7 @@ public class CheckstyleAntTask extends Task {
      */
     public static class Formatter {
         /** The formatter type. */
-        private FormatterType formatterType;
+        private FormatterType type;
         /** The file to output to. */
         private File toFile;
         /** Whether or not the write to the named file. */
@@ -551,12 +562,7 @@ public class CheckstyleAntTask extends Task {
          * @param type the type
          */
         public void setType(FormatterType type) {
-            final String val = type.getValue();
-            if (!E_XML.equals(val) && !E_PLAIN.equals(val)) {
-                throw new BuildException("Invalid formatter type: " + val);
-            }
-
-            formatterType = type;
+            this.type = type;
         }
 
         /**
@@ -582,8 +588,8 @@ public class CheckstyleAntTask extends Task {
          * @throws IOException if an error occurs
          */
         public AuditListener createListener(Task task) throws IOException {
-            if (formatterType != null
-                    && E_XML.equals(formatterType.getValue())) {
+            if (type != null
+                    && E_XML.equals(type.getValue())) {
                 return createXmlLogger(task);
             }
             return createDefaultLogger(task);
@@ -596,7 +602,7 @@ public class CheckstyleAntTask extends Task {
          * @throws IOException if an error occurs
          */
         private AuditListener createDefaultLogger(Task task)
-            throws IOException {
+                throws IOException {
             if (toFile == null || !useFile) {
                 return new DefaultLogger(
                     new LogOutputStream(task, Project.MSG_DEBUG),

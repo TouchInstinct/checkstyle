@@ -19,7 +19,7 @@
 
 package com.puppycrawl.tools.checkstyle;
 
-import static org.apache.commons.lang3.ArrayUtils.EMPTY_BYTE_ARRAY;
+import static com.puppycrawl.tools.checkstyle.utils.CommonUtils.EMPTY_BYTE_ARRAY;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
@@ -36,6 +36,7 @@ import java.net.URLConnection;
 import java.net.URLStreamHandler;
 import java.util.Arrays;
 import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.Set;
 
 import org.junit.Test;
@@ -43,7 +44,6 @@ import org.mockito.Mockito;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
-import com.google.common.collect.Sets;
 import com.puppycrawl.tools.checkstyle.api.CheckstyleException;
 
 /**
@@ -54,7 +54,7 @@ import com.puppycrawl.tools.checkstyle.api.CheckstyleException;
 public class PackageNamesLoaderTest {
     @Test
     public void testDefault()
-        throws CheckstyleException {
+            throws CheckstyleException {
         final Set<String> packageNames = PackageNamesLoader
                 .getPackageNames(Thread.currentThread()
                         .getContextClassLoader());
@@ -85,8 +85,7 @@ public class PackageNamesLoaderTest {
 
         assertEquals("pkgNames.length.", checkstylePackages.length,
             pkgNames.size());
-        final Set<String> checkstylePackagesSet =
-            Sets.newHashSet(Arrays.asList(checkstylePackages));
+        final Set<String> checkstylePackagesSet = new HashSet<>(Arrays.asList(checkstylePackages));
         assertEquals("names set.", checkstylePackagesSet, pkgNames);
     }
 

@@ -24,13 +24,13 @@ import static com.puppycrawl.tools.checkstyle.checks.modifier.RedundantModifierC
 import java.io.File;
 import java.io.IOException;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
 import com.puppycrawl.tools.checkstyle.BaseCheckTestSupport;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
+import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
 public class RedundantModifierCheckTest
     extends BaseCheckTestSupport {
@@ -84,22 +84,22 @@ public class RedundantModifierCheckTest
 
     @Test
     public void testStaticMethodInInterface()
-        throws Exception {
+            throws Exception {
         final DefaultConfiguration checkConfig =
                 createCheckConfig(RedundantModifierCheck.class);
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
-        verify(checkConfig, getNonCompilablePath("InputStaticModifierInInterface.java"), expected);
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        verify(checkConfig, getPath("InputStaticModifierInInterface.java"), expected);
     }
 
     @Test
     public void testFinalInInterface()
-        throws Exception {
+            throws Exception {
         final DefaultConfiguration checkConfig =
                 createCheckConfig(RedundantModifierCheck.class);
         final String[] expected = {
-            "3:9: " + getCheckMessage(MSG_KEY, "final"),
+            "5:9: " + getCheckMessage(MSG_KEY, "final"),
         };
-        verify(checkConfig, getNonCompilablePath("InputFinalInDefaultMethods.java"), expected);
+        verify(checkConfig, getPath("InputFinalInDefaultMethods.java"), expected);
     }
 
     @Test
@@ -130,7 +130,7 @@ public class RedundantModifierCheckTest
                 createCheckConfig(RedundantModifierCheck.class);
 
         final String[] expected = {
-            "18:5: "  + getCheckMessage(MSG_KEY, "public"),
+            "18:5: " + getCheckMessage(MSG_KEY, "public"),
         };
         verify(checkConfig, getPath("InputRedundantPublicModifierInNotPublicClass.java"), expected);
     }
@@ -164,6 +164,7 @@ public class RedundantModifierCheckTest
             TokenTypes.CTOR_DEF,
             TokenTypes.CLASS_DEF,
             TokenTypes.ENUM_DEF,
+            TokenTypes.RESOURCE,
         };
         Assert.assertArrayEquals(expected, actual);
     }
@@ -172,7 +173,7 @@ public class RedundantModifierCheckTest
     public void testGetRequiredTokens() {
         final RedundantModifierCheck redundantModifierCheckObj = new RedundantModifierCheck();
         final int[] actual = redundantModifierCheckObj.getRequiredTokens();
-        final int[] expected = ArrayUtils.EMPTY_INT_ARRAY;
+        final int[] expected = CommonUtils.EMPTY_INT_ARRAY;
         Assert.assertArrayEquals(expected, actual);
     }
 
@@ -190,12 +191,36 @@ public class RedundantModifierCheckTest
 
     @Test
     public void testFinalInAnonymousClass()
-        throws Exception {
+            throws Exception {
         final DefaultConfiguration checkConfig =
                 createCheckConfig(RedundantModifierCheck.class);
         final String[] expected = {
             "14:20: " + getCheckMessage(MSG_KEY, "final"),
         };
         verify(checkConfig, getPath("InputFinalInAnonymousClass.java"), expected);
+    }
+
+    @Test
+    public void testFinalInTryWithResource() throws Exception {
+        final DefaultConfiguration checkConfig = createCheckConfig(RedundantModifierCheck.class);
+        final String[] expected = {
+            "22:14: " + getCheckMessage(MSG_KEY, "final"),
+            "27:14: " + getCheckMessage(MSG_KEY, "final"),
+            "28:17: " + getCheckMessage(MSG_KEY, "final"),
+        };
+        verify(checkConfig, getPath("InputFinalInTryWithResource.java"), expected);
+    }
+
+    @Test
+    public void testFinalInAbstractMethods() throws Exception {
+        final DefaultConfiguration checkConfig = createCheckConfig(RedundantModifierCheck.class);
+        final String[] expected = {
+            "4:33: " + getCheckMessage(MSG_KEY, "final"),
+            "8:49: " + getCheckMessage(MSG_KEY, "final"),
+            "11:17: " + getCheckMessage(MSG_KEY, "final"),
+            "16:24: " + getCheckMessage(MSG_KEY, "final"),
+            "25:33: " + getCheckMessage(MSG_KEY, "final"),
+        };
+        verify(checkConfig, getPath("InputFinalInAbstractMethods.java"), expected);
     }
 }

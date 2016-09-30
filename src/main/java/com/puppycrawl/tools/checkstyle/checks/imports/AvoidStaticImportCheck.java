@@ -19,12 +19,11 @@
 
 package com.puppycrawl.tools.checkstyle.checks.imports;
 
-import org.apache.commons.lang3.ArrayUtils;
-
-import com.puppycrawl.tools.checkstyle.api.Check;
+import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.FullIdent;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
+import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
 /**
  * <p>
@@ -64,7 +63,7 @@ import com.puppycrawl.tools.checkstyle.api.TokenTypes;
  * @author Travis Schneeberger
  */
 public class AvoidStaticImportCheck
-    extends Check {
+    extends AbstractCheck {
 
     /**
      * A key is pointing to the warning message text in "messages.properties"
@@ -73,7 +72,7 @@ public class AvoidStaticImportCheck
     public static final String MSG_KEY = "import.avoidStatic";
 
     /** The classes/static members to exempt from this check. */
-    private String[] excludes = ArrayUtils.EMPTY_STRING_ARRAY;
+    private String[] excludes = CommonUtils.EMPTY_STRING_ARRAY;
 
     @Override
     public int[] getDefaultTokens() {

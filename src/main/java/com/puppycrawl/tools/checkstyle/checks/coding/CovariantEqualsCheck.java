@@ -19,10 +19,10 @@
 
 package com.puppycrawl.tools.checkstyle.checks.coding;
 
+import java.util.HashSet;
 import java.util.Set;
 
-import com.google.common.collect.Sets;
-import com.puppycrawl.tools.checkstyle.api.Check;
+import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.FullIdent;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
@@ -42,7 +42,7 @@ import com.puppycrawl.tools.checkstyle.utils.CheckUtils;
  * </pre>
  * @author Rick Giles
  */
-public class CovariantEqualsCheck extends Check {
+public class CovariantEqualsCheck extends AbstractCheck {
 
     /**
      * A key is pointing to the warning message text in "messages.properties"
@@ -51,7 +51,7 @@ public class CovariantEqualsCheck extends Check {
     public static final String MSG_KEY = "covariant.equals";
 
     /** Set of equals method definitions. */
-    private final Set<DetailAST> equalsMethods = Sets.newHashSet();
+    private final Set<DetailAST> equalsMethods = new HashSet<>();
 
     @Override
     public int[] getDefaultTokens() {

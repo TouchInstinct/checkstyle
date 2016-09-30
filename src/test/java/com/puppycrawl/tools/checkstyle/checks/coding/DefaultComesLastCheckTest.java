@@ -24,12 +24,12 @@ import static com.puppycrawl.tools.checkstyle.checks.coding.DefaultComesLastChec
 import java.io.File;
 import java.io.IOException;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
 import com.puppycrawl.tools.checkstyle.BaseCheckTestSupport;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
+import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
 public class DefaultComesLastCheckTest extends BaseCheckTestSupport {
     @Override
@@ -49,8 +49,8 @@ public class DefaultComesLastCheckTest extends BaseCheckTestSupport {
         final DefaultConfiguration checkConfig =
             createCheckConfig(DefaultComesLastCheck.class);
         final String[] expected = {
-            "24:9: " + getCheckMessage(MSG_KEY),
-            "31:24: " + getCheckMessage(MSG_KEY),
+            "25:9: " + getCheckMessage(MSG_KEY),
+            "32:24: " + getCheckMessage(MSG_KEY),
         };
         verify(checkConfig,
                getPath("InputDefaultComesLast.java"),
@@ -59,12 +59,12 @@ public class DefaultComesLastCheckTest extends BaseCheckTestSupport {
 
     @Test
     public void testDefaultMethodsInJava8()
-        throws Exception {
+            throws Exception {
         final DefaultConfiguration checkConfig =
                 createCheckConfig(DefaultComesLastCheck.class);
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
         verify(checkConfig,
-                getNonCompilablePath("InputDefaultComesLast2.java"),
+                getPath("InputDefaultComesLast2.java"),
                 expected);
     }
 

@@ -33,8 +33,6 @@ import org.xml.sax.SAXParseException;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.DefaultHandler;
 
-import com.google.common.collect.Maps;
-
 /**
  * Contains the common implementation of a loader, for loading a configuration
  * from an XML file.
@@ -64,8 +62,8 @@ public abstract class AbstractLoader
      * @throws ParserConfigurationException if an error occurs
      */
     protected AbstractLoader(String publicId, String dtdResourceName)
-        throws SAXException, ParserConfigurationException {
-        this(new HashMap<String, String>(1));
+            throws SAXException, ParserConfigurationException {
+        this(new HashMap<>(1));
         publicIdToResourceNameMap.put(publicId, dtdResourceName);
     }
 
@@ -76,9 +74,8 @@ public abstract class AbstractLoader
      * @throws ParserConfigurationException if an error occurs
      */
     protected AbstractLoader(Map<String, String> publicIdToResourceNameMap)
-        throws SAXException, ParserConfigurationException {
-        this.publicIdToResourceNameMap =
-            Maps.newHashMap(publicIdToResourceNameMap);
+            throws SAXException, ParserConfigurationException {
+        this.publicIdToResourceNameMap = new HashMap<>(publicIdToResourceNameMap);
         final SAXParserFactory factory = SAXParserFactory.newInstance();
         factory.setValidating(true);
         factory.setNamespaceAware(true);
@@ -95,13 +92,13 @@ public abstract class AbstractLoader
      * @throws SAXException in an error occurs
      */
     public void parseInputSource(InputSource inputSource)
-        throws IOException, SAXException {
+            throws IOException, SAXException {
         parser.parse(inputSource);
     }
 
     @Override
     public InputSource resolveEntity(String publicId, String systemId)
-        throws SAXException, IOException {
+            throws SAXException, IOException {
         if (publicIdToResourceNameMap.keySet().contains(publicId)) {
             final String dtdResourceName =
                     publicIdToResourceNameMap.get(publicId);

@@ -24,7 +24,6 @@ import static com.puppycrawl.tools.checkstyle.checks.coding.ReturnCountCheck.MSG
 import java.io.File;
 import java.io.IOException;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -32,6 +31,7 @@ import com.puppycrawl.tools.checkstyle.BaseCheckTestSupport;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
+import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
 public class ReturnCountCheckTest extends BaseCheckTestSupport {
     @Override
@@ -51,8 +51,10 @@ public class ReturnCountCheckTest extends BaseCheckTestSupport {
         final DefaultConfiguration checkConfig =
             createCheckConfig(ReturnCountCheck.class);
         final String[] expected = {
-            "18:5: " + getCheckMessage(MSG_KEY, 7, 2),
-            "35:17: " + getCheckMessage(MSG_KEY, 6, 2),
+            "18:5: " + getCheckMessage(MSG_KEY, 7, 1),
+            "30:5: " + getCheckMessage(MSG_KEY, 2, 1),
+            "35:17: " + getCheckMessage(MSG_KEY, 6, 1),
+            "49:5: " + getCheckMessage(MSG_KEY, 7, 2),
         };
         verify(checkConfig, getPath("InputReturnCount.java"), expected);
     }
@@ -64,8 +66,10 @@ public class ReturnCountCheckTest extends BaseCheckTestSupport {
         checkConfig.addAttribute("format", "^$");
         final String[] expected = {
             "5:5: " + getCheckMessage(MSG_KEY, 7, 2),
-            "18:5: " + getCheckMessage(MSG_KEY, 7, 2),
-            "35:17: " + getCheckMessage(MSG_KEY, 6, 2),
+            "18:5: " + getCheckMessage(MSG_KEY, 7, 1),
+            "30:5: " + getCheckMessage(MSG_KEY, 2, 1),
+            "35:17: " + getCheckMessage(MSG_KEY, 6, 1),
+            "49:5: " + getCheckMessage(MSG_KEY, 7, 2),
         };
         verify(checkConfig, getPath("InputReturnCount.java"), expected);
     }
@@ -75,13 +79,13 @@ public class ReturnCountCheckTest extends BaseCheckTestSupport {
         final DefaultConfiguration checkConfig = createCheckConfig(ReturnCountCheck.class);
         checkConfig.addAttribute("max", "1");
         final String[] expected = {
-            "14:55: " + getCheckMessage(MSG_KEY, 2, 1),
-            "26:49: " + getCheckMessage(MSG_KEY, 2, 1),
-            "33:42: " + getCheckMessage(MSG_KEY, 3, 1),
-            "40:5: " + getCheckMessage(MSG_KEY, 2, 1),
-            "48:57: " + getCheckMessage(MSG_KEY, 2, 1),
+            "15:55: " + getCheckMessage(MSG_KEY, 2, 1),
+            "27:49: " + getCheckMessage(MSG_KEY, 2, 1),
+            "34:42: " + getCheckMessage(MSG_KEY, 3, 1),
+            "41:5: " + getCheckMessage(MSG_KEY, 2, 1),
+            "49:57: " + getCheckMessage(MSG_KEY, 2, 1),
         };
-        verify(checkConfig, getNonCompilablePath("InputReturnCountLambda.java"), expected);
+        verify(checkConfig, getPath("InputReturnCountLambda.java"), expected);
     }
 
     @Test
@@ -89,9 +93,9 @@ public class ReturnCountCheckTest extends BaseCheckTestSupport {
         final DefaultConfiguration checkConfig = createCheckConfig(ReturnCountCheck.class);
         checkConfig.addAttribute("tokens", "LAMBDA");
         final String[] expected = {
-            "33:42: " + getCheckMessage(MSG_KEY, 3, 2),
+            "34:42: " + getCheckMessage(MSG_KEY, 3, 2),
         };
-        verify(checkConfig, getNonCompilablePath("InputReturnCountLambda.java"), expected);
+        verify(checkConfig, getPath("InputReturnCountLambda.java"), expected);
     }
 
     @Test
@@ -99,24 +103,24 @@ public class ReturnCountCheckTest extends BaseCheckTestSupport {
         final DefaultConfiguration checkConfig = createCheckConfig(ReturnCountCheck.class);
         checkConfig.addAttribute("tokens", "METHOD_DEF");
         final String[] expected = {
-            "25:5: " + getCheckMessage(MSG_KEY, 3, 2),
-            "32:5: " + getCheckMessage(MSG_KEY, 4, 2),
-            "40:5: " + getCheckMessage(MSG_KEY, 4, 2),
-            "55:5: " + getCheckMessage(MSG_KEY, 3, 2),
+            "26:5: " + getCheckMessage(MSG_KEY, 3, 2),
+            "33:5: " + getCheckMessage(MSG_KEY, 4, 2),
+            "41:5: " + getCheckMessage(MSG_KEY, 4, 2),
+            "56:5: " + getCheckMessage(MSG_KEY, 3, 2),
         };
-        verify(checkConfig, getNonCompilablePath("InputReturnCountLambda.java"), expected);
+        verify(checkConfig, getPath("InputReturnCountLambda.java"), expected);
     }
 
     @Test
     public void testWithReturnOnlyAsTokens() throws Exception {
         final DefaultConfiguration checkConfig = createCheckConfig(ReturnCountCheck.class);
         checkConfig.addAttribute("tokens", "LITERAL_RETURN");
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
-        verify(checkConfig, getNonCompilablePath("InputReturnCountLambda.java"), expected);
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        verify(checkConfig, getPath("InputReturnCountLambda.java"), expected);
     }
 
     @Test
-    public void testImproperToken() throws Exception {
+    public void testImproperToken() {
         final ReturnCountCheck check = new ReturnCountCheck();
 
         final DetailAST classDefAst = new DetailAST();
@@ -137,5 +141,19 @@ public class ReturnCountCheckTest extends BaseCheckTestSupport {
         catch (IllegalStateException ex) {
             // it is OK
         }
+    }
+
+    @Test
+    public void testMaxForVoid() throws Exception {
+        final DefaultConfiguration checkConfig = createCheckConfig(ReturnCountCheck.class);
+        checkConfig.addAttribute("max", "2");
+        checkConfig.addAttribute("maxForVoid", "0");
+        final String[] expected = {
+            "4:5: " + getCheckMessage(MSG_KEY, 1, 0),
+            "8:5: " + getCheckMessage(MSG_KEY, 1, 0),
+            "14:5: " + getCheckMessage(MSG_KEY, 2, 0),
+            "30:5: " + getCheckMessage(MSG_KEY, 3, 2),
+        };
+        verify(checkConfig, getPath("InputReturnCountVoid.java"), expected);
     }
 }

@@ -22,11 +22,10 @@ package com.puppycrawl.tools.checkstyle.checks.modifier;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.lang3.ArrayUtils;
-
-import com.puppycrawl.tools.checkstyle.api.Check;
+import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
+import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
 /**
  * Checks for redundant modifiers in interface and annotation definitions,
@@ -97,7 +96,7 @@ import com.puppycrawl.tools.checkstyle.api.TokenTypes;
  * @author Vladislav Lisetskiy
  */
 public class RedundantModifierCheck
-    extends Check {
+    extends AbstractCheck {
 
     /**
      * A key is pointing to the warning message text in "messages.properties"
@@ -120,7 +119,7 @@ public class RedundantModifierCheck
 
     @Override
     public int[] getRequiredTokens() {
-        return ArrayUtils.EMPTY_INT_ARRAY;
+        return CommonUtils.EMPTY_INT_ARRAY;
     }
 
     @Override
@@ -133,6 +132,7 @@ public class RedundantModifierCheck
             TokenTypes.CTOR_DEF,
             TokenTypes.CLASS_DEF,
             TokenTypes.ENUM_DEF,
+            TokenTypes.RESOURCE,
         };
     }
 
@@ -141,22 +141,28 @@ public class RedundantModifierCheck
         if (ast.getType() == TokenTypes.INTERFACE_DEF) {
             checkInterfaceModifiers(ast);
         }
-        else if (ast.getType() == TokenTypes.CTOR_DEF) {
-            if (isEnumMember(ast)) {
-                checkEnumConstructorModifiers(ast);
-            }
-            else {
-                checkClassConstructorModifiers(ast);
-            }
-        }
         else if (ast.getType() == TokenTypes.ENUM_DEF) {
             checkEnumDef(ast);
         }
-        else if (isInterfaceOrAnnotationMember(ast)) {
-            processInterfaceOrAnnotation(ast);
-        }
-        else if (ast.getType() == TokenTypes.METHOD_DEF) {
-            processMethods(ast);
+        else {
+            if (ast.getType() == TokenTypes.CTOR_DEF) {
+                if (isEnumMember(ast)) {
+                    checkEnumConstructorModifiers(ast);
+                }
+                else {
+                    checkClassConstructorModifiers(ast);
+                }
+            }
+            else if (ast.getType() == TokenTypes.METHOD_DEF) {
+                processMethods(ast);
+            }
+            else if (ast.getType() == TokenTypes.RESOURCE) {
+                processResources(ast);
+            }
+
+            if (isInterfaceOrAnnotationMember(ast)) {
+                processInterfaceOrAnnotation(ast);
+            }
         }
     }
 
@@ -200,12 +206,7 @@ public class RedundantModifierCheck
             processInterfaceOrAnnotation(ast);
         }
         else if (ast.getParent() != null) {
-            final DetailAST modifiers = ast.findFirstToken(TokenTypes.MODIFIERS);
-            final DetailAST staticModifier = modifiers.findFirstToken(TokenTypes.LITERAL_STATIC);
-            if (staticModifier != null) {
-                log(staticModifier.getLineNo(), staticModifier.getColumnNo(),
-                        MSG_KEY, staticModifier.getText());
-            }
+            checkForRedundantModifier(ast, TokenTypes.LITERAL_STATIC);
         }
     }
 
@@ -240,7 +241,7 @@ public class RedundantModifierCheck
     }
 
     /**
-     * Process validation ofMethods.
+     * Process validation of Methods.
      * @param ast method AST
      */
     private void processMethods(DetailAST ast) {
@@ -267,15 +268,25 @@ public class RedundantModifierCheck
             }
         }
         if (checkFinal && !isAnnotatedWithSafeVarargs(ast)) {
-            DetailAST modifier = modifiers.getFirstChild();
-            while (modifier != null) {
-                final int type = modifier.getType();
-                if (type == TokenTypes.FINAL) {
-                    log(modifier.getLineNo(), modifier.getColumnNo(),
-                            MSG_KEY, modifier.getText());
-                    break;
-                }
-                modifier = modifier.getNextSibling();
+            checkForRedundantModifier(ast, TokenTypes.FINAL);
+        }
+
+        if (!ast.branchContains(TokenTypes.SLIST)) {
+            processAbstractMethodParameters(ast);
+        }
+    }
+
+    /**
+     * Process validation of parameters for Methods with no definition.
+     * @param ast method AST
+     */
+    private void processAbstractMethodParameters(DetailAST ast) {
+        final DetailAST parameters = ast.findFirstToken(TokenTypes.PARAMETERS);
+
+        for (DetailAST child = parameters.getFirstChild(); child != null; child = child
+                .getNextSibling()) {
+            if (child.getType() == TokenTypes.PARAMETER_DEF) {
+                checkForRedundantModifier(child, TokenTypes.FINAL);
             }
         }
     }
@@ -287,19 +298,28 @@ public class RedundantModifierCheck
     private void checkClassConstructorModifiers(DetailAST classCtorAst) {
         final DetailAST classDef = classCtorAst.getParent().getParent();
         if (!isClassPublic(classDef) && !isClassProtected(classDef)) {
-            checkForRedundantPublicModifier(classCtorAst);
+            checkForRedundantModifier(classCtorAst, TokenTypes.LITERAL_PUBLIC);
         }
     }
 
     /**
-     * Checks if given ast has redundant public modifier.
+     * Checks if given resource has redundant modifiers.
      * @param ast ast
      */
-    private void checkForRedundantPublicModifier(DetailAST ast) {
+    private void processResources(DetailAST ast) {
+        checkForRedundantModifier(ast, TokenTypes.FINAL);
+    }
+
+    /**
+     * Checks if given ast has a redundant modifier.
+     * @param ast ast
+     * @param modifierType The modifier to check for.
+     */
+    private void checkForRedundantModifier(DetailAST ast, int modifierType) {
         final DetailAST astModifiers = ast.findFirstToken(TokenTypes.MODIFIERS);
         DetailAST astModifier = astModifiers.getFirstChild();
         while (astModifier != null) {
-            if (astModifier.getType() == TokenTypes.LITERAL_PUBLIC) {
+            if (astModifier.getType() == modifierType) {
                 log(astModifier.getLineNo(), astModifier.getColumnNo(),
                         MSG_KEY, astModifier.getText());
             }

@@ -62,8 +62,7 @@ public class CommonUtilsTest {
      * Test CommonUtils.countCharInString.
      */
     @Test
-    public void testLengthExpandedTabs()
-        throws Exception {
+    public void testLengthExpandedTabs() {
         final String s1 = "\t";
         assertEquals(8, CommonUtils.lengthExpandedTabs(s1, s1.length(), 8));
 
@@ -199,13 +198,16 @@ public class CommonUtilsTest {
 
     @Test(expected = IllegalStateException.class)
     public void testCloseWithException() {
-        CommonUtils.close(new Closeable() {
-
-            @Override
-            public void close() throws IOException {
-                throw new IOException("Test IOException");
-            }
+        CommonUtils.close(() -> {
+            throw new IOException("Test IOException");
         });
+    }
+
+    @Test
+    public void testGetFileExtensionForFileNameWithoutExtension() {
+        final String fileNameWithoutExtension = "file";
+        final String extension = CommonUtils.getFileExtension(fileNameWithoutExtension);
+        assertEquals("", extension);
     }
 
     @Test

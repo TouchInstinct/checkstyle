@@ -27,8 +27,9 @@
           Checks that the order of modifiers conforms to the suggestions in
           the <a
           href="http://docs.oracle.com/javase/specs/jls/se8/html/jls-8.html">Java
-          Language specification, sections 8.1.1, 8.3.1 and 8.4.3</a>. The
-          correct order is:
+          Language specification, sections 8.1.1, 8.3.1, 8.4.3</a> and <a
+          href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-9.html">
+          9.4</a>. The correct order is:
         </p>
 
         <ol>
@@ -43,6 +44,9 @@
           </li>
           <li>
             <code>abstract</code>
+          </li>
+          <li>
+            <code>default</code>
           </li>
           <li>
             <code>static</code>
@@ -66,6 +70,12 @@
             <code>strictfp</code>
           </li>
         </ol>
+
+        <p>
+          ATTENTION: We skip <a href="https://blogs.oracle.com/java-platform-group/entry/java_8_s_new_type">
+          type annotations</a> from validation.
+        </p>
+
       </subsection>
 
       <subsection name="Examples">
@@ -240,7 +250,8 @@
               <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#INTERFACE_DEF">INTERFACE_DEF</a>,
               <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#CTOR_DEF">CTOR_DEF</a>,
               <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#CLASS_DEF">CLASS_DEF</a>,
-              <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#ENUM_DEF">ENUM_DEF</a>.
+              <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#ENUM_DEF">ENUM_DEF</a>,
+              <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#RESOURCE">RESOURCE</a>.
             </td>
             <td>
               <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#METHOD_DEF">METHOD_DEF</a>,
@@ -249,7 +260,8 @@
               <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#INTERFACE_DEF">INTERFACE_DEF</a>,
               <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#CTOR_DEF">CTOR_DEF</a>,
               <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#CLASS_DEF">CLASS_DEF</a>,
-              <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#ENUM_DEF">ENUM_DEF</a>.
+              <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#ENUM_DEF">ENUM_DEF</a>,
+              <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#RESOURCE">RESOURCE</a>.
             </td>
           </tr>
         </table>

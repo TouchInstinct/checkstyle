@@ -182,16 +182,14 @@ public class NoWhitespaceAfterCheckTest
     @Test
     public void testMethodReference() throws Exception {
         final String[] expected = {
-            "10:40: " + getCheckMessage(MSG_KEY, "int"),
-            "11:63: " + getCheckMessage(MSG_KEY, "Message"),
+            "9:40: " + getCheckMessage(MSG_KEY, "int"),
+            "10:61: " + getCheckMessage(MSG_KEY, "String"),
         };
-        verify(checkConfig,
-            getNonCompilablePath("InputNoWhitespaceAfterMethodRef.java"),
-                 expected);
+        verify(checkConfig, getPath("InputNoWhitespaceAfterMethodRef.java"), expected);
     }
 
     @Test
-    public void testVisitTokenSwitchReflection() throws Exception {
+    public void testVisitTokenSwitchReflection() {
         //unexpected parent for ARRAY_DECLARATOR token
         final DetailAST astImport = mockAST(TokenTypes.IMPORT, "import", "mockfile");
         final DetailAST astArrayDeclarator = mockAST(TokenTypes.ARRAY_DECLARATOR, "[", "mockfile");

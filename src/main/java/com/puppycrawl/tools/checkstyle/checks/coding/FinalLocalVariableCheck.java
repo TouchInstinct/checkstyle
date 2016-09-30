@@ -25,8 +25,9 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Optional;
 
-import com.puppycrawl.tools.checkstyle.api.Check;
+import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
 import com.puppycrawl.tools.checkstyle.utils.ScopeUtils;
@@ -73,7 +74,7 @@ import com.puppycrawl.tools.checkstyle.utils.ScopeUtils;
  * @author k_gibbs, r_auckenthaler
  * @author Vladislav Lisetskiy
  */
-public class FinalLocalVariableCheck extends Check {
+public class FinalLocalVariableCheck extends AbstractCheck {
 
     /**
      * A key is pointing to the warning message text in "messages.properties"
@@ -172,6 +173,8 @@ public class FinalLocalVariableCheck extends Check {
         };
     }
 
+    // -@cs[CyclomaticComplexity] The only optimization which can be done here is moving CASE-block
+    // expressions to separate methods, but that will not increase readability.
     @Override
     public void visitToken(DetailAST ast) {
         switch (ast.getType()) {
@@ -207,9 +210,12 @@ public class FinalLocalVariableCheck extends Check {
 
             case TokenTypes.IDENT:
                 final int parentType = ast.getParent().getType();
-                if (isAssignOperator(parentType)
-                        && isFirstChild(ast)) {
-                    removeVariable(ast);
+                if (isAssignOperator(parentType) && isFirstChild(ast)) {
+                    final Optional<FinalVariableCandidate> candidate = getFinalCandidate(ast);
+                    if (candidate.isPresent()) {
+                        determineAssignmentConditions(ast, candidate.get());
+                    }
+                    removeFinalVariableCandidateFromStack(ast);
                 }
                 break;
 
@@ -220,7 +226,7 @@ public class FinalLocalVariableCheck extends Check {
 
     @Override
     public void leaveToken(DetailAST ast) {
-        Map<String, DetailAST> scope = null;
+        Map<String, FinalVariableCandidate> scope = null;
         switch (ast.getType()) {
             case TokenTypes.OBJBLOCK:
             case TokenTypes.CTOR_DEF:
@@ -245,10 +251,62 @@ public class FinalLocalVariableCheck extends Check {
                 // do nothing
         }
         if (scope != null) {
-            for (DetailAST node : scope.values()) {
-                log(node.getLineNo(), node.getColumnNo(), MSG_KEY, node.getText());
+            for (FinalVariableCandidate candidate : scope.values()) {
+                final DetailAST ident = candidate.variableIdent;
+                log(ident.getLineNo(), ident.getColumnNo(), MSG_KEY, ident.getText());
             }
         }
+    }
+
+    /**
+     * Determines identifier assignment conditions (assigned or already assigned).
+     * @param ident identifier.
+     * @param candidate final local variable candidate.
+     */
+    private static void determineAssignmentConditions(DetailAST ident,
+                                                      FinalVariableCandidate candidate) {
+        if (candidate.assigned) {
+            if (!isInSpecificCodeBlock(ident, TokenTypes.LITERAL_ELSE)
+                    && !isInSpecificCodeBlock(ident, TokenTypes.CASE_GROUP)) {
+                candidate.alreadyAssigned = true;
+            }
+        }
+        else {
+            candidate.assigned = true;
+        }
+    }
+
+    /**
+     * Checks whether the scope of a node is restricted to a specific code block.
+     * @param node node.
+     * @param blockType block type.
+     * @return true if the scope of a node is restricted to a specific code block.
+     */
+    private static boolean isInSpecificCodeBlock(DetailAST node, int blockType) {
+        boolean returnValue = false;
+        for (DetailAST token = node.getParent(); token != null; token = token.getParent()) {
+            final int type = token.getType();
+            if (type == blockType) {
+                returnValue = true;
+                break;
+            }
+        }
+        return returnValue;
+    }
+
+    /**
+     * Gets final variable candidate for ast.
+     * @param ast ast.
+     * @return Optional of {@link FinalVariableCandidate} for ast from scopeStack.
+     */
+    private Optional<FinalVariableCandidate> getFinalCandidate(DetailAST ast) {
+        Optional<FinalVariableCandidate> result = Optional.empty();
+        final Iterator<ScopeData> iterator = scopeStack.descendingIterator();
+        while (iterator.hasNext() && !result.isPresent()) {
+            final ScopeData scopeData = iterator.next();
+            result = scopeData.findFinalVariableCandidateForAst(ast);
+        }
+        return result;
     }
 
     /**
@@ -258,9 +316,7 @@ public class FinalLocalVariableCheck extends Check {
         final ScopeData scopeData = scopeStack.peek();
         final Deque<DetailAST> prevScopeUnitializedVariableData =
                 new ArrayDeque<>();
-        for (DetailAST variable : scopeData.uninitializedVariables) {
-            prevScopeUnitializedVariableData.push(variable);
-        }
+        scopeData.uninitializedVariables.forEach(prevScopeUnitializedVariableData::push);
         prevScopeUninitializedVariables.push(prevScopeUnitializedVariableData);
     }
 
@@ -269,12 +325,16 @@ public class FinalLocalVariableCheck extends Check {
      * @param prevScopeUnitializedVariableData variable for previous stack of uninitialized
      *     variables
      */
-    private void updateUninitializedVariables(Deque<DetailAST>
-            prevScopeUnitializedVariableData) {
+    // -@cs[CyclomaticComplexity] Breaking apart will damage encapsulation.
+    private void updateUninitializedVariables(Deque<DetailAST> prevScopeUnitializedVariableData) {
         // Check for only previous scope
         for (DetailAST variable : prevScopeUnitializedVariableData) {
             for (ScopeData scopeData : scopeStack) {
-                final DetailAST storedVariable = scopeData.scope.get(variable.getText());
+                final FinalVariableCandidate candidate = scopeData.scope.get(variable.getText());
+                DetailAST storedVariable = null;
+                if (candidate != null) {
+                    storedVariable = candidate.variableIdent;
+                }
                 if (storedVariable != null && isSameVariables(storedVariable, variable)
                         && !scopeData.uninitializedVariables.contains(storedVariable)) {
                     scopeData.uninitializedVariables.push(variable);
@@ -285,7 +345,12 @@ public class FinalLocalVariableCheck extends Check {
         for (Deque<DetailAST> unitializedVariableData : prevScopeUninitializedVariables) {
             for (DetailAST variable : unitializedVariableData) {
                 for (ScopeData scopeData : scopeStack) {
-                    final DetailAST storedVariable = scopeData.scope.get(variable.getText());
+                    final FinalVariableCandidate candidate =
+                        scopeData.scope.get(variable.getText());
+                    DetailAST storedVariable = null;
+                    if (candidate != null) {
+                        storedVariable = candidate.variableIdent;
+                    }
                     if (storedVariable != null
                             && isSameVariables(storedVariable, variable)
                             && !scopeData.uninitializedVariables.contains(storedVariable)) {
@@ -302,7 +367,7 @@ public class FinalLocalVariableCheck extends Check {
      * @param ast token to be checked
      * @return true if should be updated, else false
      */
-    private boolean shouldUpdateUninitializedVariables(DetailAST ast) {
+    private static boolean shouldUpdateUninitializedVariables(DetailAST ast) {
         return ast.getType() != TokenTypes.LITERAL_TRY
                 && ast.getType() != TokenTypes.LITERAL_CATCH
                 && ast.getType() != TokenTypes.LITERAL_FINALLY
@@ -318,7 +383,7 @@ public class FinalLocalVariableCheck extends Check {
      * @return the matching token, or null if no match
      */
     public DetailAST findLastChildWhichContainsSpecifiedToken(DetailAST ast, int childType,
-            int containType) {
+                                                              int containType) {
         DetailAST returnValue = null;
         for (DetailAST astIterator = ast.getFirstChild(); astIterator != null;
                 astIterator = astIterator.getNextSibling()) {
@@ -344,9 +409,9 @@ public class FinalLocalVariableCheck extends Check {
      * @param ast the variable to insert.
      */
     private void insertParameter(DetailAST ast) {
-        final Map<String, DetailAST> scope = scopeStack.peek().scope;
+        final Map<String, FinalVariableCandidate> scope = scopeStack.peek().scope;
         final DetailAST astNode = ast.findFirstToken(TokenTypes.IDENT);
-        scope.put(astNode.getText(), astNode);
+        scope.put(astNode.getText(), new FinalVariableCandidate(astNode));
     }
 
     /**
@@ -354,9 +419,9 @@ public class FinalLocalVariableCheck extends Check {
      * @param ast the variable to insert.
      */
     private void insertVariable(DetailAST ast) {
-        final Map<String, DetailAST> scope = scopeStack.peek().scope;
+        final Map<String, FinalVariableCandidate> scope = scopeStack.peek().scope;
         final DetailAST astNode = ast.findFirstToken(TokenTypes.IDENT);
-        scope.put(astNode.getText(), astNode);
+        scope.put(astNode.getText(), new FinalVariableCandidate(astNode));
         if (!isInitialized(astNode)) {
             scopeStack.peek().uninitializedVariables.add(astNode);
         }
@@ -381,17 +446,21 @@ public class FinalLocalVariableCheck extends Check {
     }
 
     /**
-     * Remove the variable from the Stack.
-     * @param ast Variable to remove
+     * Removes the final variable candidate from the Stack.
+     * @param ast variable to remove.
      */
-    private void removeVariable(DetailAST ast) {
+    private void removeFinalVariableCandidateFromStack(DetailAST ast) {
         final Iterator<ScopeData> iterator = scopeStack.descendingIterator();
         while (iterator.hasNext()) {
             final ScopeData scopeData = iterator.next();
-            final Map<String, DetailAST> scope = scopeData.scope;
-            final DetailAST storedVariable = scope.get(ast.getText());
+            final Map<String, FinalVariableCandidate> scope = scopeData.scope;
+            final FinalVariableCandidate candidate = scope.get(ast.getText());
+            DetailAST storedVariable = null;
+            if (candidate != null) {
+                storedVariable = candidate.variableIdent;
+            }
             if (storedVariable != null && isSameVariables(storedVariable, ast)) {
-                if (shouldRemoveVariable(scopeData, ast)) {
+                if (shouldRemoveFinalVariableCandidate(scopeData, ast)) {
                     scope.remove(ast.getText());
                 }
                 break;
@@ -400,28 +469,51 @@ public class FinalLocalVariableCheck extends Check {
     }
 
     /**
-     * Whether the variable should be removed from the list of final local variable
+     * Whether the final variable candidate should be removed from the list of final local variable
      * candidates.
      * @param scopeData the scope data of the variable.
      * @param ast the variable ast.
      * @return true, if the variable should be removed.
      */
-    private static boolean shouldRemoveVariable(ScopeData scopeData, DetailAST ast) {
+    private static boolean shouldRemoveFinalVariableCandidate(ScopeData scopeData, DetailAST ast) {
         boolean shouldRemove = true;
         for (DetailAST variable : scopeData.uninitializedVariables) {
             if (variable.getText().equals(ast.getText())) {
-
                 // if the variable is declared outside the loop and initialized inside
                 // the loop, then it cannot be declared final, as it can be initialized
                 // more than once in this case
-                if (isInTheSameLoop(variable, ast)) {
-                    shouldRemove = false;
+                if (isInTheSameLoop(variable, ast) || !isUseOfExternalVariableInsideLoop(ast)) {
+                    final FinalVariableCandidate candidate = scopeData.scope.get(ast.getText());
+                    shouldRemove = candidate.alreadyAssigned;
                 }
                 scopeData.uninitializedVariables.remove(variable);
                 break;
             }
         }
         return shouldRemove;
+    }
+
+    /**
+     * Checks whether a variable which is declared outside loop is used inside loop.
+     * For example:
+     * <p>
+     * {@code
+     * int x;
+     * for (int i = 0, j = 0; i < j; i++) {
+     *     x = 5;
+     * }
+     * }
+     * </p>
+     * @param variable variable.
+     * @return true if a variable which is declared ouside loop is used inside loop.
+     */
+    private static boolean isUseOfExternalVariableInsideLoop(DetailAST variable) {
+        DetailAST loop2 = variable.getParent();
+        while (loop2 != null
+            && !isLoopAst(loop2.getType())) {
+            loop2 = loop2.getParent();
+        }
+        return loop2 != null;
     }
 
     /**
@@ -479,7 +571,7 @@ public class FinalLocalVariableCheck extends Check {
     }
 
     /**
-     * Find the Class, Constructor, Enum or Method in which it is defined.
+     * Find the Class, Constructor, Enum, Method, or Field in which it is defined.
      * @param ast Variable for which we want to find the scope in which it is defined
      * @return ast The Class or Constructor or Method in which it is defined.
      */
@@ -488,7 +580,8 @@ public class FinalLocalVariableCheck extends Check {
         while (astTraverse.getType() != TokenTypes.METHOD_DEF
                 && astTraverse.getType() != TokenTypes.CLASS_DEF
                 && astTraverse.getType() != TokenTypes.ENUM_DEF
-                && astTraverse.getType() != TokenTypes.CTOR_DEF) {
+                && astTraverse.getType() != TokenTypes.CTOR_DEF
+                && !ScopeUtils.isClassFieldDef(astTraverse)) {
             astTraverse = astTraverse.getParent();
         }
         return astTraverse;
@@ -523,8 +616,7 @@ public class FinalLocalVariableCheck extends Check {
         while (loop2 != null && !isLoopAst(loop2.getType())) {
             loop2 = loop2.getParent();
         }
-        return loop1 == null && loop2 == null
-                || loop1 != null && loop1 == loop2;
+        return loop1 != null && loop1 == loop2;
     }
 
     /**
@@ -541,9 +633,46 @@ public class FinalLocalVariableCheck extends Check {
      */
     private static class ScopeData {
         /** Contains variable definitions. */
-        private final Map<String, DetailAST> scope = new HashMap<>();
+        private final Map<String, FinalVariableCandidate> scope = new HashMap<>();
 
         /** Contains definitions of uninitialized variables. */
         private final Deque<DetailAST> uninitializedVariables = new ArrayDeque<>();
+
+        /**
+         * Searches for final local variable candidate for ast in the scope.
+         * @param ast ast.
+         * @return Optional of {@link FinalVariableCandidate}.
+         */
+        public Optional<FinalVariableCandidate> findFinalVariableCandidateForAst(DetailAST ast) {
+            Optional<FinalVariableCandidate> result = Optional.empty();
+            DetailAST storedVariable = null;
+            final Optional<FinalVariableCandidate> candidate =
+                Optional.ofNullable(scope.get(ast.getText()));
+            if (candidate.isPresent()) {
+                storedVariable = candidate.get().variableIdent;
+            }
+            if (storedVariable != null && isSameVariables(storedVariable, ast)) {
+                result = candidate;
+            }
+            return result;
+        }
+    }
+
+    /**Represents information about final local variable candidate. */
+    private static class FinalVariableCandidate {
+        /** Identifier token. */
+        private final DetailAST variableIdent;
+        /** Whether the variable is assigned. */
+        private boolean assigned;
+        /** Whether the variable is already assigned. */
+        private boolean alreadyAssigned;
+
+        /**
+         * Creates new instance.
+         * @param variableIdent variable identifier.
+         */
+        FinalVariableCandidate(DetailAST variableIdent) {
+            this.variableIdent = variableIdent;
+        }
     }
 }

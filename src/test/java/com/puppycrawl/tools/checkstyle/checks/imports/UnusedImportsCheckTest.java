@@ -25,12 +25,12 @@ import static org.junit.Assert.assertArrayEquals;
 import java.io.File;
 import java.io.IOException;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.junit.Test;
 
 import com.puppycrawl.tools.checkstyle.BaseCheckTestSupport;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
+import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
 public class UnusedImportsCheckTest extends BaseCheckTestSupport {
     @Override
@@ -105,16 +105,23 @@ public class UnusedImportsCheckTest extends BaseCheckTestSupport {
     }
 
     @Test
+    public void testProcessJavadocWithLinkTag() throws Exception {
+        final DefaultConfiguration checkConfig = createCheckConfig(UnusedImportsCheck.class);
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        verify(checkConfig, getPath("InputUnusedImportWithValueTag.java"), expected);
+    }
+
+    @Test
     public void testAnnotations() throws Exception {
         final DefaultConfiguration checkConfig = createCheckConfig(UnusedImportsCheck.class);
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
         verify(checkConfig, getNonCompilablePath("package-info.java"), expected);
     }
 
     @Test
     public void testBug() throws Exception {
         final DefaultConfiguration checkConfig = createCheckConfig(UnusedImportsCheck.class);
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
         verify(checkConfig, getPath("InputImportBug.java"), expected);
     }
 
@@ -172,8 +179,8 @@ public class UnusedImportsCheckTest extends BaseCheckTestSupport {
     public void testFileInUnnamedPackage() throws Exception {
         final DefaultConfiguration checkConfig = createCheckConfig(UnusedImportsCheck.class);
         final String[] expected = {
-            "3:8: " + getCheckMessage(MSG_KEY, "java.util.Arrays"),
-            "4:8: " + getCheckMessage(MSG_KEY, "java.lang.String"),
+            "5:8: " + getCheckMessage(MSG_KEY, "java.util.Arrays"),
+            "6:8: " + getCheckMessage(MSG_KEY, "java.lang.String"),
         };
         verify(checkConfig, getNonCompilablePath("InputRedundantImport_UnnamedPackage.java"),
             expected);

@@ -21,9 +21,10 @@ package com.puppycrawl.tools.checkstyle.checks.coding;
 
 import java.util.Collections;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import com.google.common.collect.Sets;
-import com.puppycrawl.tools.checkstyle.api.Check;
+import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.FullIdent;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
@@ -50,7 +51,7 @@ import com.puppycrawl.tools.checkstyle.utils.AnnotationUtility;
  * @author John Sirois
  * @author <a href="mailto:nesterenko-aleksey@list.ru">Aleksey Nesterenko</a>
  */
-public final class IllegalThrowsCheck extends Check {
+public final class IllegalThrowsCheck extends AbstractCheck {
 
     /**
      * A key is pointing to the warning message text in "messages.properties"
@@ -59,11 +60,13 @@ public final class IllegalThrowsCheck extends Check {
     public static final String MSG_KEY = "illegal.throw";
 
     /** Methods which should be ignored. */
-    private final Set<String> ignoredMethodNames = Sets.newHashSet("finalize");
+    private final Set<String> ignoredMethodNames =
+        Stream.of("finalize").collect(Collectors.toSet());
 
     /** Illegal class names. */
-    private final Set<String> illegalClassNames = Sets.newHashSet("Error", "RuntimeException",
-        "Throwable", "java.lang.Error", "java.lang.RuntimeException", "java.lang.Throwable");
+    private final Set<String> illegalClassNames = Stream.of("Error", "RuntimeException",
+        "Throwable", "java.lang.Error", "java.lang.RuntimeException", "java.lang.Throwable")
+        .collect(Collectors.toSet());
 
     /** Property for ignoring overridden methods. */
     private boolean ignoreOverriddenMethods = true;

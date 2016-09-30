@@ -21,13 +21,13 @@ package com.puppycrawl.tools.checkstyle.checks;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
-import com.puppycrawl.tools.checkstyle.api.Check;
+import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.FullIdent;
 import com.puppycrawl.tools.checkstyle.api.LocalizedMessage;
@@ -43,12 +43,12 @@ import com.puppycrawl.tools.checkstyle.api.TokenTypes;
  *     class are potentially unstable.
  */
 @Deprecated
-public abstract class AbstractTypeAwareCheck extends Check {
+public abstract class AbstractTypeAwareCheck extends AbstractCheck {
     /** Stack of maps for type params. */
     private final Deque<Map<String, AbstractClassInfo>> typeParams = new ArrayDeque<>();
 
     /** Imports details. **/
-    private final Set<String> imports = Sets.newHashSet();
+    private final Set<String> imports = new HashSet<>();
 
     /** Full identifier for package of the method. **/
     private FullIdent packageFullIdent;
@@ -227,6 +227,7 @@ public abstract class AbstractTypeAwareCheck extends Check {
      * @return the resolved class or {@code null}
      *          if unable to resolve the class.
      */
+    // -@cs[ForbidWildcardAsReturnType] The class is deprecated and will be removed soon.
     protected final Class<?> resolveClass(String resolvableClassName,
             String className) {
         try {
@@ -243,6 +244,7 @@ public abstract class AbstractTypeAwareCheck extends Check {
      * @param className name of surrounding class.
      * @return {@code Class} for a ident.
      */
+    // -@cs[ForbidWildcardAsReturnType] The class is deprecated and will be removed soon.
     protected final Class<?> tryLoadClass(Token ident, String className) {
         final Class<?> clazz = resolveClass(ident.getText(), className);
         if (clazz == null) {
@@ -304,27 +306,25 @@ public abstract class AbstractTypeAwareCheck extends Check {
         final DetailAST params =
             ast.findFirstToken(TokenTypes.TYPE_PARAMETERS);
 
-        final Map<String, AbstractClassInfo> paramsMap = Maps.newHashMap();
+        final Map<String, AbstractClassInfo> paramsMap = new HashMap<>();
         typeParams.push(paramsMap);
 
-        if (params == null) {
-            return;
-        }
-
-        for (DetailAST child = params.getFirstChild();
-             child != null;
-             child = child.getNextSibling()) {
-            if (child.getType() == TokenTypes.TYPE_PARAMETER) {
-                final String alias =
-                    child.findFirstToken(TokenTypes.IDENT).getText();
-                final DetailAST bounds =
-                    child.findFirstToken(TokenTypes.TYPE_UPPER_BOUNDS);
-                if (bounds != null) {
-                    final FullIdent name =
-                        FullIdent.createFullIdentBelow(bounds);
-                    final AbstractClassInfo classInfo =
-                        createClassInfo(new Token(name), currentClassName);
-                    paramsMap.put(alias, classInfo);
+        if (params != null) {
+            for (DetailAST child = params.getFirstChild();
+                 child != null;
+                 child = child.getNextSibling()) {
+                if (child.getType() == TokenTypes.TYPE_PARAMETER) {
+                    final String alias =
+                        child.findFirstToken(TokenTypes.IDENT).getText();
+                    final DetailAST bounds =
+                        child.findFirstToken(TokenTypes.TYPE_UPPER_BOUNDS);
+                    if (bounds != null) {
+                        final FullIdent name =
+                            FullIdent.createFullIdentBelow(bounds);
+                        final AbstractClassInfo classInfo =
+                            createClassInfo(new Token(name), currentClassName);
+                        paramsMap.put(alias, classInfo);
+                    }
                 }
             }
         }
@@ -408,6 +408,7 @@ public abstract class AbstractTypeAwareCheck extends Check {
         /**
          * @return {@code Class} associated with an object.
          */
+        // -@cs[ForbidWildcardAsReturnType] The class is deprecated and will be removed soon.
         public abstract Class<?> getClazz();
 
         /**

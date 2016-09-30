@@ -26,9 +26,12 @@ import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
 import java.lang.reflect.Field;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -48,21 +51,18 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 
-import com.google.common.collect.ImmutableSet;
-import com.google.common.io.Files;
 import com.puppycrawl.tools.checkstyle.Checker;
 import com.puppycrawl.tools.checkstyle.ConfigurationLoader;
 import com.puppycrawl.tools.checkstyle.ModuleFactory;
 import com.puppycrawl.tools.checkstyle.PropertiesExpander;
+import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.AbstractFileSetCheck;
-import com.puppycrawl.tools.checkstyle.api.Check;
 import com.puppycrawl.tools.checkstyle.api.CheckstyleException;
 import com.puppycrawl.tools.checkstyle.api.Configuration;
 
 public class XDocsPagesTest {
-    private static final File JAVA_SOURCES_DIRECTORY = new File("src/main/java");
-    private static final String AVAILABLE_CHECKS_PATH = "src/xdocs/checks.xml";
-    private static final File AVAILABLE_CHECKS_FILE = new File(AVAILABLE_CHECKS_PATH);
+    private static final Path JAVA_SOURCES_DIRECTORY = Paths.get("src/main/java");
+    private static final Path AVAILABLE_CHECKS_PATH = Paths.get("src/xdocs/checks.xml");
     private static final String CHECK_FILE_NAME = ".+Check.java$";
     private static final String CHECK_SUFFIX = "Check.java";
     private static final String LINK_TEMPLATE =
@@ -70,6 +70,7 @@ public class XDocsPagesTest {
 
     private static final List<String> CHECKS_ON_PAGE_IGNORE_LIST = Arrays.asList(
             "AbstractAccessControlNameCheck.java",
+            "AbstractCheck.java",
             "AbstractClassCouplingCheck.java",
             "AbstractComplexityCheck.java",
             "AbstractFileSetCheck.java",
@@ -109,7 +110,7 @@ public class XDocsPagesTest {
             "name=\"FileTabCharacter\""
     );
 
-    private static final Set<String> CHECK_PROPERTIES = getProperties(Check.class);
+    private static final Set<String> CHECK_PROPERTIES = getProperties(AbstractCheck.class);
     private static final Set<String> FILESET_PROPERTIES = getProperties(AbstractFileSetCheck.class);
 
     private static final List<String> UNDOCUMENTED_PROPERTIES = Arrays.asList(
@@ -117,25 +118,25 @@ public class XDocsPagesTest {
             "SuppressionCommentFilter.fileContents"
     );
 
-    private static final Set<String> SUN_CHECKS = ImmutableSet.copyOf(CheckUtil
-            .getConfigSunStyleChecks());
-    private static final Set<String> GOOGLE_CHECKS = ImmutableSet.copyOf(CheckUtil
-            .getConfigGoogleStyleChecks());
+    private static final Set<String> SUN_CHECKS = Collections.unmodifiableSet(
+        new HashSet<>(CheckUtil.getConfigSunStyleChecks()));
+    private static final Set<String> GOOGLE_CHECKS = Collections.unmodifiableSet(
+        new HashSet<>(CheckUtil.getConfigGoogleStyleChecks()));
 
     @Test
     public void testAllChecksPresentOnAvailableChecksPage() throws IOException {
-        final String availableChecks = Files.toString(AVAILABLE_CHECKS_FILE, UTF_8);
-        for (File file : Files.fileTreeTraverser().preOrderTraversal(JAVA_SOURCES_DIRECTORY)) {
-            final String fileName = file.getName();
+        final String availableChecks = new String(Files.readAllBytes(AVAILABLE_CHECKS_PATH), UTF_8);
+        Files.walk(JAVA_SOURCES_DIRECTORY).forEach(filePath -> {
+            final String fileName = filePath.getFileName().toString();
             if (fileName.matches(CHECK_FILE_NAME)
                     && !CHECKS_ON_PAGE_IGNORE_LIST.contains(fileName)) {
                 final String checkName = fileName.replace(CHECK_SUFFIX, "");
                 if (!isPresent(availableChecks, checkName)) {
                     Assert.fail(checkName + " is not correctly listed on Available Checks page"
-                            + " - add it to " + AVAILABLE_CHECKS_PATH);
+                        + " - add it to " + AVAILABLE_CHECKS_PATH);
                 }
             }
-        }
+        });
     }
 
     private static boolean isPresent(String availableChecks, String checkName) {
@@ -146,9 +147,8 @@ public class XDocsPagesTest {
     @Test
     public void testAllXmlExamples() throws Exception {
         for (Path path : XDocUtil.getXdocsFilePaths()) {
-            final File file = path.toFile();
-            final String input = Files.toString(file, UTF_8);
-            final String fileName = file.getName();
+            final String input = new String(Files.readAllBytes(path), UTF_8);
+            final String fileName = path.getFileName().toString();
 
             final Document document = XmlUtil.getRawXml(fileName, input, input);
             final NodeList sources = document.getElementsByTagName("source");
@@ -158,12 +158,9 @@ public class XDocsPagesTest {
                         .replace("...", "").trim();
 
                 if (unserializedSource.charAt(0) != '<'
-                        || unserializedSource.charAt(unserializedSource.length() - 1) != '>') {
-                    continue;
-                }
-
-                // no dtd testing yet
-                if (unserializedSource.contains("<!")) {
+                        || unserializedSource.charAt(unserializedSource.length() - 1) != '>'
+                        // no dtd testing yet
+                        || unserializedSource.contains("<!")) {
                     continue;
                 }
 
@@ -173,7 +170,7 @@ public class XDocsPagesTest {
     }
 
     private static void buildAndValidateXml(String fileName, String unserializedSource)
-            throws IOException, ParserConfigurationException {
+            throws IOException, ParserConfigurationException, CheckstyleException {
         // not all examples come with the full xml structure
         String code = unserializedSource;
 
@@ -216,39 +213,38 @@ public class XDocsPagesTest {
     }
 
     private static void validateCheckstyleXml(String fileName, String code,
-            String unserializedSource) throws IOException {
+            String unserializedSource) throws IOException, CheckstyleException {
         // can't process non-existent examples, or out of context snippets
-        if (code.contains("com.mycompany") || code.contains("checkstyle-packages")
-                || code.contains("MethodLimit") || code.contains("<suppress ")
-                || code.contains("<import-control ") || unserializedSource.startsWith("<property ")
-                || unserializedSource.startsWith("<taskdef ")) {
-            return;
-        }
-
-        // validate checkstyle structure and contents
-        try {
-            final Properties properties = new Properties();
-
-            properties.setProperty("checkstyle.header.file",
-                    new File("config/java.header").getCanonicalPath());
-
-            final PropertiesExpander expander = new PropertiesExpander(properties);
-            final Configuration config = ConfigurationLoader.loadConfiguration(new InputSource(
-                    new StringReader(code)), expander, false);
-            final Checker checker = new Checker();
-
+        if (!code.contains("com.mycompany") && !code.contains("checkstyle-packages")
+                && !code.contains("MethodLimit") && !code.contains("<suppress ")
+                && !code.contains("<import-control ")
+                && !unserializedSource.startsWith("<property ")
+                && !unserializedSource.startsWith("<taskdef ")) {
+            // validate checkstyle structure and contents
             try {
-                final ClassLoader moduleClassLoader = Checker.class.getClassLoader();
-                checker.setModuleClassLoader(moduleClassLoader);
-                checker.configure(config);
+                final Properties properties = new Properties();
+
+                properties.setProperty("checkstyle.header.file",
+                        new File("config/java.header").getCanonicalPath());
+
+                final PropertiesExpander expander = new PropertiesExpander(properties);
+                final Configuration config = ConfigurationLoader.loadConfiguration(new InputSource(
+                        new StringReader(code)), expander, false);
+                final Checker checker = new Checker();
+
+                try {
+                    final ClassLoader moduleClassLoader = Checker.class.getClassLoader();
+                    checker.setModuleClassLoader(moduleClassLoader);
+                    checker.configure(config);
+                }
+                finally {
+                    checker.destroy();
+                }
             }
-            finally {
-                checker.destroy();
+            catch (CheckstyleException ex) {
+                throw new CheckstyleException(fileName + " has invalid Checkstyle xml ("
+                        + ex.getMessage() + "): " + unserializedSource, ex);
             }
-        }
-        catch (CheckstyleException ex) {
-            Assert.fail(fileName + " has invalid Checkstyle xml (" + ex.getMessage() + "): "
-                    + unserializedSource);
         }
     }
 
@@ -257,14 +253,13 @@ public class XDocsPagesTest {
         final ModuleFactory moduleFactory = TestUtils.getPackageObjectFactory();
 
         for (Path path : XDocUtil.getXdocsConfigFilePaths(XDocUtil.getXdocsFilePaths())) {
-            final File file = path.toFile();
-            final String fileName = file.getName();
+            final String fileName = path.getFileName().toString();
 
             if ("config_reporting.xml".equals(fileName)) {
                 continue;
             }
 
-            final String input = Files.toString(file, UTF_8);
+            final String input = new String(Files.readAllBytes(path), UTF_8);
             final Document document = XmlUtil.getRawXml(fileName, input, input);
             final NodeList sources = document.getElementsByTagName("section");
             String lastSectioName = null;
@@ -299,13 +294,13 @@ public class XDocsPagesTest {
 
     private static void validateCheckSection(ModuleFactory moduleFactory, String fileName,
             String sectionName, Node section) throws Exception {
-        Object instance = null;
+        final Object instance;
 
         try {
             instance = moduleFactory.createModule(sectionName);
         }
         catch (CheckstyleException ex) {
-            Assert.fail(fileName + " couldn't find class: " + sectionName);
+            throw new CheckstyleException(fileName + " couldn't find class: " + sectionName, ex);
         }
 
         int subSectionPos = 0;
@@ -395,7 +390,7 @@ public class XDocsPagesTest {
     }
 
     private static void validatePropertySection(String fileName, String sectionName,
-            Node subSection, Object instance) {
+            Node subSection, Object instance) throws Exception {
         final Set<String> properties = getProperties(instance.getClass());
         final Class<?> clss = instance.getClass();
 
@@ -411,31 +406,31 @@ public class XDocsPagesTest {
         }
 
         // remove undocumented properties
-        for (String p : new HashSet<>(properties)) {
-            if (UNDOCUMENTED_PROPERTIES.contains(clss.getSimpleName() + "." + p)) {
-                properties.remove(p);
-            }
-        }
+        new HashSet<>(properties).stream()
+            .filter(p -> UNDOCUMENTED_PROPERTIES.contains(clss.getSimpleName() + "." + p))
+            .forEach(properties::remove);
 
-        final Check check;
+        if (AbstractCheck.class.isAssignableFrom(clss)) {
+            final AbstractCheck check = (AbstractCheck) instance;
 
-        if (Check.class.isAssignableFrom(clss)) {
-            check = (Check) instance;
+            final int[] acceptableTokens = check.getAcceptableTokens();
+            Arrays.sort(acceptableTokens);
+            final int[] defaultTokens = check.getDefaultTokens();
+            Arrays.sort(defaultTokens);
+            final int[] requiredTokens = check.getRequiredTokens();
+            Arrays.sort(requiredTokens);
 
-            if (!Arrays.equals(check.getAcceptableTokens(), check.getDefaultTokens())
-                    || !Arrays.equals(check.getAcceptableTokens(), check.getRequiredTokens())) {
+            if (!Arrays.equals(acceptableTokens, defaultTokens)
+                    || !Arrays.equals(acceptableTokens, requiredTokens)) {
                 properties.add("tokens");
             }
-        }
-        else {
-            check = null;
         }
 
         if (subSection != null) {
             Assert.assertTrue(fileName + " section '" + sectionName
                     + "' should have no properties to show", !properties.isEmpty());
 
-            validatePropertySectionProperties(fileName, sectionName, subSection, check,
+            validatePropertySectionProperties(fileName, sectionName, subSection, instance,
                     properties);
         }
 
@@ -444,7 +439,7 @@ public class XDocsPagesTest {
     }
 
     private static void validatePropertySectionProperties(String fileName, String sectionName,
-            Node subSection, Check check, Set<String> properties) {
+            Node subSection, Object instance, Set<String> properties) throws Exception {
         boolean skip = true;
         boolean didTokens = false;
 
@@ -464,6 +459,8 @@ public class XDocsPagesTest {
                     properties.remove(propertyName));
 
             if ("tokens".equals(propertyName)) {
+                final AbstractCheck check = (AbstractCheck) instance;
+
                 Assert.assertEquals(fileName + " section '" + sectionName
                         + "' should have the basic token description", "tokens to check", columns
                         .get(1).getTextContent());
@@ -485,12 +482,132 @@ public class XDocsPagesTest {
                 Assert.assertFalse(fileName + " section '" + sectionName
                         + "' should have a description for " + propertyName, columns.get(1)
                         .getTextContent().trim().isEmpty());
+
+                final String actualTypeName = columns.get(2).getTextContent().replace("\n", "")
+                        .replace("\r", "").replaceAll(" +", " ").trim();
+                final String actualValue = columns.get(3).getTextContent().replace("\n", "")
+                        .replace("\r", "").replaceAll(" +", " ").trim();
+
                 Assert.assertFalse(fileName + " section '" + sectionName
-                        + "' should have a type for " + propertyName, columns.get(2)
-                        .getTextContent().trim().isEmpty());
-                // default can be empty string
+                        + "' should have a type for " + propertyName, actualTypeName.isEmpty());
+
+                final PropertyDescriptor descriptor = PropertyUtils.getPropertyDescriptor(instance,
+                        propertyName);
+                final Class<?> clss = descriptor.getPropertyType();
+                final String expectedTypeName =
+                        getCheckPropertyExpectedTypeName(clss, instance, propertyName);
+                final String expectedValue = getCheckPropertyExpectedValue(clss, instance,
+                        propertyName);
+
+                if (expectedTypeName != null) {
+                    Assert.assertEquals(fileName + " section '" + sectionName
+                            + "' should have the type for " + propertyName, expectedTypeName,
+                            actualTypeName);
+                    if (expectedValue != null) {
+                        Assert.assertEquals(fileName + " section '" + sectionName
+                                + "' should have the value for " + propertyName, expectedValue,
+                                actualValue);
+                    }
+                }
             }
         }
+    }
+
+    private static String getCheckPropertyExpectedTypeName(Class<?> clss, Object instance,
+            String propertyName) {
+        final String instanceName = instance.getClass().getSimpleName();
+        String result = null;
+
+        if (clss == boolean.class) {
+            result = "Boolean";
+        }
+        else if (clss == int.class) {
+            result = "Integer";
+        }
+        else if (clss == int[].class) {
+            result = "Integer Set";
+        }
+        else if (clss == double[].class) {
+            result = "Number Set";
+        }
+        else if (clss == String[].class) {
+            if (propertyName.endsWith("Tokens") || propertyName.endsWith("Token")
+                    || "AtclauseOrderCheck".equals(instanceName) && "target".equals(propertyName)
+                    || "MultipleStringLiteralsCheck".equals(instanceName)
+                            && "ignoreOccurrenceContext".equals(propertyName)) {
+                result = "subset of tokens TokenTypes";
+            }
+            else {
+                result = "String Set";
+            }
+        }
+        else if (clss != String.class) {
+            Assert.fail("Unknown property type: " + clss.getSimpleName());
+        }
+
+        if ("SuppressWarningsHolder".equals(instanceName)) {
+            result = result + " in a format of comma separated attribute=value entries. The "
+                    + "attribute is the fully qualified name of the Check and value is its alias.";
+        }
+
+        return result;
+    }
+
+    private static String getCheckPropertyExpectedValue(Class<?> clss, Object instance,
+            String propertyName) throws Exception {
+        final Field field = getField(instance.getClass(), propertyName);
+        String result = null;
+
+        if (field != null) {
+            final Object value = field.get(instance);
+
+            if (clss == boolean.class) {
+                result = value.toString();
+            }
+            else if (clss == int.class) {
+                if (value.equals(Integer.MAX_VALUE)) {
+                    result = "java.lang.Integer.MAX_VALUE";
+                }
+                else {
+                    result = value.toString();
+                }
+            }
+            else if (clss == int[].class) {
+                result = Arrays.toString((int[]) value).replace("[", "").replace("]", "");
+                if (result.isEmpty()) {
+                    result = "{}";
+                }
+            }
+            else if (clss == double[].class) {
+                result = Arrays.toString((double[]) value).replace("[", "").replace("]", "")
+                        .replace(".0", "");
+                if (result.isEmpty()) {
+                    result = "{}";
+                }
+            }
+
+            if (clss != String.class && clss != String[].class && result == null) {
+                result = "null";
+            }
+        }
+
+        return result;
+    }
+
+    private static Field getField(Class<?> clss, String propertyName) {
+        Field result = null;
+
+        if (clss != null) {
+            try {
+                result = clss.getDeclaredField(propertyName);
+                result.setAccessible(true);
+            }
+            catch (NoSuchFieldException ex) {
+                result = getField(clss.getSuperclass(), propertyName);
+            }
+        }
+
+        return result;
     }
 
     private static void validateErrorSection(String fileName, String sectionName, Node subSection,
@@ -648,9 +765,8 @@ public class XDocsPagesTest {
     @Test
     public void testAllStyleRules() throws Exception {
         for (Path path : XDocUtil.getXdocsStyleFilePaths(XDocUtil.getXdocsFilePaths())) {
-            final File file = path.toFile();
-            final String fileName = file.getName();
-            final String input = Files.toString(file, UTF_8);
+            final String fileName = path.getFileName().toString();
+            final String input = new String(Files.readAllBytes(path), UTF_8);
             final Document document = XmlUtil.getRawXml(fileName, input, input);
             final NodeList sources = document.getElementsByTagName("tr");
             String lastRuleName = null;
@@ -674,11 +790,49 @@ public class XDocsPagesTest {
                                     lastRuleName.toLowerCase(Locale.ENGLISH)) >= 0);
                 }
 
+                if (!"--".equals(ruleName)) {
+                    validateStyleAnchors(XmlUtil.findChildElementsByTag(columns.get(0), "a"),
+                            fileName, ruleName);
+                }
+
                 validateStyleChecks(XmlUtil.findChildElementsByTag(columns.get(2), "a"),
                         XmlUtil.findChildElementsByTag(columns.get(3), "a"), fileName, ruleName);
 
                 lastRuleName = ruleName;
             }
+        }
+    }
+
+    private static void validateStyleAnchors(Set<Node> anchors, String fileName, String ruleName) {
+        Assert.assertEquals(fileName + " rule '" + ruleName + "' must have two row anchors", 2,
+                anchors.size());
+
+        final int space = ruleName.indexOf(' ');
+        Assert.assertTrue(fileName + " rule '" + ruleName
+                + "' must have have a space between the rule's number and the rule's name",
+                space != -1);
+
+        final String ruleNumber = ruleName.substring(0, space);
+
+        int position = 1;
+
+        for (Node anchor : anchors) {
+            final String actualUrl;
+            final String expectedUrl;
+
+            if (position == 1) {
+                actualUrl = anchor.getAttributes().getNamedItem("name").getTextContent();
+                expectedUrl = ruleNumber;
+            }
+            else {
+                actualUrl = anchor.getAttributes().getNamedItem("href").getTextContent();
+                expectedUrl = "#" + ruleNumber;
+            }
+
+            Assert.assertEquals(fileName + " rule '" + ruleName + "' anchor " + position
+                    + " shoud have matching name/url", expectedUrl, actualUrl);
+
+            position++;
         }
     }
 

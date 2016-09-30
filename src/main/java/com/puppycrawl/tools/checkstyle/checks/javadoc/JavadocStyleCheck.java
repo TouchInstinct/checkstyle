@@ -20,22 +20,24 @@
 package com.puppycrawl.tools.checkstyle.checks.javadoc;
 
 import java.util.ArrayDeque;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import org.apache.commons.lang3.ArrayUtils;
-
-import com.google.common.collect.ImmutableSortedSet;
-import com.puppycrawl.tools.checkstyle.api.Check;
+import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.FileContents;
 import com.puppycrawl.tools.checkstyle.api.Scope;
 import com.puppycrawl.tools.checkstyle.api.TextBlock;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
 import com.puppycrawl.tools.checkstyle.utils.CheckUtils;
+import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 import com.puppycrawl.tools.checkstyle.utils.ScopeUtils;
 
 /**
@@ -46,7 +48,7 @@ import com.puppycrawl.tools.checkstyle.utils.ScopeUtils;
  * @author Travis Schneeberger
  */
 public class JavadocStyleCheck
-    extends Check {
+    extends AbstractCheck {
 
     /** Message property key for the Unclosed HTML message. */
     public static final String MSG_JAVADOC_MISSING = "javadoc.missing";
@@ -67,21 +69,23 @@ public class JavadocStyleCheck
     public static final String MSG_EXTRA_HTML = "javadoc.extraHtml";
 
     /** HTML tags that do not require a close tag. */
-    private static final Set<String> SINGLE_TAGS = ImmutableSortedSet.of(
-            "br", "li", "dt", "dd", "hr", "img", "p", "td", "tr", "th");
+    private static final Set<String> SINGLE_TAGS = Collections.unmodifiableSortedSet(Stream.of(
+        "br", "li", "dt", "dd", "hr", "img", "p", "td", "tr", "th")
+        .collect(Collectors.toCollection(TreeSet::new)));
 
     /** HTML tags that are allowed in java docs.
      * From http://www.w3schools.com/tags/default.asp
      * The forms and structure tags are not allowed
      */
-    private static final Set<String> ALLOWED_TAGS = ImmutableSortedSet.of(
-            "a", "abbr", "acronym", "address", "area", "b", "bdo", "big",
-            "blockquote", "br", "caption", "cite", "code", "colgroup", "dd",
-            "del", "div", "dfn", "dl", "dt", "em", "fieldset", "font", "h1",
-            "h2", "h3", "h4", "h5", "h6", "hr", "i", "img", "ins", "kbd",
-            "li", "ol", "p", "pre", "q", "samp", "small", "span", "strong",
-            "style", "sub", "sup", "table", "tbody", "td", "tfoot", "th",
-            "thead", "tr", "tt", "u", "ul");
+    private static final Set<String> ALLOWED_TAGS = Collections.unmodifiableSortedSet(Stream.of(
+        "a", "abbr", "acronym", "address", "area", "b", "bdo", "big",
+        "blockquote", "br", "caption", "cite", "code", "colgroup", "dd",
+        "del", "div", "dfn", "dl", "dt", "em", "fieldset", "font", "h1",
+        "h2", "h3", "h4", "h5", "h6", "hr", "i", "img", "ins", "kbd",
+        "li", "ol", "p", "pre", "q", "samp", "small", "span", "strong",
+        "style", "sub", "sup", "table", "tbody", "td", "tfoot", "th",
+        "thead", "tr", "tt", "u", "ul", "var")
+        .collect(Collectors.toCollection(TreeSet::new)));
 
     /** The scope to check. */
     private Scope scope = Scope.PRIVATE;
@@ -134,7 +138,7 @@ public class JavadocStyleCheck
 
     @Override
     public int[] getRequiredTokens() {
-        return ArrayUtils.EMPTY_INT_ARRAY;
+        return CommonUtils.EMPTY_INT_ARRAY;
     }
 
     @Override
@@ -202,19 +206,19 @@ public class JavadocStyleCheck
             if (getFileContents().inPackageInfo()) {
                 log(ast.getLineNo(), MSG_JAVADOC_MISSING);
             }
-            return;
         }
+        else {
+            if (checkFirstSentence) {
+                checkFirstSentenceEnding(ast, comment);
+            }
 
-        if (checkFirstSentence) {
-            checkFirstSentenceEnding(ast, comment);
-        }
+            if (checkHtml) {
+                checkHtmlTags(ast, comment);
+            }
 
-        if (checkHtml) {
-            checkHtmlTags(ast, comment);
-        }
-
-        if (checkEmptyJavadoc) {
-            checkJavadocIsNotEmpty(comment);
+            if (checkEmptyJavadoc) {
+                checkJavadocIsNotEmpty(comment);
+            }
         }
     }
 
@@ -314,7 +318,7 @@ public class JavadocStyleCheck
             if (Character.isWhitespace(builder.charAt(index))) {
                 builder.deleteCharAt(index);
             }
-            else if (builder.charAt(index) == '/'
+            else if (index > 0 && builder.charAt(index) == '/'
                     && builder.charAt(index - 1) == '*') {
                 builder.deleteCharAt(index);
                 builder.deleteCharAt(index - 1);
@@ -340,6 +344,7 @@ public class JavadocStyleCheck
      * @param comment the {@code TextBlock} which represents
      *                 the Javadoc comment.
      */
+    // -@cs[ReturnCount] Too complex to break apart.
     private void checkHtmlTags(final DetailAST ast, final TextBlock comment) {
         final int lineNo = comment.getStartLineNo();
         final Deque<HtmlTag> htmlStack = new ArrayDeque<>();

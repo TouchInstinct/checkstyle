@@ -22,9 +22,10 @@ package com.puppycrawl.tools.checkstyle.checks.coding;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import com.google.common.collect.Sets;
-import com.puppycrawl.tools.checkstyle.api.Check;
+import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.FullIdent;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
@@ -35,7 +36,7 @@ import com.puppycrawl.tools.checkstyle.api.TokenTypes;
  * @author <a href="mailto:simon@redhillconsulting.com.au">Simon Harris</a>
  * @author <a href="mailto:IliaDubinin91@gmail.com">Ilja Dubinin</a>
  */
-public final class IllegalCatchCheck extends Check {
+public final class IllegalCatchCheck extends AbstractCheck {
 
     /**
      * A key is pointing to the warning message text in "messages.properties"
@@ -44,9 +45,9 @@ public final class IllegalCatchCheck extends Check {
     public static final String MSG_KEY = "illegal.catch";
 
     /** Illegal class names. */
-    private final Set<String> illegalClassNames = Sets.newHashSet("Exception", "Error",
+    private final Set<String> illegalClassNames = Stream.of("Exception", "Error",
             "RuntimeException", "Throwable", "java.lang.Error", "java.lang.Exception",
-            "java.lang.RuntimeException", "java.lang.Throwable");
+            "java.lang.RuntimeException", "java.lang.Throwable").collect(Collectors.toSet());
 
     /**
      * Set the list of illegal classes.

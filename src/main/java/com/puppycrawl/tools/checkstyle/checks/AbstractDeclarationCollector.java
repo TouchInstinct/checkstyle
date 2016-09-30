@@ -20,14 +20,14 @@
 package com.puppycrawl.tools.checkstyle.checks;
 
 import java.util.Deque;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
-import com.puppycrawl.tools.checkstyle.api.Check;
+import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
 import com.puppycrawl.tools.checkstyle.utils.ScopeUtils;
@@ -35,12 +35,13 @@ import com.puppycrawl.tools.checkstyle.utils.ScopeUtils;
 /**
  * Abstract class for checks which need to collect information about
  * declared members/parameters/variables.
- * @deprecated Checkstyle will not support abstract checks anymore. Use {@link Check} instead.
+ * @deprecated Checkstyle will not support abstract checks anymore. Use
+ *             {@link AbstractCheck} instead.
  * @author o_sukhodolsky
  * @noinspection AbstractClassNeverImplemented
  */
 @Deprecated
-public abstract class AbstractDeclarationCollector extends Check {
+public abstract class AbstractDeclarationCollector extends AbstractCheck {
     /**
      * Tree of all the parsed frames.
      */
@@ -53,10 +54,10 @@ public abstract class AbstractDeclarationCollector extends Check {
 
     @Override
     public void beginTree(DetailAST rootAST) {
-        final Deque<LexicalFrame> frameStack = Lists.newLinkedList();
+        final Deque<LexicalFrame> frameStack = new LinkedList<>();
         frameStack.add(new GlobalFrame());
 
-        frames = Maps.newHashMap();
+        frames = new HashMap<>();
 
         DetailAST curNode = rootAST;
         while (curNode != null) {
@@ -242,7 +243,7 @@ public abstract class AbstractDeclarationCollector extends Check {
          */
         protected LexicalFrame(LexicalFrame parent) {
             this.parent = parent;
-            varNames = Sets.newHashSet();
+            varNames = new HashSet<>();
         }
 
         /** Add a name to the frame.
@@ -256,7 +257,7 @@ public abstract class AbstractDeclarationCollector extends Check {
          * @param nameToFind the name we're looking for
          * @return whether it was found
          */
-        boolean contains(String nameToFind) {
+        protected boolean contains(String nameToFind) {
             return varNames.contains(nameToFind);
         }
 
@@ -327,10 +328,10 @@ public abstract class AbstractDeclarationCollector extends Check {
          */
         ClassFrame(LexicalFrame parent) {
             super(parent);
-            instanceMembers = Sets.newHashSet();
-            instanceMethods = Sets.newHashSet();
-            staticMembers = Sets.newHashSet();
-            staticMethods = Sets.newHashSet();
+            instanceMembers = new HashSet<>();
+            instanceMethods = new HashSet<>();
+            staticMembers = new HashSet<>();
+            staticMethods = new HashSet<>();
         }
 
         /**
@@ -386,7 +387,7 @@ public abstract class AbstractDeclarationCollector extends Check {
         }
 
         @Override
-        boolean contains(String nameToFind) {
+        protected boolean contains(String nameToFind) {
             return super.contains(nameToFind)
                     || instanceMembers.contains(nameToFind)
                     || instanceMethods.contains(nameToFind)

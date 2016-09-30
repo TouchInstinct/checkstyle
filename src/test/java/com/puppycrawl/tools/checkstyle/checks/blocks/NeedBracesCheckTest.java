@@ -24,11 +24,11 @@ import static com.puppycrawl.tools.checkstyle.checks.blocks.NeedBracesCheck.MSG_
 import java.io.File;
 import java.io.IOException;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.junit.Test;
 
 import com.puppycrawl.tools.checkstyle.BaseCheckTestSupport;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
+import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
 public class NeedBracesCheckTest extends BaseCheckTestSupport {
     @Override
@@ -99,7 +99,7 @@ public class NeedBracesCheckTest extends BaseCheckTestSupport {
         final String[] expected = {
             "7: " + getCheckMessage(MSG_KEY_NEED_BRACES, "->"),
         };
-        verify(checkConfig, getNonCompilablePath("InputSingleLineLambda.java"), expected);
+        verify(checkConfig, getPath("InputSingleLineLambda.java"), expected);
     }
 
     @Test
@@ -120,7 +120,7 @@ public class NeedBracesCheckTest extends BaseCheckTestSupport {
         final DefaultConfiguration checkConfig = createCheckConfig(NeedBracesCheck.class);
         checkConfig.addAttribute("tokens", "LITERAL_WHILE, LITERAL_DO, LITERAL_FOR");
         checkConfig.addAttribute("allowSingleLineStatement", "true");
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
         verify(checkConfig, getPath("InputNeedBraces.java"), expected);
     }
 

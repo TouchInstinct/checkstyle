@@ -50,7 +50,7 @@
               is not recursive, subpackages of excluded packages are not
               automatically excluded.
             </td>
-            <td><a href="property_types.html#stringSet">list of strings</a></td>
+            <td><a href="property_types.html#stringSet">String Set</a></td>
             <td><code>empty list</code></td>
           </tr>
           <tr>
@@ -167,7 +167,7 @@
               import of each static member in the Math class
               individually like <code>java.lang.Math.PI</code>.
             </td>
-            <td><a href="property_types.html#stringSet">list of strings</a></td>
+            <td><a href="property_types.html#stringSet">String Set</a></td>
             <td><code>empty list</code></td>
           </tr>
         </table>
@@ -356,7 +356,7 @@ import com.puppycrawl.tools.checkstyle.checks.imports.AvoidStarImportCheck;
           <tr>
             <td>separateLineBetweenGroups</td>
             <td>Force empty line separator between import groups.</td>
-            <td><a href="property_types.html#boolean">boolean</a></td>
+            <td><a href="property_types.html#boolean">Boolean</a></td>
             <td><code>true</code></td>
           </tr>
           <tr>
@@ -364,7 +364,7 @@ import com.puppycrawl.tools.checkstyle.checks.imports.AvoidStarImportCheck;
             <td>Force grouping alphabetically, in
                 <a href="https://en.wikipedia.org/wiki/ASCII#Order">
                    ASCII sort order</a>.</td>
-            <td><a href="property_types.html#boolean">boolean</a></td>
+            <td><a href="property_types.html#boolean">Boolean</a></td>
             <td><code>false</code></td>
           </tr>
         </table>
@@ -604,7 +604,7 @@ import android.*;
           <tr>
             <td>illegalPkgs</td>
             <td>packages to reject</td>
-            <td><a href="property_types.html#stringSet">list of strings</a></td>
+            <td><a href="property_types.html#stringSet">String Set</a></td>
             <td><code>sun</code></td>
           </tr>
         </table>
@@ -844,7 +844,7 @@ import android.*;
               common prefix string, or by a regular expression enclosed
               in forward slashes (e.g. <code>/regexp/</code>)
             </td>
-            <td><a href="property_types.html#stringSet">list of strings</a></td>
+            <td><a href="property_types.html#stringSet">String Set</a></td>
             <td><code>empty list</code></td>
           </tr>
           <tr>
@@ -875,6 +875,12 @@ import android.*;
             <td>sortStaticImportsAlphabetically</td>
             <td>whether static imports grouped by <b>top</b> or <b>bottom</b> option
             are sorted alphabetically or not</td>
+            <td><a href="property_types.html#boolean">Boolean</a></td>
+            <td>false</td>
+          </tr>
+          <tr>
+            <td>useContainerOrderingForStatic</td>
+            <td>whether to use container ordering (Eclipse IDE term) for static imports or not</td>
             <td><a href="property_types.html#boolean">Boolean</a></td>
             <td>false</td>
           </tr>
@@ -1007,6 +1013,56 @@ import java.util.Set; //  Wrong order for 'java.util.Set' import.
 public class SomeClass { ... }
         </source>
 
+        <p>
+          The following example shows the idea of 'useContainerOrderingForStatic' option that is
+          useful for Eclipse IDE users to match ordering validation.
+          This is how the import comparison works for static imports: we first compare
+          the container of the static import, container is the type enclosing the static element
+          being imported. When the result of the comparison is 0 (containers are equal),
+          we compare the fully qualified import names.
+          For e.g. this is what is considered to be container names for the given example:
+
+          import static HttpConstants.COLON     => HttpConstants
+          import static HttpHeaders.addHeader   => HttpHeaders
+          import static HttpHeaders.setHeader   => HttpHeaders
+          import static HttpHeaders.Names.DATE  => HttpHeaders.Names
+
+          According to this logic, HttpHeaders.Names should come after HttpHeaders.
+        </p>
+        <source>
+&lt;module name=&quot;ImportOrder&quot;&gt;
+    &lt;property name=&quot;useContainerOrderingForStatic&quot; value=&quot;true&quot;/&gt;
+    &lt;property name=&quot;ordered&quot; value=&quot;true&quot;/&gt;
+    &lt;property name=&quot;option&quot; value=&quot;top&quot;/&gt;
+    &lt;property name=&quot;caseSensitive&quot; value=&quot;false&quot;/&gt;
+    &lt;property name=&quot;sortStaticImportsAlphabetically&quot; value=&quot;true&quot;/&gt;
+&lt;/module&gt;
+        </source>
+        <source>
+import static io.netty.handler.codec.http.HttpConstants.COLON;
+import static io.netty.handler.codec.http.HttpHeaders.addHeader;
+import static io.netty.handler.codec.http.HttpHeaders.setHeader;
+import static io.netty.handler.codec.http.HttpHeaders.Names.DATE;
+
+public class InputEclipseStaticImportsOrder { }
+        </source>
+        <source>
+&lt;module name=&quot;ImportOrder&quot;&gt;
+    &lt;property name=&quot;useContainerOrderingForStatic&quot; value=&quot;false&quot;/&gt;
+    &lt;property name=&quot;ordered&quot; value=&quot;true&quot;/&gt;
+    &lt;property name=&quot;option&quot; value=&quot;top&quot;/&gt;
+    &lt;property name=&quot;caseSensitive&quot; value=&quot;false&quot;/&gt;
+    &lt;property name=&quot;sortStaticImportsAlphabetically&quot; value=&quot;true&quot;/&gt;
+&lt;/module&gt;
+        </source>
+        <source>
+import static io.netty.handler.codec.http.HttpConstants.COLON;
+import static io.netty.handler.codec.http.HttpHeaders.addHeader;
+import static io.netty.handler.codec.http.HttpHeaders.setHeader;
+import static io.netty.handler.codec.http.HttpHeaders.Names.DATE; // violation
+
+public class InputEclipseStaticImportsOrder { }
+        </source>
       </subsection>
 
       <subsection name="Example of Usage">
@@ -1195,7 +1251,7 @@ class FooBar {
           <tr>
             <td>processJavadoc</td>
             <td>whether to process Javadoc</td>
-            <td><a href="property_types.html#boolean">boolean</a></td>
+            <td><a href="property_types.html#boolean">Boolean</a></td>
             <td><code>true</code></td>
           </tr>
         </table>

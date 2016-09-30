@@ -38,6 +38,7 @@ java -D&lt;property&gt;=&lt;value&gt;  \
      com.puppycrawl.tools.checkstyle.Main \
      -c &lt;configurationFile&gt; \
      [-f &lt;format&gt;] [-p &lt;propertiesFile&gt;] [-o &lt;file&gt;] \
+     [-t | --tree] [-T | --treeWithComments] [-J | treeWithJavadoc] [-j | --javadocTree] [-v] \
      file...
       </source>
       </p>
@@ -72,6 +73,47 @@ java -D&lt;property&gt;=&lt;value&gt;  \
           <code>-o file</code> - specify the file to output
           to.
         </li>
+        <li>
+          <code>-t, --tree</code> - print Abstract Syntax Tree(AST) of the checked file. The option
+          cannot be used other options and requires exactly one file to run on to be specified.
+        </li>
+        <li>
+          <code>-T, --treeWithComments</code> - print Abstract Syntax Tree(AST) with comment nodes of the checked file. The option
+          cannot be used other options and requires exactly one file to run on to be specified.
+        </li>
+        <li>
+          <code>-J, --treeWithJavadoc</code> - print Abstract Syntax Tree(AST) with Javadoc nodes and comment nodes 
+          of the checked file. The option cannot be used other options and requires exactly one file to run on to be specified.
+        </li>
+        <li>
+          <code>-j, --javadocTree</code> - print Parse Tree of the Javadoc comment.
+          The file have to contain <b>only Javadoc comment content</b> without including '/**' and '*/' at the beginning and at the end respectively.
+          For example:
+          MyTestFile.javadoc
+          <source>
+          
+           * Test method.
+           * @return true
+           
+          </source>
+          The option
+          cannot be used other options and requires exactly one file to run on to be specified.
+        </li>
+        <li>
+          <code>-d, --debug</code> - Print all debug logging of CheckStyle utility.
+        </li>
+        <li>
+          <code>-e, --exclude excludedDirectory</code> - Directory to exclude from
+          CheckStyle. The directory can be the full, absolute path, or relative to the current path.
+          Multiple excludes are allowed.
+        </li>
+        <li>
+          <code>-x, --exclude-regexp excludedDirectoryPattern</code> - Directory pattern to exclude from
+          CheckStyle. Multiple excludes are allowed.
+        </li>
+        <li>
+          <code>-v</code> - print product version and exit. Any other option is ignored.
+        </li>
       </ul>
 
       <p>
@@ -93,7 +135,7 @@ java -D&lt;property&gt;=&lt;value&gt;  \
     <section name="Download and Run">
       <p>
           It is possible to run Checkstyle directly from the JAR file using
-          the <code>-jar</code> option. Download latest <a href="http://iweb.dl.sourceforge.net/project/checkstyle/checkstyle/${projectVersion}/checkstyle-${projectVersion}-all.jar">
+          the <code>-jar</code> option. Download latest <a href="http://downloads.sourceforge.net/project/checkstyle/checkstyle/${projectVersion}/checkstyle-${projectVersion}-all.jar">
           checkstyle-${projectVersion}-all.jar</a>.
           An example of run would be:
         <source>
@@ -105,8 +147,8 @@ java -jar checkstyle-${projectVersion}-all.jar -c /google_checks.xml MyClass.jav
         <a href="https://raw.githubusercontent.com/checkstyle/checkstyle/master/src/main/resources/google_checks.xml">google_checks.xml</a>
       </p>
       <p>
-          To run Checkstyle UI viewer for AST tree directly from the JAR file using
-          the <code>-jar</code> option. Download latest <a href="http://iweb.dl.sourceforge.net/project/checkstyle/checkstyle/${projectVersion}/checkstyle-${projectVersion}-all.jar">
+          To run <a href="writingchecks.html#The_Checkstyle_SDK_Gui">Checkstyle UI viewer</a> for AST tree directly from the JAR file using
+          the <code>-jar</code> option. Download latest <a href="http://downloads.sourceforge.net/project/checkstyle/checkstyle/${projectVersion}/checkstyle-${projectVersion}-all.jar">
           checkstyle-${projectVersion}-all.jar</a>.
           An example of run would be (path to java file is optional):
         <source>
@@ -145,7 +187,7 @@ java -jar target/checkstyle-X.X-SNAPSHOT-all.jar -c /sun_checks.xml MyClass.java
     <section name="Usage by Classpath update">
       <p>
         The easiest way is to include
-        <a href="http://iweb.dl.sourceforge.net/project/checkstyle/checkstyle/${projectVersion}/checkstyle-${projectVersion}-all.jar">checkstyle-${projectVersion}-all.jar</a> in the
+        <a href="http://downloads.sourceforge.net/project/checkstyle/checkstyle/${projectVersion}/checkstyle-${projectVersion}-all.jar">checkstyle-${projectVersion}-all.jar</a> in the
         <a href="http://docs.oracle.com/javase/8/docs/technotes/tools/windows/classpath.html#sthref10">classpath</a>. Alternatively, you must include the
         <code>compile</code> third party dependencies listed in
 

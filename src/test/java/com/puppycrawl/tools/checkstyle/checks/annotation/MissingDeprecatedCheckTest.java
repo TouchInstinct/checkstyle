@@ -27,12 +27,12 @@ import static org.junit.Assert.assertArrayEquals;
 import java.io.File;
 import java.io.IOException;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.junit.Test;
 
 import com.puppycrawl.tools.checkstyle.BaseCheckTestSupport;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
+import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
 public class MissingDeprecatedCheckTest extends BaseCheckTestSupport {
     @Override
@@ -43,7 +43,7 @@ public class MissingDeprecatedCheckTest extends BaseCheckTestSupport {
 
     @Test
     public void testGetRequiredTokens() {
-        final MissingDeprecatedCheck checkObj = new  MissingDeprecatedCheck();
+        final MissingDeprecatedCheck checkObj = new MissingDeprecatedCheck();
         final int[] expected = {
             TokenTypes.INTERFACE_DEF,
             TokenTypes.CLASS_DEF,
@@ -138,7 +138,7 @@ public class MissingDeprecatedCheckTest extends BaseCheckTestSupport {
 
         final DefaultConfiguration checkConfig = createCheckConfig(MissingDeprecatedCheck.class);
 
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
 
         verify(checkConfig, getPath("InputGoodDeprecated.java"), expected);
     }
@@ -168,5 +168,18 @@ public class MissingDeprecatedCheckTest extends BaseCheckTestSupport {
         };
 
         verify(checkConfig, getPath("InputMissingDeprecated2.java"), expected);
+    }
+
+    @Test
+    public void testSkipNoJavadocOption() throws Exception {
+        final DefaultConfiguration checkConfig = createCheckConfig(MissingDeprecatedCheck.class);
+        checkConfig.addAttribute("skipNoJavadoc", "true");
+
+        final String[] expected = {
+            "10: " + getCheckMessage(MSG_KEY_ANNOTATION_MISSING_DEPRECATED),
+            "26: " + getCheckMessage(MSG_KEY_ANNOTATION_MISSING_DEPRECATED),
+        };
+
+        verify(checkConfig, getPath("InputMissingDeprecatedSkipNoJavadoc.java"), expected);
     }
 }

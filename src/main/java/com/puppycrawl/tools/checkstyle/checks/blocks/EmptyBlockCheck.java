@@ -22,12 +22,11 @@ package com.puppycrawl.tools.checkstyle.checks.blocks;
 import java.util.Locale;
 
 import org.apache.commons.beanutils.ConversionException;
-import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.StringUtils;
 
-import com.puppycrawl.tools.checkstyle.api.Check;
+import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
+import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
 /**
  * Checks for empty blocks. The policy to verify is specified using the {@link
@@ -66,7 +65,7 @@ import com.puppycrawl.tools.checkstyle.api.TokenTypes;
  * @author Lars Kühne
  */
 public class EmptyBlockCheck
-    extends Check {
+    extends AbstractCheck {
     /**
      * A key is pointing to the warning message text in "messages.properties"
      * file.
@@ -136,7 +135,7 @@ public class EmptyBlockCheck
 
     @Override
     public int[] getRequiredTokens() {
-        return ArrayUtils.EMPTY_INT_ARRAY;
+        return CommonUtils.EMPTY_INT_ARRAY;
     }
 
     @Override
@@ -200,7 +199,7 @@ public class EmptyBlockCheck
             // Handle braces on the same line
             final String txt = lines[slistLineNo - 1]
                     .substring(slistColNo + 1, rcurlyColNo);
-            if (StringUtils.isNotBlank(txt)) {
+            if (!CommonUtils.isBlank(txt)) {
                 returnValue = true;
             }
         }

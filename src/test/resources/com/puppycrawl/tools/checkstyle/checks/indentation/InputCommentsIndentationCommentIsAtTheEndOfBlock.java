@@ -145,7 +145,7 @@ public class InputCommentsIndentationCommentIsAtTheEndOfBlock {
         for (int i = 0; i < 5; i++) {
         org.junit.Assert.assertEquals(expected.get(i), array[i]);
         }
-        String s = String.format("The array element "
+        String s = String.format(java.util.Locale.ENGLISH, "The array element "
                + "immediately following the end of the collection should be nulled",
             array[1]);
         // the above example was taken from hibernate-orm and was modified a bit
@@ -158,7 +158,7 @@ public class InputCommentsIndentationCommentIsAtTheEndOfBlock {
         for (int i = 0; i < 5; i++) {
             org.junit.Assert.assertEquals(expected.get(i), array[i]);
         }
-        String s = String.format("The array element "
+        String s = String.format(java.util.Locale.ENGLISH, "The array element "
                 + "immediately following the end of the collection should be nulled",
             array[1]);
                                  // violation
@@ -175,13 +175,13 @@ public class InputCommentsIndentationCommentIsAtTheEndOfBlock {
     }
 
     public String foo25() {
-        return String.format("%d",
+        return String.format(java.util.Locale.ENGLISH, "%d",
             1);
         // comment
     }
 
     public String foo26() {
-        return String.format("%d",
+        return String.format(java.util.Locale.ENGLISH, "%d",
             1);
                                   // violation
     }
@@ -196,14 +196,14 @@ public class InputCommentsIndentationCommentIsAtTheEndOfBlock {
 
     public String foo28() {
         int a = 5;
-        return String.format("%d",
+        return String.format(java.util.Locale.ENGLISH, "%d",
             1);
         // comment
     }
 
     public String foo29() {
         int a = 5;
-        return String.format("%d",
+        return String.format(java.util.Locale.ENGLISH, "%d",
             1);
                           // violation
     }
@@ -359,6 +359,207 @@ public class InputCommentsIndentationCommentIsAtTheEndOfBlock {
         return String
             .valueOf("11"
             );
+        // comment
+    }
+
+    void foo53() {
+        // comment
+        new Object()
+            .toString();
+        // comment
+    }
+
+    void foo54() {
+        /* comment */
+        new Object()
+            .toString();
+        // comment
+    }
+
+    void foo55() {
+            /* violation */
+        new Object()
+            .toString();
+            // comment
+    }
+
+    void foo56() {
+        new Object().toString();
+        // comment
+    }
+
+    void foo57() {
+        new Object().toString();
+            // violation
+    }
+
+    void foo58() {
+        /*
+           comment
+           */
+        // violation
+          foo1();
+          // comment
+    }
+
+    void foo59() {
+        foo1();
+        /*
+         comment */
+        // comment
+    }
+
+
+    void foo61() {
+        foo1();
+        /*
+         * comment
+         */
+        /*
+         * comment
+         */
+    }
+
+    void foo62() {
+        if (true) {
+            String.CASE_INSENSITIVE_ORDER.equals("");
+          }
+        else {
+
+          }
+        /*
+         comment
+         */
+        /*
+         comment
+         */
+    }
+
+    void foo63() {
+        try {
+            String.CASE_INSENSITIVE_ORDER.equals("");
+          }
+        catch (Exception e){
+
+          }
+
+        /*
+         comment
+         */
+        /*
+         comment
+         */
+    }
+
+    void foo64()  {
+        foo1();
+
+//  violation
+    }
+
+    void foo65() {
+        int i = 1
+            + 1
+            + 1;
+        // comment
+        // comment
+    }
+
+    void foo66()  {
+        if (true) {
+            getClass();
+        }
+
+          /* violation */
+    }
+
+    void foo67()  {
+        try {
+            getClass();
+        } finally {
+            hashCode();
+        }
+
+          /* violation */
+    }
+
+    void foo68()  {
+        for (int i = 0; i < 0; i++) {
+            getClass();
+        }
+
+          /* violation */
+    }
+
+    void foo69()  {
+        while (true) {
+            getClass();
+        }
+
+          /* violation */
+    }
+
+    void foo70()  {
+        do {
+            getClass();
+        } while (true);
+
+          /* violation */
+    }
+
+    void foo71() {
+        switch("") {
+            case "!":
+                break;
+            default:
+                break;
+        }
+
+          // violation
+    }
+
+    void foo72() {
+        int u = 1;
+
+/* comment */
+// violation
+    }
+
+    void foo73() {
+        class Foo { }
+
+/* comment */
+// violation
+    }
+
+    interface Bar1 {
+        interface NestedBar { }
+
+// violation
+    }
+
+    static class Bar2 {
+        enum Foo {
+            A;
+        }
+
+    // violation
+    }
+
+    static class Bar3 {
+        @interface Foo { }
+            // violation
+    }
+
+    void foo74() {
+        getClass(); // comment
+// comment
+// comment
+    }
+
+    void foo75() {
+        getClass();
+// comment
         // comment
     }
 

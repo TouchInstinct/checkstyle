@@ -21,6 +21,7 @@ package com.puppycrawl.tools.checkstyle.api;
 
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
@@ -41,8 +42,6 @@ import org.apache.commons.beanutils.converters.FloatConverter;
 import org.apache.commons.beanutils.converters.IntegerConverter;
 import org.apache.commons.beanutils.converters.LongConverter;
 import org.apache.commons.beanutils.converters.ShortConverter;
-
-import com.google.common.collect.Lists;
 
 /**
  * A Java Bean that implements the component lifecycle interfaces by
@@ -116,13 +115,11 @@ public class AutomaticBean
      * is called for each {@link Configuration#getChildren child Configuration}
      * of {@code configuration}.
      *
-     * @param config the configuration to use.
-     * @throws CheckstyleException if there is a configuration error.
      * @see Configurable
      */
     @Override
     public final void configure(Configuration config)
-        throws CheckstyleException {
+            throws CheckstyleException {
         configuration = config;
 
         final String[] attributes = config.getAttributeNames();
@@ -189,14 +186,11 @@ public class AutomaticBean
 
     /**
      * Implements the Contextualizable interface using bean introspection.
-     *
-     * @param context the context.
-     * @throws CheckstyleException if there is a contextualization error.
      * @see Contextualizable
      */
     @Override
     public final void contextualize(Context context)
-        throws CheckstyleException {
+            throws CheckstyleException {
 
         final Collection<String> attributes = context.getAttributeNames();
 
@@ -230,15 +224,21 @@ public class AutomaticBean
     /**
      * Called by configure() for every child of this component's Configuration.
      * <p>
-     * The default implementation does nothing.
+     * The default implementation throws {@link CheckstyleException} if
+     * {@code childConf} is {@code null} because it doesn't support children. It
+     * must be overridden to validate and support children that are wanted.
      * </p>
+     *
      * @param childConf a child of this component's Configuration
      * @throws CheckstyleException if there is a configuration error.
      * @see Configuration#getChildren
      */
     protected void setupChild(Configuration childConf)
-        throws CheckstyleException {
-        // No code by default, should be overridden only by demand at subclasses
+            throws CheckstyleException {
+        if (childConf != null) {
+            throw new CheckstyleException(childConf.getName() + " is not allowed as a child in "
+                    + getConfiguration().getName());
+        }
     }
 
     /**
@@ -253,7 +253,7 @@ public class AutomaticBean
             // Convert to a String and trim it for the tokenizer.
             final StringTokenizer tokenizer = new StringTokenizer(
                 value.toString().trim(), ",");
-            final List<String> result = Lists.newArrayList();
+            final List<String> result = new ArrayList<>();
 
             while (tokenizer.hasMoreTokens()) {
                 final String token = tokenizer.nextToken();

@@ -19,9 +19,8 @@
 
 package com.puppycrawl.tools.checkstyle.checks.regexp;
 
+import java.util.Optional;
 import java.util.regex.Pattern;
-
-import org.apache.commons.lang3.ObjectUtils;
 
 import com.puppycrawl.tools.checkstyle.api.AbstractViolationReporter;
 
@@ -29,7 +28,7 @@ import com.puppycrawl.tools.checkstyle.api.AbstractViolationReporter;
  * Options for a detector.
  * @author Oliver Burn
  */
-final class DetectorOptions {
+public final class DetectorOptions {
     /**
      * Flags to compile a regular expression with.
      * See {@link Pattern#flags()}.
@@ -56,6 +55,14 @@ final class DetectorOptions {
 
     /** Default constructor.*/
     private DetectorOptions() { }
+
+    /**
+     * Returns new Builder object.
+     * @return Builder object.
+     */
+    public static Builder newBuilder() {
+        return new DetectorOptions().new Builder();
+    }
 
     /**
      * Format of the regular expression.
@@ -122,14 +129,6 @@ final class DetectorOptions {
         return pattern;
     }
 
-    /**
-     * Returns new Builder object.
-     * @return Builder object.
-     */
-    static Builder newBuilder() {
-        return new DetectorOptions().new Builder();
-    }
-
     /** Class which implements Builder pattern to build DetectorOptions instance. */
     public final class Builder {
 
@@ -137,8 +136,9 @@ final class DetectorOptions {
          * Specifies the violation reporter and returns Builder object.
          * @param val for reporting violations.
          * @return Builder object.
+         * @noinspection ReturnOfInnerClass
          */
-        Builder reporter(AbstractViolationReporter val) {
+        public Builder reporter(AbstractViolationReporter val) {
             reporter = val;
             return this;
         }
@@ -148,8 +148,9 @@ final class DetectorOptions {
          * and returns Builder object.
          * @param val the format to use when matching lines.
          * @return Builder object.
+         * @noinspection ReturnOfInnerClass
          */
-        Builder compileFlags(int val) {
+        public Builder compileFlags(int val) {
             compileFlags = val;
             return this;
         }
@@ -158,8 +159,9 @@ final class DetectorOptions {
          * Specifies the format to use when matching lines and returns Builder object.
          * @param val the format to use when matching lines.
          * @return Builder object.
+         * @noinspection ReturnOfInnerClass
          */
-        Builder format(String val) {
+        public Builder format(String val) {
             format = val;
             return this;
         }
@@ -168,8 +170,9 @@ final class DetectorOptions {
          * Specifies message to use when reporting a match and returns Builder object.
          * @param val message to use when reporting a match.
          * @return Builder object.
+         * @noinspection ReturnOfInnerClass
          */
-        Builder message(String val) {
+        public Builder message(String val) {
             message = val;
             return this;
         }
@@ -178,8 +181,9 @@ final class DetectorOptions {
          * Specifies the minimum allowed number of detections and returns Builder object.
          * @param val the minimum allowed number of detections.
          * @return Builder object.
+         * @noinspection ReturnOfInnerClass
          */
-        Builder minimum(int val) {
+        public Builder minimum(int val) {
             minimum = val;
             return this;
         }
@@ -188,8 +192,9 @@ final class DetectorOptions {
          * Specifies the maximum allowed number of detections and returns Builder object.
          * @param val the maximum allowed number of detections.
          * @return Builder object.
+         * @noinspection ReturnOfInnerClass
          */
-        Builder maximum(int val) {
+        public Builder maximum(int val) {
             maximum = val;
             return this;
         }
@@ -198,8 +203,9 @@ final class DetectorOptions {
          * Specifies whether to ignore case when matching and returns Builder object.
          * @param val whether to ignore case when matching.
          * @return Builder object.
+         * @noinspection ReturnOfInnerClass
          */
-        Builder ignoreCase(boolean val) {
+        public Builder ignoreCase(boolean val) {
             ignoreCase = val;
             return this;
         }
@@ -208,8 +214,9 @@ final class DetectorOptions {
          * Specifies the suppressor to use and returns Builder object.
          * @param val the suppressor to use.
          * @return current instance
+         * @noinspection ReturnOfInnerClass
          */
-        Builder suppressor(MatchSuppressor val) {
+        public Builder suppressor(MatchSuppressor val) {
             suppressor = val;
             return this;
         }
@@ -218,9 +225,9 @@ final class DetectorOptions {
          * Returns new DetectorOptions instance.
          * @return DetectorOptions instance.
          */
-        DetectorOptions build() {
-            message = ObjectUtils.defaultIfNull(message, "");
-            suppressor = ObjectUtils.defaultIfNull(suppressor, NeverSuppress.INSTANCE);
+        public DetectorOptions build() {
+            message = Optional.ofNullable(message).orElse("");
+            suppressor = Optional.ofNullable(suppressor).orElse(NeverSuppress.INSTANCE);
             return DetectorOptions.this;
         }
     }

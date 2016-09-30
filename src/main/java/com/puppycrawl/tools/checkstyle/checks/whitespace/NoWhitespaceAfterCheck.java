@@ -19,7 +19,7 @@
 
 package com.puppycrawl.tools.checkstyle.checks.whitespace;
 
-import com.puppycrawl.tools.checkstyle.api.Check;
+import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
 
@@ -71,7 +71,7 @@ import com.puppycrawl.tools.checkstyle.api.TokenTypes;
  * @author <a href="mailto:nesterenko-aleksey@list.ru">Aleksey Nesterenko</a>
  * @author attatrol
  */
-public class NoWhitespaceAfterCheck extends Check {
+public class NoWhitespaceAfterCheck extends AbstractCheck {
 
     /**
      * A key is pointing to the warning message text in "messages.properties"
@@ -193,7 +193,7 @@ public class NoWhitespaceAfterCheck extends Check {
      *        , line number of a possible whitespace.
      * @return true if whitespace found.
      */
-    boolean hasTrailingWhitespace(DetailAST ast,
+    private boolean hasTrailingWhitespace(DetailAST ast,
         int whitespaceColumnNo, int whitespaceLineNo) {
         final boolean result;
         final int astLineNo = ast.getLineNo();

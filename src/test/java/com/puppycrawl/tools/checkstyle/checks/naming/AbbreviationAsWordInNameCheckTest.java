@@ -24,11 +24,11 @@ import static com.puppycrawl.tools.checkstyle.checks.naming.AbbreviationAsWordIn
 import java.io.File;
 import java.io.IOException;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.junit.Test;
 
 import com.puppycrawl.tools.checkstyle.BaseCheckTestSupport;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
+import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
 public class AbbreviationAsWordInNameCheckTest extends BaseCheckTestSupport {
 
@@ -50,7 +50,7 @@ public class AbbreviationAsWordInNameCheckTest extends BaseCheckTestSupport {
         checkConfig.addAttribute("ignoreOverriddenMethods", "true");
 
         final String[] expected = {
-            "9: "  + getWarningMessage("FactoryWithBADNAme", expectedCapitalCount),
+            "9: " + getWarningMessage("FactoryWithBADNAme", expectedCapitalCount),
             "12: " + getWarningMessage("AbstractCLASSName", expectedCapitalCount),
             "32: " + getWarningMessage("AbstractINNERRClass", expectedCapitalCount),
             "37: " + getWarningMessage("WellNamedFACTORY", expectedCapitalCount),
@@ -234,7 +234,7 @@ public class AbbreviationAsWordInNameCheckTest extends BaseCheckTestSupport {
 
     @Test
     public void testTypeNamesForThreePermittedCapitalLettersWithOverriddenMethod()
-        throws Exception {
+            throws Exception {
 
         final DefaultConfiguration checkConfig =
             createCheckConfig(AbbreviationAsWordInNameCheck.class);
@@ -311,12 +311,21 @@ public class AbbreviationAsWordInNameCheckTest extends BaseCheckTestSupport {
         checkConfig.addAttribute("ignoreFinal", "false");
         checkConfig.addAttribute("allowedAbbreviations", null);
 
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
 
         verify(checkConfig, getPath("InputAbstractMultisetSetCount.java"), expected);
     }
 
     private String getWarningMessage(String typeName, int expectedCapitalCount) {
         return getCheckMessage(MSG_KEY, typeName, expectedCapitalCount);
+    }
+
+    @Test
+    public void testReceiver() throws Exception {
+        final DefaultConfiguration checkConfig =
+            createCheckConfig(AbbreviationAsWordInNameCheck.class);
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+
+        verify(checkConfig, getPath("InputAbbreviationAsWordReceiver.java"), expected);
     }
 }

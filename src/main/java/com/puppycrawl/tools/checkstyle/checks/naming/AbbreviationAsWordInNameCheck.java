@@ -24,12 +24,13 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.ArrayUtils;
-
-import com.puppycrawl.tools.checkstyle.api.Check;
+import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
+import com.puppycrawl.tools.checkstyle.utils.CheckUtils;
+import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
 /**
  * <p>
@@ -81,7 +82,7 @@ import com.puppycrawl.tools.checkstyle.api.TokenTypes;
  *
  * @author Roman Ivanov, Daniil Yaroslvtsev, Baratali Izmailov
  */
-public class AbbreviationAsWordInNameCheck extends Check {
+public class AbbreviationAsWordInNameCheck extends AbstractCheck {
 
     /**
      * Warning message key.
@@ -157,10 +158,10 @@ public class AbbreviationAsWordInNameCheck extends Check {
      *        an string of abbreviations that must be skipped from checking,
      *        each abbreviation separated by comma.
      */
-    public void setAllowedAbbreviations(String allowedAbbreviations) {
+    public void setAllowedAbbreviations(String... allowedAbbreviations) {
         if (allowedAbbreviations != null) {
-            this.allowedAbbreviations = new HashSet<>(
-                    Arrays.asList(allowedAbbreviations.split(",")));
+            this.allowedAbbreviations =
+                Arrays.stream(allowedAbbreviations).collect(Collectors.toSet());
         }
     }
 
@@ -195,7 +196,7 @@ public class AbbreviationAsWordInNameCheck extends Check {
 
     @Override
     public int[] getRequiredTokens() {
-        return ArrayUtils.EMPTY_INT_ARRAY;
+        return CommonUtils.EMPTY_INT_ARRAY;
     }
 
     @Override
@@ -222,7 +223,7 @@ public class AbbreviationAsWordInNameCheck extends Check {
     private boolean isIgnoreSituation(DetailAST ast) {
         final DetailAST modifiers = ast.getFirstChild();
 
-        boolean result = false;
+        final boolean result;
         if (ast.getType() == TokenTypes.VARIABLE_DEF) {
             if ((ignoreFinal || ignoreStatic)
                     && isInterfaceDeclaration(ast)) {
@@ -239,6 +240,9 @@ public class AbbreviationAsWordInNameCheck extends Check {
         else if (ast.getType() == TokenTypes.METHOD_DEF) {
             result = ignoreOverriddenMethods
                     && hasOverrideAnnotation(modifiers);
+        }
+        else {
+            result = CheckUtils.isReceiverParameter(ast);
         }
         return result;
     }

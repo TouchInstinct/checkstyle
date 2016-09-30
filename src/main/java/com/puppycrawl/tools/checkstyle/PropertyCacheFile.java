@@ -19,26 +19,33 @@
 
 package com.puppycrawl.tools.checkstyle;
 
+import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
-import java.nio.file.AccessDeniedException;
+import java.net.URI;
 import java.nio.file.Files;
-import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.HashSet;
 import java.util.Properties;
+import java.util.Set;
+
+import javax.xml.bind.DatatypeConverter;
 
 import com.google.common.io.Closeables;
 import com.google.common.io.Flushables;
+import com.puppycrawl.tools.checkstyle.api.CheckstyleException;
 import com.puppycrawl.tools.checkstyle.api.Configuration;
+import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
 /**
  * This class maintains a persistent(on file-system) store of the files
@@ -51,6 +58,7 @@ import com.puppycrawl.tools.checkstyle.api.Configuration;
  * configuration has changed.
  *
  * @author Oliver Burn
+ * @author Andrei Selkin
  */
 final class PropertyCacheFile {
 
@@ -62,17 +70,8 @@ final class PropertyCacheFile {
      */
     private static final String CONFIG_HASH_KEY = "configuration*?";
 
-    /** Hex digits. */
-    private static final char[] HEX_CHARS = {
-        '0', '1', '2', '3', '4', '5', '6', '7',
-        '8', '9', 'A', 'B', 'C', 'D', 'E', 'F',
-    };
-
-    /** Mask for last byte. */
-    private static final int MASK_0X0F = 0x0F;
-
-    /** Bit shift. */
-    private static final int SHIFT_4 = 4;
+    /** Size of buffer which is used to read external configuration resources. */
+    private static final int BUFFER_SIZE = 1024;
 
     /** The details on files. **/
     private final Properties details = new Properties();
@@ -104,10 +103,10 @@ final class PropertyCacheFile {
      * Load cached values from file.
      * @throws IOException when there is a problems with file read
      */
-    void load() throws IOException {
+    public void load() throws IOException {
         // get the current config so if the file isn't found
         // the first time the hash will be added to output file
-        final String currentConfigHash = getConfigHashCode(config);
+        final String currentConfigHash = getHashCodeBasedOnObjectContent(config);
         if (new File(fileName).exists()) {
             FileInputStream inStream = null;
             try {
@@ -134,15 +133,10 @@ final class PropertyCacheFile {
      * Cleans up the object and updates the cache file.
      * @throws IOException  when there is a problems with file save
      */
-    void persist() throws IOException {
-        try {
-            final Path directory = Paths.get(fileName).getParent();
-            if (directory != null) {
-                Files.createDirectories(directory);
-            }
-        }
-        catch (InvalidPathException | AccessDeniedException ex) {
-            throw new IllegalStateException(ex.getMessage(), ex);
+    public void persist() throws IOException {
+        final Path directory = Paths.get(fileName).getParent();
+        if (directory != null) {
+            Files.createDirectories(directory);
         }
         FileOutputStream out = null;
         try {
@@ -152,6 +146,13 @@ final class PropertyCacheFile {
         finally {
             flushAndCloseOutStream(out);
         }
+    }
+
+    /**
+     * Clears the cache.
+     */
+    public void clear() {
+        details.clear();
     }
 
     /**
@@ -172,7 +173,7 @@ final class PropertyCacheFile {
      * @param timestamp the timestamp of the file to check
      * @return whether the specified file has already been checked ok
      */
-    boolean isInCache(String uncheckedFileName, long timestamp) {
+    public boolean isInCache(String uncheckedFileName, long timestamp) {
         final String lastChecked = details.getProperty(uncheckedFileName);
         return lastChecked != null
             && lastChecked.equals(Long.toString(timestamp));
@@ -183,17 +184,16 @@ final class PropertyCacheFile {
      * @param checkedFileName name of the file that checked ok
      * @param timestamp the timestamp of the file
      */
-    void put(String checkedFileName, long timestamp) {
+    public void put(String checkedFileName, long timestamp) {
         details.setProperty(checkedFileName, Long.toString(timestamp));
     }
 
     /**
-     * Calculates the hashcode for a GlobalProperties.
-     *
-     * @param object the GlobalProperties
-     * @return the hashcode for {@code object}
+     * Calculates the hashcode for the serializable object based on its content.
+     * @param object serializable object.
+     * @return the hashcode for serializable object.
      */
-    private static String getConfigHashCode(Serializable object) {
+    private static String getHashCodeBasedOnObjectContent(Serializable object) {
         try {
             // im-memory serialization of Configuration
 
@@ -214,7 +214,7 @@ final class PropertyCacheFile {
             final MessageDigest digest = MessageDigest.getInstance("SHA-1");
             digest.update(outputStream.toByteArray());
 
-            return hexEncode(digest.digest());
+            return DatatypeConverter.printHexBinary(digest.digest());
         }
         catch (final IOException | NoSuchAlgorithmException ex) {
             // rethrow as unchecked exception
@@ -223,18 +223,137 @@ final class PropertyCacheFile {
     }
 
     /**
-     * Hex-encodes a byte array.
-     * @param byteArray the byte array
-     * @return hex encoding of {@code byteArray}
+     * Puts external resources in cache.
+     * If at least one external resource changed, clears the cache.
+     * @param locations locations of external resources.
      */
-    private static String hexEncode(byte... byteArray) {
-        final StringBuilder buf = new StringBuilder(2 * byteArray.length);
-        for (final byte b : byteArray) {
-            final int low = b & MASK_0X0F;
-            final int high = b >> SHIFT_4 & MASK_0X0F;
-            buf.append(HEX_CHARS[high]);
-            buf.append(HEX_CHARS[low]);
+    public void putExternalResources(Set<String> locations) {
+        final Set<ExternalResource> resources = loadExternalResources(locations);
+        if (areExternalResourcesChanged(resources)) {
+            details.clear();
         }
-        return buf.toString();
+        fillCacheWithExternalResources(resources);
+    }
+
+    /**
+     * Loads a set of {@link ExternalResource} based on their locations.
+     * @param resourceLocations locations of external configuration resources.
+     * @return a set of {@link ExternalResource}.
+     */
+    private static Set<ExternalResource> loadExternalResources(Set<String> resourceLocations) {
+        final Set<ExternalResource> resources = new HashSet<>();
+        for (String location : resourceLocations) {
+            String contentHashSum = null;
+            try {
+                final byte[] content = loadExternalResource(location);
+                contentHashSum = getHashCodeBasedOnObjectContent(content);
+            }
+            catch (CheckstyleException ex) {
+                // if exception happened (configuration resource was not found, connection is not
+                // available, resouce is broken, etc), we need to calculate hash sum based on
+                // exception object content in order to check whether problem is resolved later
+                // and/or the configuration is changed.
+                contentHashSum = getHashCodeBasedOnObjectContent(ex);
+            }
+            finally {
+                resources.add(new ExternalResource(location, contentHashSum));
+            }
+        }
+        return resources;
+    }
+
+    /**
+     * Loads the content of external resource.
+     * @param location external resource location.
+     * @return array of bytes which respresents the content of external resource in binary form.
+     * @throws CheckstyleException if error while loading occurs.
+     */
+    private static byte[] loadExternalResource(String location) throws CheckstyleException {
+        byte[] content = null;
+        final URI uri = CommonUtils.getUriByFilename(location);
+        InputStream resourceReader = null;
+        try {
+            resourceReader = new BufferedInputStream(uri.toURL().openStream());
+            final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            final byte[] data = new byte[BUFFER_SIZE];
+            int bytesRead = resourceReader.read(data, 0, data.length);
+            while (bytesRead != -1) {
+                outputStream.write(data, 0, bytesRead);
+                bytesRead = resourceReader.read(data, 0, data.length);
+            }
+            outputStream.flush();
+            content = outputStream.toByteArray();
+        }
+        catch (IOException ex) {
+            throw new CheckstyleException("Unable to load external resource file " + location, ex);
+        }
+        finally {
+            Closeables.closeQuietly(resourceReader);
+        }
+        return content;
+    }
+
+    /**
+     * Checks whether the contents of external configuration resources were changed.
+     * @param resources a set of {@link ExternalResource}.
+     * @return true if the contents of external configuration resources were changed.
+     */
+    private boolean areExternalResourcesChanged(Set<ExternalResource> resources) {
+        return resources.stream().filter(resource -> {
+            boolean changed = false;
+            if (isResourceLocationInCache(resource.location)) {
+                final String contentHashSum = resource.contentHashSum;
+                final String cachedHashSum = details.getProperty(resource.location);
+                if (!cachedHashSum.equals(contentHashSum)) {
+                    changed = true;
+                }
+            }
+            else {
+                changed = true;
+            }
+            return changed;
+        }).findFirst().isPresent();
+    }
+
+    /**
+     * Fills cache with a set of {@link ExternalResource}.
+     * If external resource from the set is already in cache, it will be skipped.
+     * @param externalResources a set of {@link ExternalResource}.
+     */
+    private void fillCacheWithExternalResources(Set<ExternalResource> externalResources) {
+        externalResources.stream()
+            .filter(resource -> !isResourceLocationInCache(resource.location))
+            .forEach(resource -> details.setProperty(resource.location, resource.contentHashSum));
+    }
+
+    /**
+     * Checks whether resource location is in cache.
+     * @param location resource location.
+     * @return true if resource location is in cache.
+     */
+    private boolean isResourceLocationInCache(String location) {
+        final String cachedHashSum = details.getProperty(location);
+        return cachedHashSum != null;
+    }
+
+    /**
+     * Class which represents external resource.
+     * @author Andrei Selkin
+     */
+    private static class ExternalResource {
+        /** Location of resource. */
+        private final String location;
+        /** Hash sum which is calculated based on resource content. */
+        private final String contentHashSum;
+
+        /**
+         * Creates an instance.
+         * @param location resource location.
+         * @param contentHashSum content hash sum.
+         */
+        ExternalResource(String location, String contentHashSum) {
+            this.location = location;
+            this.contentHashSum = contentHashSum;
+        }
     }
 }

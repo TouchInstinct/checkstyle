@@ -22,10 +22,8 @@ package com.puppycrawl.tools.checkstyle.checks.whitespace;
 import java.util.Locale;
 
 import org.apache.commons.beanutils.ConversionException;
-import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.StringUtils;
 
-import com.puppycrawl.tools.checkstyle.api.Check;
+import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
 import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
@@ -85,15 +83,16 @@ import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
  * <pre>
  * &lt;module name="OperatorWrap"&gt;
  *     &lt;property name="tokens"
- *               value="ASSIGN,DIV_ASSIGN,PLUS_ASSIGN,MINUS_ASSIGN,STAR_ASSIGN,MOD_ASSIGN,SR_ASSIGN,BSR_ASSIGN,SL_ASSIGN,BXOR_ASSIGN,BOR_ASSIGN,BAND_ASSIGN"/&gt;
+ *               value="ASSIGN,DIV_ASSIGN,PLUS_ASSIGN,MINUS_ASSIGN,STAR_ASSIGN,MOD_ASSIGN
+ *               ,SR_ASSIGN,BSR_ASSIGN,SL_ASSIGN,BXOR_ASSIGN,BOR_ASSIGN,BAND_ASSIGN"/&gt;
  *     &lt;property name="option" value="eol"/&gt;
-  * &lt;/module&gt;
+ * &lt;/module&gt;
  * </pre>
  *
  * @author Rick Giles
  */
 public class OperatorWrapCheck
-    extends Check {
+    extends AbstractCheck {
 
     /**
      * A key is pointing to the warning message text in "messages.properties"
@@ -197,36 +196,33 @@ public class OperatorWrapCheck
 
     @Override
     public int[] getRequiredTokens() {
-        return ArrayUtils.EMPTY_INT_ARRAY;
+        return CommonUtils.EMPTY_INT_ARRAY;
     }
 
     @Override
     public void visitToken(DetailAST ast) {
-        if (ast.getType() == TokenTypes.COLON) {
-            final DetailAST parent = ast.getParent();
-            if (parent.getType() == TokenTypes.LITERAL_DEFAULT
-                || parent.getType() == TokenTypes.LITERAL_CASE) {
-                //we do not want to check colon for cases and defaults
-                return;
+        final DetailAST parent = ast.getParent();
+        //we do not want to check colon for cases and defaults
+        if (ast.getType() != TokenTypes.COLON
+                || parent.getType() != TokenTypes.LITERAL_DEFAULT
+                    && parent.getType() != TokenTypes.LITERAL_CASE) {
+            final String text = ast.getText();
+            final int colNo = ast.getColumnNo();
+            final int lineNo = ast.getLineNo();
+            final String currentLine = getLine(lineNo - 1);
+
+            // Check if rest of line is whitespace, and not just the operator
+            // by itself. This last bit is to handle the operator on a line by
+            // itself.
+            if (option == WrapOption.NL
+                    && !text.equals(currentLine.trim())
+                    && CommonUtils.isBlank(currentLine.substring(colNo + text.length()))) {
+                log(lineNo, colNo, MSG_LINE_NEW, text);
             }
-        }
-
-        final String text = ast.getText();
-        final int colNo = ast.getColumnNo();
-        final int lineNo = ast.getLineNo();
-        final String currentLine = getLine(lineNo - 1);
-
-        // Check if rest of line is whitespace, and not just the operator
-        // by itself. This last bit is to handle the operator on a line by
-        // itself.
-        if (option == WrapOption.NL
-                && !text.equals(currentLine.trim())
-                && StringUtils.isBlank(currentLine.substring(colNo + text.length()))) {
-            log(lineNo, colNo, MSG_LINE_NEW, text);
-        }
-        else if (option == WrapOption.EOL
-                && CommonUtils.hasWhitespaceBefore(colNo - 1, currentLine)) {
-            log(lineNo, colNo, MSG_LINE_PREVIOUS, text);
+            else if (option == WrapOption.EOL
+                    && CommonUtils.hasWhitespaceBefore(colNo - 1, currentLine)) {
+                log(lineNo, colNo, MSG_LINE_PREVIOUS, text);
+            }
         }
     }
 }

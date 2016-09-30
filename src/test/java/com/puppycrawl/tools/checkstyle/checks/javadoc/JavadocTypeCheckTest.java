@@ -29,13 +29,13 @@ import static org.junit.Assert.assertArrayEquals;
 import java.io.File;
 import java.io.IOException;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.junit.Test;
 
 import com.puppycrawl.tools.checkstyle.BaseCheckTestSupport;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
 import com.puppycrawl.tools.checkstyle.api.Scope;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
+import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
 /**
  * @author Oliver.Burn
@@ -50,7 +50,7 @@ public class JavadocTypeCheckTest extends BaseCheckTestSupport {
     @Test
     public void testGetRequiredTokens() {
         final JavadocTypeCheck javadocTypeCheck = new JavadocTypeCheck();
-        assertArrayEquals(ArrayUtils.EMPTY_INT_ARRAY, javadocTypeCheck.getRequiredTokens());
+        assertArrayEquals(CommonUtils.EMPTY_INT_ARRAY, javadocTypeCheck.getRequiredTokens());
     }
 
     @Test
@@ -183,7 +183,7 @@ public class JavadocTypeCheckTest extends BaseCheckTestSupport {
 
     @Test
     public void testAuthorRegularEx()
-        throws Exception {
+            throws Exception {
         final DefaultConfiguration checkConfig =
             createCheckConfig(JavadocTypeCheck.class);
         checkConfig.addAttribute("authorFormat", "0*");
@@ -197,7 +197,7 @@ public class JavadocTypeCheckTest extends BaseCheckTestSupport {
 
     @Test
     public void testAuthorRegularExError()
-        throws Exception {
+            throws Exception {
         final DefaultConfiguration checkConfig =
             createCheckConfig(JavadocTypeCheck.class);
         checkConfig.addAttribute("authorFormat", "ABC");
@@ -217,7 +217,7 @@ public class JavadocTypeCheckTest extends BaseCheckTestSupport {
 
     @Test
     public void testVersionRequired()
-        throws Exception {
+            throws Exception {
         final DefaultConfiguration checkConfig =
             createCheckConfig(JavadocTypeCheck.class);
         checkConfig.addAttribute("versionFormat", "\\S");
@@ -229,7 +229,7 @@ public class JavadocTypeCheckTest extends BaseCheckTestSupport {
 
     @Test
     public void testVersionRegularEx()
-        throws Exception {
+            throws Exception {
         final DefaultConfiguration checkConfig =
             createCheckConfig(JavadocTypeCheck.class);
         checkConfig.addAttribute("versionFormat", "^\\p{Digit}+\\.\\p{Digit}+$");
@@ -243,7 +243,7 @@ public class JavadocTypeCheckTest extends BaseCheckTestSupport {
 
     @Test
     public void testVersionRegularExError()
-        throws Exception {
+            throws Exception {
         final DefaultConfiguration checkConfig =
             createCheckConfig(JavadocTypeCheck.class);
         checkConfig.addAttribute("versionFormat", "\\$Revision.*\\$");
@@ -340,6 +340,7 @@ public class JavadocTypeCheckTest extends BaseCheckTestSupport {
             "11: " + getCheckMessage(MSG_MISSING_TAG, "@param <C456>"),
             "44:8: " + getCheckMessage(MSG_UNUSED_TAG, "@param", "<C>"),
             "47: " + getCheckMessage(MSG_MISSING_TAG, "@param <B>"),
+            "60:5: " + getCheckMessage(MSG_UNUSED_TAG, "@param", "<x>"),
         };
         verify(checkConfig, getPath("InputTypeParamsTags.java"), expected);
     }
@@ -352,8 +353,22 @@ public class JavadocTypeCheckTest extends BaseCheckTestSupport {
         final String[] expected = {
             "7:4: " + getCheckMessage(MSG_UNUSED_TAG, "@param", "<D123>"),
             "44:8: " + getCheckMessage(MSG_UNUSED_TAG, "@param", "<C>"),
+            "60:5: " + getCheckMessage(MSG_UNUSED_TAG, "@param", "<x>"),
         };
         verify(checkConfig, getPath("InputTypeParamsTags.java"), expected);
+    }
+
+    @Test
+    public void testDontAllowUnusedParameterTag() throws Exception {
+        final DefaultConfiguration checkConfig =
+                createCheckConfig(JavadocTypeCheck.class);
+        final String[] expected = {
+            "6:4: " + getCheckMessage(MSG_UNUSED_TAG, "@param", "<BAD>"),
+            "7:4: " + getCheckMessage(MSG_UNUSED_TAG, "@param", "<BAD>"),
+        };
+        verify(checkConfig,
+                getPath("InputUnusedParamInJavadocForClass.java"),
+                expected);
     }
 
     @Test
@@ -373,7 +388,7 @@ public class JavadocTypeCheckTest extends BaseCheckTestSupport {
         final DefaultConfiguration checkConfig =
             createCheckConfig(JavadocTypeCheck.class);
         checkConfig.addAttribute("allowUnknownTags", "true");
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
         verify(checkConfig,
                 getPath("InputBadTag.java"),
                 expected);

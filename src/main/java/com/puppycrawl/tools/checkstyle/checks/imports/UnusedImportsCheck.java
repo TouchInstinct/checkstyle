@@ -25,8 +25,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.google.common.collect.Sets;
-import com.puppycrawl.tools.checkstyle.api.Check;
+import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.FileContents;
 import com.puppycrawl.tools.checkstyle.api.FullIdent;
@@ -50,7 +49,7 @@ import com.puppycrawl.tools.checkstyle.utils.JavadocUtils;
  *
  * @author Oliver Burn
  */
-public class UnusedImportsCheck extends Check {
+public class UnusedImportsCheck extends AbstractCheck {
 
     /**
      * A key is pointing to the warning message text in "messages.properties"
@@ -72,10 +71,10 @@ public class UnusedImportsCheck extends Check {
     private static final String STAR_IMPORT_SUFFIX = ".*";
 
     /** Set of the imports. */
-    private final Set<FullIdent> imports = Sets.newHashSet();
+    private final Set<FullIdent> imports = new HashSet<>();
 
     /** Set of references - possibly to imports or other things. */
-    private final Set<String> referenced = Sets.newHashSet();
+    private final Set<String> referenced = new HashSet<>();
 
     /** Flag to indicate when time to start collecting references. */
     private boolean collect;
@@ -101,13 +100,11 @@ public class UnusedImportsCheck extends Check {
     @Override
     public void finishTree(DetailAST rootAST) {
         // loop over all the imports to see if referenced.
-        for (final FullIdent imp : imports) {
-            if (!referenced.contains(CommonUtils.baseClassName(imp.getText()))) {
-                log(imp.getLineNo(),
-                    imp.getColumnNo(),
-                    MSG_KEY, imp.getText());
-            }
-        }
+        imports.stream()
+            .filter(imp -> !referenced.contains(CommonUtils.baseClassName(imp.getText())))
+            .forEach(imp -> log(imp.getLineNo(),
+                imp.getColumnNo(),
+                MSG_KEY, imp.getText()));
     }
 
     @Override
@@ -238,20 +235,13 @@ public class UnusedImportsCheck extends Check {
         final Set<String> references = new HashSet<>();
         // process all the @link type tags
         // INLINE tags inside BLOCKs get hidden when using ALL
-        for (final JavadocTag tag
-                : getValidTags(textBlock, JavadocUtils.JavadocTagType.INLINE)) {
-            if (tag.canReferenceImports()) {
-                references.addAll(processJavadocTag(tag));
-            }
-        }
+        getValidTags(textBlock, JavadocUtils.JavadocTagType.INLINE).stream()
+            .filter(JavadocTag::canReferenceImports)
+            .forEach(tag -> references.addAll(processJavadocTag(tag)));
         // process all the @throws type tags
-        for (final JavadocTag tag
-                : getValidTags(textBlock, JavadocUtils.JavadocTagType.BLOCK)) {
-            if (tag.canReferenceImports()) {
-                references.addAll(
-                        matchPattern(tag.getFirstArg(), FIRST_CLASS_NAME));
-            }
-        }
+        getValidTags(textBlock, JavadocUtils.JavadocTagType.BLOCK).stream()
+            .filter(JavadocTag::canReferenceImports)
+            .forEach(tag -> references.addAll(matchPattern(tag.getFirstArg(), FIRST_CLASS_NAME)));
         return references;
     }
 

@@ -22,9 +22,8 @@ package com.puppycrawl.tools.checkstyle.checks.blocks;
 import java.util.Locale;
 
 import org.apache.commons.beanutils.ConversionException;
-import org.apache.commons.lang3.ArrayUtils;
 
-import com.puppycrawl.tools.checkstyle.api.Check;
+import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.Scope;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
@@ -83,7 +82,7 @@ import com.puppycrawl.tools.checkstyle.utils.ScopeUtils;
  * @author Andrei Selkin
  * @author <a href="mailto:piotr.listkiewicz@gmail.com">liscju</a>
  */
-public class RightCurlyCheck extends Check {
+public class RightCurlyCheck extends AbstractCheck {
     /**
      * A key is pointing to the warning message text in "messages.properties"
      * file.
@@ -168,7 +167,7 @@ public class RightCurlyCheck extends Check {
 
     @Override
     public int[] getRequiredTokens() {
-        return ArrayUtils.EMPTY_INT_ARRAY;
+        return CommonUtils.EMPTY_INT_ARRAY;
     }
 
     @Override
@@ -176,22 +175,19 @@ public class RightCurlyCheck extends Check {
         final Details details = getDetails(ast);
         final DetailAST rcurly = details.rcurly;
 
-        if (rcurly == null || rcurly.getType() != TokenTypes.RCURLY) {
-            // we need to have both tokens to perform the check
-            return;
-        }
+        if (rcurly != null && rcurly.getType() == TokenTypes.RCURLY) {
+            final String violation;
+            if (shouldStartLine) {
+                final String targetSourceLine = getLines()[rcurly.getLineNo() - 1];
+                violation = validate(details, option, true, targetSourceLine);
+            }
+            else {
+                violation = validate(details, option, false, "");
+            }
 
-        final String violation;
-        if (shouldStartLine) {
-            final String targetSourceLine = getLines()[rcurly.getLineNo() - 1];
-            violation = validate(details, option, true, targetSourceLine);
-        }
-        else {
-            violation = validate(details, option, false, "");
-        }
-
-        if (!violation.isEmpty()) {
-            log(rcurly, violation, "}", rcurly.getColumnNo() + 1);
+            if (!violation.isEmpty()) {
+                log(rcurly, violation, "}", rcurly.getColumnNo() + 1);
+            }
         }
     }
 
@@ -314,6 +310,8 @@ public class RightCurlyCheck extends Check {
      * @param ast detail ast.
      * @return object that contain all details to make a validation.
      */
+    // -@cs[JavaNCSS] getDetails() method is a huge SWITCH, it has to be monolithic
+    // -@cs[ExecutableStatementCount] getDetails() method is a huge SWITCH, it has to be monolithic
     private static Details getDetails(DetailAST ast) {
         // Attempt to locate the tokens to do the check
         boolean shouldCheckLastRcurly = false;
@@ -369,9 +367,14 @@ public class RightCurlyCheck extends Check {
                 rcurly = lcurly.getLastChild();
                 nextToken = getNextToken(ast);
                 break;
+            case TokenTypes.LITERAL_DO:
+                nextToken = ast.findFirstToken(TokenTypes.DO_WHILE);
+                lcurly = ast.findFirstToken(TokenTypes.SLIST);
+                rcurly = lcurly.getLastChild();
+                break;
             default:
                 // ATTENTION! We have default here, but we expect case TokenTypes.METHOD_DEF,
-                // TokenTypes.LITERAL_FOR, TokenTypes.LITERAL_WHILE, TokenTypes.LITERAL_DO only.
+                // TokenTypes.LITERAL_FOR, TokenTypes.LITERAL_WHILE, only.
                 // It has been done to improve coverage to 100%. I couldn't replace it with
                 // if-else-if block because code was ugly and didn't pass pmd check.
 

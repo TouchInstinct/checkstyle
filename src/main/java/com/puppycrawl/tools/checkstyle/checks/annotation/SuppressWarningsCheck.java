@@ -22,9 +22,7 @@ package com.puppycrawl.tools.checkstyle.checks.annotation;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.commons.lang3.ArrayUtils;
-
-import com.puppycrawl.tools.checkstyle.api.Check;
+import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
 import com.puppycrawl.tools.checkstyle.utils.AnnotationUtility;
@@ -49,7 +47,7 @@ import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
  * By default, any warning specified will be disallowed on
  * all legal TokenTypes unless otherwise specified via
  * the
- * {@link Check#setTokens(String[]) tokens}
+ * {@link AbstractCheck#setTokens(String[]) tokens}
  * property.
  *
  * Also, by default warnings that are empty strings or all
@@ -91,7 +89,7 @@ import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
  * </pre>
  * @author Travis Schneeberger
  */
-public class SuppressWarningsCheck extends Check {
+public class SuppressWarningsCheck extends AbstractCheck {
     /**
      * A key is pointing to the warning message text in "messages.properties"
      * file.
@@ -148,69 +146,70 @@ public class SuppressWarningsCheck extends Check {
 
     @Override
     public int[] getRequiredTokens() {
-        return ArrayUtils.EMPTY_INT_ARRAY;
+        return CommonUtils.EMPTY_INT_ARRAY;
     }
 
     @Override
     public void visitToken(final DetailAST ast) {
         final DetailAST annotation = getSuppressWarnings(ast);
 
-        if (annotation == null) {
-            return;
-        }
+        if (annotation != null) {
+            final DetailAST warningHolder =
+                findWarningsHolder(annotation);
 
-        final DetailAST warningHolder =
-            findWarningsHolder(annotation);
+            final DetailAST token =
+                    warningHolder.findFirstToken(TokenTypes.ANNOTATION_MEMBER_VALUE_PAIR);
+            DetailAST warning;
 
-        final DetailAST token =
-                warningHolder.findFirstToken(TokenTypes.ANNOTATION_MEMBER_VALUE_PAIR);
-        DetailAST warning;
+            if (token == null) {
+                warning = warningHolder.findFirstToken(TokenTypes.EXPR);
+            }
+            else {
+                // case like '@SuppressWarnings(value = UNUSED)'
+                warning = token.findFirstToken(TokenTypes.EXPR);
+            }
 
-        if (token == null) {
-            warning = warningHolder.findFirstToken(TokenTypes.EXPR);
-        }
-        else {
-            // case like '@SuppressWarnings(value = UNUSED)'
-            warning = token.findFirstToken(TokenTypes.EXPR);
-        }
-
-        //rare case with empty array ex: @SuppressWarnings({})
-        if (warning == null) {
-            //check to see if empty warnings are forbidden -- are by default
-            logMatch(warningHolder.getLineNo(),
-                warningHolder.getColumnNo(), "");
-            return;
-        }
-
-        while (warning != null) {
-            if (warning.getType() == TokenTypes.EXPR) {
-                final DetailAST fChild = warning.getFirstChild();
-                switch (fChild.getType()) {
-                    //typical case
-                    case TokenTypes.STRING_LITERAL:
-                        final String warningText =
-                            removeQuotes(warning.getFirstChild().getText());
-                        logMatch(warning.getLineNo(),
-                                warning.getColumnNo(), warningText);
-                        break;
-                    // conditional case
-                    // ex: @SuppressWarnings((false) ? (true) ? "unchecked" : "foo" : "unused")
-                    case TokenTypes.QUESTION:
-                        walkConditional(fChild);
-                        break;
-                    // param in constant case
-                    // ex: public static final String UNCHECKED = "unchecked";
-                    // @SuppressWarnings(UNCHECKED) or @SuppressWarnings(SomeClass.UNCHECKED)
-                    case TokenTypes.IDENT:
-                    case TokenTypes.DOT:
-                        break;
-                    default:
-                        // Known limitation: cases like @SuppressWarnings("un" + "used") or
-                        // @SuppressWarnings((String) "unused") are not properly supported,
-                        // but they should not cause exceptions.
+            //rare case with empty array ex: @SuppressWarnings({})
+            if (warning == null) {
+                //check to see if empty warnings are forbidden -- are by default
+                logMatch(warningHolder.getLineNo(),
+                    warningHolder.getColumnNo(), "");
+            }
+            else {
+                while (warning != null) {
+                    if (warning.getType() == TokenTypes.EXPR) {
+                        final DetailAST fChild = warning.getFirstChild();
+                        switch (fChild.getType()) {
+                            //typical case
+                            case TokenTypes.STRING_LITERAL:
+                                final String warningText =
+                                    removeQuotes(warning.getFirstChild().getText());
+                                logMatch(warning.getLineNo(),
+                                        warning.getColumnNo(), warningText);
+                                break;
+                            // conditional case
+                            // ex:
+                            // @SuppressWarnings((false) ? (true) ? "unchecked" : "foo" : "unused")
+                            case TokenTypes.QUESTION:
+                                walkConditional(fChild);
+                                break;
+                            // param in constant case
+                            // ex: public static final String UNCHECKED = "unchecked";
+                            // @SuppressWarnings(UNCHECKED)
+                            // or
+                            // @SuppressWarnings(SomeClass.UNCHECKED)
+                            case TokenTypes.IDENT:
+                            case TokenTypes.DOT:
+                                break;
+                            default:
+                                // Known limitation: cases like @SuppressWarnings("un" + "used") or
+                                // @SuppressWarnings((String) "unused") are not properly supported,
+                                // but they should not cause exceptions.
+                        }
+                    }
+                    warning = warning.getNextSibling();
                 }
             }
-            warning = warning.getNextSibling();
         }
     }
 
@@ -303,15 +302,15 @@ public class SuppressWarningsCheck extends Check {
      * {@link TokenTypes#QUESTION QUESTION}
      */
     private void walkConditional(final DetailAST cond) {
-        if (cond.getType() != TokenTypes.QUESTION) {
-            final String warningText =
-                removeQuotes(cond.getText());
-            logMatch(cond.getLineNo(), cond.getColumnNo(), warningText);
-            return;
+        if (cond.getType() == TokenTypes.QUESTION) {
+            walkConditional(getCondLeft(cond));
+            walkConditional(getCondRight(cond));
         }
-
-        walkConditional(getCondLeft(cond));
-        walkConditional(getCondRight(cond));
+        else {
+            final String warningText =
+                    removeQuotes(cond.getText());
+            logMatch(cond.getLineNo(), cond.getColumnNo(), warningText);
+        }
     }
 
     /**

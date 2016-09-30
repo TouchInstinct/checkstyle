@@ -27,6 +27,18 @@
           The Check finds classes that are designed for extension (subclass creation).
         </p>
         <p>
+          Nothing wrong could be with founded classes
+          this Check make sence only for library project (not a application projects)
+          who care about ideal OOP design to make sure class work in all cases even misusage.
+          Even in library projects this Check most likely finds classes that are not required to check.
+          User need to use suppressions extensively to got a benefit from this Check and avoid
+          false positives.
+        </p>
+        <p>
+         ATTENTION: Only user can deside whether class is designed for extension or not.
+         Check just show all possible. If smth inappropriate is found please use supporession.
+        </p>
+         <p>
           Problem is described at "Effective Java, 2nd Edition by Josh Bloch" book, chapter "Item 17: Design and document for inheritance or else prohibit it".
         </p>
         <p>
@@ -60,7 +72,7 @@ method will never affect the behavior of any other method.
         </ul>
 
         <p>
-          Rationale: This API design style protects superclasses against
+          Rationale: This library design style protects superclasses against
           being broken by subclasses. The downside is that subclasses are
           limited in their flexibility, in particular they cannot prevent
           execution of code in the superclass, but that also means that
@@ -781,8 +793,12 @@ public class Foo{
           named the same type without consideration of package
         </p>
         <p>
-          <b>allowPublicImmutableFields</b> - which allows immutable fields be declared as
-          public if defined in final class. Default value is <b>true</b>
+          <b>allowPublicFinalFields</b> - which allows public final fields.
+          Default value is <b>false</b>
+        </p>
+        <p>
+          <b>allowPublicImmutableFields</b> - which allows immutable fields to be declared as
+          public if defined in final class. Default value is <b>false</b>
         </p>
         <p>
           Field is known to be immutable if:
@@ -802,7 +818,10 @@ public class Foo{
         <p>
           <b>Restriction</b>: Check doesn't check if class is immutable, there's no
           checking if accessory methods are missing and all fields are immutable, we only check
-          <b>if current field is immutable and defined in final class</b>
+          <b>if current field is immutable or final</b>. Under the flag
+          <b>allowPublicImmutableFields</b>, the enclosing class must also be final, to encourage
+          immutability. Under the flag <b>allowPublicFinalFields</b>, the final modifier on
+          the enclosing class is optional.
         </p>
         <p>
           Star imports are out of scope of this Check. So if one of type imported via
@@ -822,13 +841,13 @@ public class Foo{
           <tr>
             <td>packageAllowed</td>
             <td>whether package visible members are allowed</td>
-            <td><a href="property_types.html#boolean">boolean</a></td>
+            <td><a href="property_types.html#boolean">Boolean</a></td>
             <td><code>false</code></td>
           </tr>
           <tr>
             <td>protectedAllowed</td>
             <td>whether protected members are allowed</td>
-            <td><a href="property_types.html#boolean">boolean</a></td>
+            <td><a href="property_types.html#boolean">Boolean</a></td>
             <td><code>false</code></td>
           </tr>
           <tr>
@@ -838,10 +857,16 @@ public class Foo{
             <td><code>^serialVersionUID$</code></td>
           </tr>
           <tr>
+            <td>allowPublicFinalFields</td>
+            <td>allows public final fields</td>
+            <td><a href="property_types.html#boolean">Boolean</a></td>
+            <td><code>false</code></td>
+          </tr>
+          <tr>
             <td>allowPublicImmutableFields</td>
-            <td>allows immutable fields be declared as public if defined in final class</td>
-            <td><a href="property_types.html#boolean">boolean</a></td>
-            <td><code>true</code></td>
+            <td>allows immutable fields to be declared as public if defined in final class</td>
+            <td><a href="property_types.html#boolean">Boolean</a></td>
+            <td><code>false</code></td>
           </tr>
           <tr>
             <td>immutableClassCanonicalNames</td>
@@ -857,7 +882,7 @@ public class Foo{
             <td>ignoreAnnotationCanonicalNames</td>
             <td>ignore annotations canonical names</td>
             <td><a href="property_types.html#stringSet">String Set</a></td>
-            <td>org.junit.Rule, com.google.common.annotations.VisibleForTesting</td>
+            <td>org.junit.Rule, org.junit.ClassRule, com.google.common.annotations.VisibleForTesting</td>
           </tr>
         </table>
       </subsection>
@@ -892,7 +917,9 @@ public class Foo{
           (mostly for immutable classes):
         </p>
         <source>
-&lt;module name=&quot;VisibilityModifier&quot;/&gt;
+&lt;module name=&quot;VisibilityModifier&quot;&gt;
+    &lt;property name=&quot;allowPublicImmutableFields&quot; value=&quot;true&quot;/&gt;
+ &lt;/module&gt;
         </source>
         <p>
           Example of allowed public immutable fields:
@@ -916,10 +943,11 @@ public class ImmutableClass
 }
         </source>
         <p>
-          To configure the Check which allows user specified immutable class names:
+          To configure the Check in order to allow user specified immutable class names:
         </p>
         <source>
 &lt;module name=&quot;VisibilityModifier&quot;&gt;
+    &lt;property name=&quot;allowPublicImmutableFields&quot; value=&quot;true&quot;/&gt;
     &lt;property name=&quot;immutableClassCanonicalNames&quot; value=&quot;
     com.google.common.collect.ImmutableSet&quot;/&gt;
 &lt;/module&gt;
@@ -949,6 +977,36 @@ public class ImmutableClass
         </source>
 
         <p>
+          Note, if allowPublicImmutableFields is set to true, the check will also check whether
+          generic type parameters are immutable. If at least one generic type parameter is mutable,
+          there will be a violation.
+        </p>
+        <source>
+&lt;module name=&quot;VisibilityModifier&quot;&gt;
+  &lt;property name=&quot;allowPublicImmutableFields&quot; value=&quot;true&quot;/&gt;
+  &lt;property name=&quot;immutableClassCanonicalNames&quot; value=&quot;
+  com.google.common.collect.ImmutableSet, com.google.common.collect.ImmutableMap,java.lang.String&quot;/&gt;
+&lt;/module&gt;
+        </source>
+        <p>
+          Example of how the check works:
+        </p>
+        <source>
+public final class Test {
+    public final String s;
+    public final ImmutableSet&lt;String&gt; names;
+    public final ImmutableSet&lt;Object&gt; objects; // violation (Object class is mutable)
+    public final ImmutableMap&lt;String, Object&gt; links; // violation (Object class is mutable)
+
+    public Test() {
+        s = "Hello!";
+        names = ImmutableSet.of();
+        objects = ImmutableSet.of();
+        links = ImmutableMap.of();
+    }
+}
+        </source>
+        <p>
           To configure the Check passing fields annotated with @com.annotation.CustomAnnotation:
         </p>
         <source>
@@ -971,7 +1029,7 @@ class SomeClass
         </source>
 
         <p>
-          To configure the Check passing fields annotated with @org.junit.Rule and
+          To configure the Check passing fields annotated with @org.junit.Rule, @org.junit.ClassRule and
           @com.google.common.annotations.VisibleForTesting annotations:
         </p>
         <source>
@@ -985,6 +1043,8 @@ class SomeClass
 {
     @org.junit.Rule
     public TemporaryFolder publicJUnitRule = new TemporaryFolder(); // no warning
+    @org.junit.ClassRule
+    public static TemporaryFolder publicJUnitClassRule = new TemporaryFolder(); // no warning
     @com.google.common.annotations.VisibleForTesting
     public String testString = ""; // no warning
 }
@@ -1012,6 +1072,69 @@ class SomeClass
     @mypackage.annotation.CustomAnnotation
     String customAnnotatedAnotherPackage; // another package but short name matches
                                           // so no violation
+}
+        </source>
+
+        <p>
+          To understand the difference between allowPublicImmutableFields and
+          allowPublicFinalFields options, please, study the following examples.
+        </p>
+        <p>
+           1) To configure the check to use only 'allowPublicImmutableFields' option:
+        </p>
+        <source>
+&lt;module name=&quot;VisibilityModifier&quot;&gt;
+  &lt;property name=&quot;allowPublicImmutableFields&quot; value=&quot;true&quot;/&gt;
+&lt;/module&gt;
+        </source>
+        <p>
+          Code example:
+        </p>
+        <source>
+public class InputPublicImmutable {
+  public final int someIntValue; // violation
+  public final ImmutableSet&lt;String&gt; includes; // violation
+  public final java.lang.String notes; // violation
+  public final BigDecimal value; // violation
+  public final List list; // violation
+
+  public InputPublicImmutable(Collection&lt;String&gt; includes,
+        BigDecimal value, String notes, int someValue, List l) {
+    this.includes = ImmutableSet.copyOf(includes);
+    this.value = value;
+    this.notes = notes;
+    this.someIntValue = someValue;
+    this.list = l;
+  }
+}
+        </source>
+        <p>
+          2) To configure the check to use only 'allowPublicFinalFields' option:
+        </p>
+        <source>
+&lt;module name=&quot;VisibilityModifier&quot;&gt;
+  &lt;property name=&quot;allowPublicFinalFields&quot; value=&quot;true&quot;/&gt;
+&lt;/module&gt;
+        </source>
+        <p>
+          Code example:
+        </p>
+        <source>
+public class InputPublicImmutable {
+  public final int someIntValue;
+  public final ImmutableSet&lt;String&gt; includes;
+  public final java.lang.String notes;
+  public final BigDecimal value;
+  public final List list;
+
+  public InputPublicImmutable(Collection&lt;String&gt; includes,
+        BigDecimal value, String notes, int someValue, List l) {
+    this.includes = ImmutableSet.copyOf(includes);
+    this.value = value;
+    this.notes = notes;
+    this.someIntValue = someValue;
+    this.list = l;
+  }
 }
         </source>
       </subsection>

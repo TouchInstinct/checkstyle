@@ -23,7 +23,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -38,9 +40,6 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.puppycrawl.tools.checkstyle.api.AbstractLoader;
 import com.puppycrawl.tools.checkstyle.api.CheckstyleException;
 import com.puppycrawl.tools.checkstyle.api.Configuration;
@@ -119,7 +118,7 @@ public final class ConfigurationLoader {
      */
     private ConfigurationLoader(final PropertyResolver overrideProps,
                                 final boolean omitIgnoredModules)
-        throws ParserConfigurationException, SAXException {
+            throws ParserConfigurationException, SAXException {
         saxHandler = new InternalLoader();
         overridePropsResolver = overrideProps;
         this.omitIgnoredModules = omitIgnoredModules;
@@ -130,7 +129,7 @@ public final class ConfigurationLoader {
      * @return map between local resources and dtd ids.
      */
     private static Map<String, String> createIdToResourceNameMap() {
-        final Map<String, String> map = Maps.newHashMap();
+        final Map<String, String> map = new HashMap<>();
         map.put(DTD_PUBLIC_ID_1_0, DTD_RESOURCE_NAME_1_0);
         map.put(DTD_PUBLIC_ID_1_1, DTD_RESOURCE_NAME_1_1);
         map.put(DTD_PUBLIC_ID_1_2, DTD_RESOURCE_NAME_1_2);
@@ -149,7 +148,7 @@ public final class ConfigurationLoader {
      * @throws SAXException if an error occurs
      */
     private void parseInputSource(InputSource source)
-        throws IOException, SAXException {
+            throws IOException, SAXException {
         saxHandler.parseInputSource(source);
     }
 
@@ -177,7 +176,7 @@ public final class ConfigurationLoader {
      */
     public static Configuration loadConfiguration(String config,
         PropertyResolver overridePropsResolver, boolean omitIgnoredModules)
-        throws CheckstyleException {
+            throws CheckstyleException {
         // figure out if this is a File or a URL
         final URI uri = CommonUtils.getUriByFilename(config);
         final InputSource source = new InputSource(uri.toString());
@@ -205,7 +204,7 @@ public final class ConfigurationLoader {
     @Deprecated
     public static Configuration loadConfiguration(InputStream configStream,
         PropertyResolver overridePropsResolver, boolean omitIgnoredModules)
-        throws CheckstyleException {
+            throws CheckstyleException {
         return loadConfiguration(new InputSource(configStream),
                                  overridePropsResolver, omitIgnoredModules);
     }
@@ -224,7 +223,7 @@ public final class ConfigurationLoader {
      */
     public static Configuration loadConfiguration(InputSource configSource,
             PropertyResolver overridePropsResolver, boolean omitIgnoredModules)
-        throws CheckstyleException {
+            throws CheckstyleException {
         try {
             final ConfigurationLoader loader =
                 new ConfigurationLoader(overridePropsResolver,
@@ -247,8 +246,6 @@ public final class ConfigurationLoader {
      * Replaces {@code ${xxx}} style constructions in the given value
      * with the string value of the corresponding data types.
      *
-     * <p>The method is package visible to facilitate testing.
-     *
      * <p>Code copied from ant -
      * http://cvs.apache.org/viewcvs/jakarta-ant/src/main/org/apache/tools/ant/ProjectHelper.java
      *
@@ -266,16 +263,15 @@ public final class ConfigurationLoader {
      *                           {@code ${} without a closing
      *                           {@code }}
      */
-    @VisibleForTesting
-    static String replaceProperties(
+    private static String replaceProperties(
             String value, PropertyResolver props, String defaultValue)
-        throws CheckstyleException {
+            throws CheckstyleException {
         if (value == null) {
             return null;
         }
 
-        final List<String> fragments = Lists.newArrayList();
-        final List<String> propertyRefs = Lists.newArrayList();
+        final List<String> fragments = new ArrayList<>();
+        final List<String> propertyRefs = new ArrayList<>();
         parsePropertyString(value, fragments, propertyRefs);
 
         final StringBuilder sb = new StringBuilder();
@@ -323,7 +319,7 @@ public final class ConfigurationLoader {
     private static void parsePropertyString(String value,
                                            List<String> fragments,
                                            List<String> propertyRefs)
-        throws CheckstyleException {
+            throws CheckstyleException {
         int prev = 0;
         //search for the next instance of $ from the 'prev' position
         int pos = value.indexOf(DOLLAR_SIGN, prev);
@@ -405,7 +401,7 @@ public final class ConfigurationLoader {
          * @throws ParserConfigurationException if an error occurs
          */
         InternalLoader()
-            throws SAXException, ParserConfigurationException {
+                throws SAXException, ParserConfigurationException {
             super(createIdToResourceNameMap());
         }
 
@@ -414,7 +410,7 @@ public final class ConfigurationLoader {
                                  String localName,
                                  String qName,
                                  Attributes attributes)
-            throws SAXException {
+                throws SAXException {
             if (qName.equals(MODULE)) {
                 //create configuration
                 final String name = attributes.getValue(NAME);

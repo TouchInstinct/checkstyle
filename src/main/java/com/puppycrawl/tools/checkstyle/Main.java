@@ -26,8 +26,15 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Filter;
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
+import java.util.logging.Logger;
+import java.util.regex.Pattern;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -35,8 +42,9 @@ import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
-import com.google.common.collect.Lists;
 import com.google.common.io.Closeables;
 import com.puppycrawl.tools.checkstyle.api.AuditListener;
 import com.puppycrawl.tools.checkstyle.api.CheckstyleException;
@@ -49,6 +57,12 @@ import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
  *
  **/
 public final class Main {
+    /** Logger for Main. */
+    private static final Log LOG = LogFactory.getLog(Main.class);
+
+    /** Width of CLI help option. */
+    private static final int HELP_WIDTH = 100;
+
     /** Exit code returned when execution finishes with {@link CheckstyleException}. */
     private static final int EXIT_WITH_CHECKSTYLE_EXCEPTION_CODE = -2;
 
@@ -67,6 +81,48 @@ public final class Main {
     /** Name for the option 'o'. */
     private static final String OPTION_O_NAME = "o";
 
+    /** Name for the option 't'. */
+    private static final String OPTION_T_NAME = "t";
+
+    /** Name for the option '--tree'. */
+    private static final String OPTION_TREE_NAME = "tree";
+
+    /** Name for the option '-T'. */
+    private static final String OPTION_CAPITAL_T_NAME = "T";
+
+    /** Name for the option '--treeWithComments'. */
+    private static final String OPTION_TREE_COMMENT_NAME = "treeWithComments";
+
+    /** Name for the option '-j'. */
+    private static final String OPTION_J_NAME = "j";
+
+    /** Name for the option '--javadocTree'. */
+    private static final String OPTION_JAVADOC_TREE_NAME = "javadocTree";
+
+    /** Name for the option '-J'. */
+    private static final String OPTION_CAPITAL_J_NAME = "J";
+
+    /** Name for the option '--treeWithJavadoc'. */
+    private static final String OPTION_TREE_JAVADOC_NAME = "treeWithJavadoc";
+
+    /** Name for the option '-d'. */
+    private static final String OPTION_D_NAME = "d";
+
+    /** Name for the option '--debug'. */
+    private static final String OPTION_DEBUG_NAME = "debug";
+
+    /** Name for the option 'e'. */
+    private static final String OPTION_E_NAME = "e";
+
+    /** Name for the option '--exclude'. */
+    private static final String OPTION_EXCLUDE_NAME = "exclude";
+
+    /** Name for the option 'x'. */
+    private static final String OPTION_X_NAME = "x";
+
+    /** Name for the option '--exclude-regexp'. */
+    private static final String OPTION_EXCLUDE_REGEXP_NAME = "exclude-regexp";
+
     /** Name for 'xml' format. */
     private static final String XML_FORMAT_NAME = "xml";
 
@@ -81,10 +137,10 @@ public final class Main {
      * Loops over the files specified checking them for errors. The exit code
      * is the number of errors found in all the files.
      * @param args the command line arguments.
-     * @throws FileNotFoundException if there is a problem with files access
+     * @throws IOException if there is a problem with files access
      * @noinspection CallToPrintStackTrace
      **/
-    public static void main(String... args) throws FileNotFoundException {
+    public static void main(String... args) throws IOException {
         int errorCounter = 0;
         boolean cliViolations = false;
         // provide proper exit code based on results.
@@ -102,21 +158,19 @@ public final class Main {
                 exitStatus = 0;
             }
             else {
+                final List<File> filesToProcess = getFilesToProcess(getExclusions(commandLine),
+                        commandLine.getArgs());
+
                 // return error if something is wrong in arguments
-                final List<String> messages = validateCli(commandLine);
+                final List<String> messages = validateCli(commandLine, filesToProcess);
                 cliViolations = !messages.isEmpty();
                 if (cliViolations) {
                     exitStatus = exitWithCliViolation;
                     errorCounter = 1;
-                    for (String message : messages) {
-                        System.out.println(message);
-                    }
+                    messages.forEach(System.out::println);
                 }
                 else {
-                    // create config helper object
-                    final CliOptions config = convertCliToPojo(commandLine);
-                    // run Checker
-                    errorCounter = runCheckstyle(config);
+                    errorCounter = runCli(commandLine, filesToProcess);
                     exitStatus = errorCounter;
                 }
             }
@@ -162,14 +216,54 @@ public final class Main {
     }
 
     /**
+     * Gets the list of exclusions provided through the command line argument.
+     * @param commandLine command line object
+     * @return List of exclusion patterns.
+     */
+    private static List<Pattern> getExclusions(CommandLine commandLine) {
+        final List<Pattern> result = new ArrayList<>();
+
+        if (commandLine.hasOption(OPTION_E_NAME)) {
+            for (String value : commandLine.getOptionValues(OPTION_E_NAME)) {
+                result.add(Pattern.compile("^" + Pattern.quote(new File(value).getAbsolutePath())
+                        + "$"));
+            }
+        }
+        if (commandLine.hasOption(OPTION_X_NAME)) {
+            for (String value : commandLine.getOptionValues(OPTION_X_NAME)) {
+                result.add(Pattern.compile(value));
+            }
+        }
+
+        return result;
+    }
+
+    /**
      * Do validation of Command line options.
      * @param cmdLine command line object
+     * @param filesToProcess List of files to process found from the command line.
      * @return list of violations
      */
-    private static List<String> validateCli(CommandLine cmdLine) {
+    // -@cs[CyclomaticComplexity] Breaking apart will damage encapsulation
+    private static List<String> validateCli(CommandLine cmdLine, List<File> filesToProcess) {
         final List<String> result = new ArrayList<>();
+
+        if (filesToProcess.isEmpty()) {
+            result.add("Files to process must be specified, found 0.");
+        }
+        // ensure there is no conflicting options
+        else if (cmdLine.hasOption(OPTION_T_NAME) || cmdLine.hasOption(OPTION_CAPITAL_T_NAME)
+                || cmdLine.hasOption(OPTION_J_NAME) || cmdLine.hasOption(OPTION_CAPITAL_J_NAME)) {
+            if (cmdLine.hasOption(OPTION_C_NAME) || cmdLine.hasOption(OPTION_P_NAME)
+                    || cmdLine.hasOption(OPTION_F_NAME) || cmdLine.hasOption(OPTION_O_NAME)) {
+                result.add("Option '-t' cannot be used with other options.");
+            }
+            else if (filesToProcess.size() > 1) {
+                result.add("Printing AST is allowed for only one file.");
+            }
+        }
         // ensure a configuration file is specified
-        if (cmdLine.hasOption(OPTION_C_NAME)) {
+        else if (cmdLine.hasOption(OPTION_C_NAME)) {
             final String configLocation = cmdLine.getOptionValue(OPTION_C_NAME);
             try {
                 // test location only
@@ -195,17 +289,6 @@ public final class Main {
                     result.add(String.format("Could not find file '%s'.", propertiesLocation));
                 }
             }
-            if (cmdLine.hasOption(OPTION_O_NAME)) {
-                final String outputLocation = cmdLine.getOptionValue(OPTION_O_NAME);
-                final File file = new File(outputLocation);
-                if (file.exists() && !file.canWrite()) {
-                    result.add(String.format("Permission denied : '%s'.", outputLocation));
-                }
-            }
-            final List<File> files = getFilesToProcess(cmdLine.getArgs());
-            if (files.isEmpty()) {
-                result.add("Must specify files to process, found 0.");
-            }
         }
         else {
             result.add("Must specify a config XML file.");
@@ -215,11 +298,76 @@ public final class Main {
     }
 
     /**
+     * Do execution of CheckStyle based on Command line options.
+     * @param commandLine command line object
+     * @param filesToProcess List of files to process found from the command line.
+     * @return number of violations
+     * @throws IOException if a file could not be read.
+     * @throws CheckstyleException if something happens processing the files.
+     */
+    private static int runCli(CommandLine commandLine, List<File> filesToProcess)
+            throws IOException, CheckstyleException {
+        int result = 0;
+
+        // create config helper object
+        final CliOptions config = convertCliToPojo(commandLine, filesToProcess);
+        if (commandLine.hasOption(OPTION_T_NAME)) {
+            // print AST
+            final File file = config.files.get(0);
+            final String stringAst = AstTreeStringPrinter.printFileAst(file, false);
+            System.out.print(stringAst);
+        }
+        else if (commandLine.hasOption(OPTION_CAPITAL_T_NAME)) {
+            final File file = config.files.get(0);
+            final String stringAst = AstTreeStringPrinter.printFileAst(file, true);
+            System.out.print(stringAst);
+        }
+        else if (commandLine.hasOption(OPTION_J_NAME)) {
+            final File file = config.files.get(0);
+            final String stringAst = DetailNodeTreeStringPrinter.printFileAst(file);
+            System.out.print(stringAst);
+        }
+        else if (commandLine.hasOption(OPTION_CAPITAL_J_NAME)) {
+            final File file = config.files.get(0);
+            final String stringAst = AstTreeStringPrinter.printJavaAndJavadocTree(file);
+            System.out.print(stringAst);
+        }
+        else {
+            if (commandLine.hasOption(OPTION_D_NAME)) {
+                final Logger parentLogger = Logger.getLogger(Main.class.getName()).getParent();
+                final ConsoleHandler handler = new ConsoleHandler();
+                handler.setLevel(Level.FINEST);
+                handler.setFilter(new Filter() {
+                    private final String packageName = Main.class.getPackage().getName();
+
+                    @Override
+                    public boolean isLoggable(LogRecord record) {
+                        return record.getLoggerName().startsWith(packageName);
+                    }
+                });
+                parentLogger.addHandler(handler);
+                parentLogger.setLevel(Level.FINEST);
+            }
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Checkstyle debug logging enabled");
+                LOG.debug("Running Checkstyle with version: "
+                        + Main.class.getPackage().getImplementationVersion());
+            }
+
+            // run Checker
+            result = runCheckstyle(config);
+        }
+
+        return result;
+    }
+
+    /**
      * Util method to convert CommandLine type to POJO object.
      * @param cmdLine command line object
+     * @param filesToProcess List of files to process found from the command line.
      * @return command line option as POJO object
      */
-    private static CliOptions convertCliToPojo(CommandLine cmdLine) {
+    private static CliOptions convertCliToPojo(CommandLine cmdLine, List<File> filesToProcess) {
         final CliOptions conf = new CliOptions();
         conf.format = cmdLine.getOptionValue(OPTION_F_NAME);
         if (conf.format == null) {
@@ -228,7 +376,7 @@ public final class Main {
         conf.outputLocation = cmdLine.getOptionValue(OPTION_O_NAME);
         conf.configLocation = cmdLine.getOptionValue(OPTION_C_NAME);
         conf.propertiesLocation = cmdLine.getOptionValue(OPTION_P_NAME);
-        conf.files = getFilesToProcess(cmdLine.getArgs());
+        conf.files = filesToProcess;
         return conf;
     }
 
@@ -359,14 +507,16 @@ public final class Main {
 
     /**
      * Determines the files to process.
+     * @param patternsToExclude The list of directory patterns to exclude from searching.
      * @param filesToProcess
      *        arguments that were not processed yet but shall be
      * @return list of files to process
      */
-    private static List<File> getFilesToProcess(String... filesToProcess) {
-        final List<File> files = Lists.newLinkedList();
+    private static List<File> getFilesToProcess(List<Pattern> patternsToExclude,
+            String... filesToProcess) {
+        final List<File> files = new LinkedList<>();
         for (String element : filesToProcess) {
-            files.addAll(listFiles(new File(element)));
+            files.addAll(listFiles(new File(element), patternsToExclude));
         }
 
         return files;
@@ -377,20 +527,23 @@ public final class Main {
      * list. Subdirectories are also traversed.
      * @param node
      *        the node to process
+     * @param patternsToExclude The list of directory patterns to exclude from searching.
      * @return found files
      */
-    private static List<File> listFiles(File node) {
+    private static List<File> listFiles(File node, List<Pattern> patternsToExclude) {
         // could be replaced with org.apache.commons.io.FileUtils.list() method
         // if only we add commons-io library
-        final List<File> result = Lists.newLinkedList();
+        final List<File> result = new LinkedList<>();
 
         if (node.canRead()) {
             if (node.isDirectory()) {
-                final File[] files = node.listFiles();
-                // listFiles() can return null, so we need to check it
-                if (files != null) {
-                    for (File element : files) {
-                        result.addAll(listFiles(element));
+                if (!isDirectoryExcluded(node.getAbsolutePath(), patternsToExclude)) {
+                    final File[] files = node.listFiles();
+                    // listFiles() can return null, so we need to check it
+                    if (files != null) {
+                        for (File element : files) {
+                            result.addAll(listFiles(element, patternsToExclude));
+                        }
                     }
                 }
             }
@@ -401,9 +554,30 @@ public final class Main {
         return result;
     }
 
+    /**
+     * Checks if a directory {@code path} should be excluded based on if it matches one of the
+     * patterns supplied.
+     * @param path The path of the directory to check
+     * @param patternsToExclude The list of directory patterns to exclude from searching.
+     * @return True if the directory matches one of the patterns.
+     */
+    private static boolean isDirectoryExcluded(String path, List<Pattern> patternsToExclude) {
+        boolean result = false;
+
+        for (Pattern pattern : patternsToExclude) {
+            if (pattern.matcher(path).find()) {
+                result = true;
+                break;
+            }
+        }
+
+        return result;
+    }
+
     /** Prints the usage information. **/
     private static void printUsage() {
         final HelpFormatter formatter = new HelpFormatter();
+        formatter.setWidth(HELP_WIDTH);
         formatter.printHelp(String.format("java %s [options] -c <config.xml> file...",
                 Main.class.getName()), buildOptions());
     }
@@ -421,6 +595,20 @@ public final class Main {
                 "Sets the output format. (%s|%s). Defaults to %s",
                 PLAIN_FORMAT_NAME, XML_FORMAT_NAME, PLAIN_FORMAT_NAME));
         options.addOption(OPTION_V_NAME, false, "Print product version and exit");
+        options.addOption(OPTION_T_NAME, OPTION_TREE_NAME, false,
+                "Print Abstract Syntax Tree(AST) of the file");
+        options.addOption(OPTION_CAPITAL_T_NAME, OPTION_TREE_COMMENT_NAME, false,
+                "Print Abstract Syntax Tree(AST) of the file including comments");
+        options.addOption(OPTION_J_NAME, OPTION_JAVADOC_TREE_NAME, false,
+                "Print Parse tree of the Javadoc comment");
+        options.addOption(OPTION_CAPITAL_J_NAME, OPTION_TREE_JAVADOC_NAME, false,
+                "Print full Abstract Syntax Tree of the file");
+        options.addOption(OPTION_D_NAME, OPTION_DEBUG_NAME, false,
+                "Print all debug logging of CheckStyle utility");
+        options.addOption(OPTION_E_NAME, OPTION_EXCLUDE_NAME, true,
+                "Directory path to exclude from CheckStyle");
+        options.addOption(OPTION_X_NAME, OPTION_EXCLUDE_REGEXP_NAME, true,
+                "Regular expression of directory to exclude from CheckStyle");
         return options;
     }
 

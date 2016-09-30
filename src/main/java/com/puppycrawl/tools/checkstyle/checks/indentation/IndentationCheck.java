@@ -21,8 +21,10 @@ package com.puppycrawl.tools.checkstyle.checks.indentation;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.HashSet;
+import java.util.Set;
 
-import com.puppycrawl.tools.checkstyle.api.Check;
+import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 
 /**
@@ -79,7 +81,7 @@ import com.puppycrawl.tools.checkstyle.api.DetailAST;
  * @author Maikel Steneker
  * @author maxvetrenko
  */
-public class IndentationCheck extends Check {
+public class IndentationCheck extends AbstractCheck {
     /**
      * A key is pointing to the warning message text in "messages.properties"
      * file.
@@ -110,8 +112,14 @@ public class IndentationCheck extends Check {
     /** Handlers currently in use. */
     private final Deque<AbstractExpressionHandler> handlers = new ArrayDeque<>();
 
+    /** Instance of line wrapping handler to use. */
+    private final LineWrappingHandler lineWrappingHandler = new LineWrappingHandler(this);
+
     /** Factory from which handlers are distributed. */
     private final HandlerFactory handlerFactory = new HandlerFactory();
+
+    /** Lines logged as having incorrect indentation. */
+    private Set<Integer> incorrectIndentationLines;
 
     /** How many tabs or spaces to use. */
     private int basicOffset = DEFAULT_INDENTATION;
@@ -272,7 +280,10 @@ public class IndentationCheck extends Check {
      * @see java.text.MessageFormat
      */
     public void indentationLog(int line, String key, Object... args) {
-        log(line, key, args);
+        if (!incorrectIndentationLines.contains(line)) {
+            incorrectIndentationLines.add(line);
+            log(line, key, args);
+        }
     }
 
     /**
@@ -306,6 +317,7 @@ public class IndentationCheck extends Check {
         final PrimordialHandler primordialHandler = new PrimordialHandler(this);
         handlers.push(primordialHandler);
         primordialHandler.checkIndentation();
+        incorrectIndentationLines = new HashSet<>();
     }
 
     @Override
@@ -322,11 +334,20 @@ public class IndentationCheck extends Check {
     }
 
     /**
+     * Accessor for the line wrapping handler.
+     *
+     * @return the line wrapping handler
+     */
+    public LineWrappingHandler getLineWrappingHandler() {
+        return lineWrappingHandler;
+    }
+
+    /**
      * Accessor for the handler factory.
      *
      * @return the handler factory
      */
-    final HandlerFactory getHandlerFactory() {
+    public final HandlerFactory getHandlerFactory() {
         return handlerFactory;
     }
 }

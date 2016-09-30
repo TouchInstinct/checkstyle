@@ -120,21 +120,23 @@ class InputFinalParameters
     void method1()
     {
         try {
-            System.err.println("");
+            String.CASE_INSENSITIVE_ORDER.equals("");
         }
         catch (java.lang.NullPointerException npe) {
-            npe.printStackTrace();
+            npe.getMessage();
         }
         catch (@MyAnnotation3 final ClassCastException e) {
-            e.printStackTrace();
+            e.getMessage();
         }
         catch (RuntimeException e) {
-            e.printStackTrace();
+            e.getMessage();
         }
         catch (@MyAnnotation3 NoClassDefFoundError e) {
-            e.printStackTrace();
+            e.getMessage();
         }
     }
+
+    native void method(int i);
 }
 
 abstract class AbstractClass

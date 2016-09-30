@@ -21,32 +21,50 @@ package com.puppycrawl.tools.checkstyle.internal;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Properties;
 import java.util.Set;
+import java.util.TreeMap;
+import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
 import com.puppycrawl.tools.checkstyle.BaseCheckTestSupport;
 import com.puppycrawl.tools.checkstyle.Checker;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
-import com.puppycrawl.tools.checkstyle.api.Check;
+import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.Configuration;
 import com.puppycrawl.tools.checkstyle.checks.imports.ImportControlCheck;
+import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
 public class AllChecksTest extends BaseCheckTestSupport {
+    private static final Locale[] ALL_LOCALES = {
+        Locale.GERMAN,
+        new Locale("es"),
+        new Locale("fi"),
+        Locale.FRENCH,
+        Locale.JAPANESE,
+        new Locale("pt"),
+        new Locale("tr"),
+        Locale.CHINESE,
+        Locale.ENGLISH,
+    };
+
     @Test
     public void testAllChecksWithDefaultConfiguration() throws Exception {
-        final String inputFilePath = getNonCompilablePath("InputDefaultConfig.java");
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
+        final String inputFilePath = getPath("InputDefaultConfig.java");
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
 
         for (Class<?> check : CheckUtil.getCheckstyleChecks()) {
             final DefaultConfiguration checkConfig = createCheckConfig(check);
             final Checker checker;
-            if (Check.class.isAssignableFrom(check)) {
+            if (AbstractCheck.class.isAssignableFrom(check)) {
                 // Checks which have Check as a parent.
                 if (check.equals(ImportControlCheck.class)) {
                     // ImportControlCheck must have the import control configuration file to avoid
@@ -74,8 +92,9 @@ public class AllChecksTest extends BaseCheckTestSupport {
     @Test
     public void testDefaultTokensAreSubsetOfAcceptableTokens() throws Exception {
         for (Class<?> check : CheckUtil.getCheckstyleChecks()) {
-            if (Check.class.isAssignableFrom(check)) {
-                final Check testedCheck = (Check) check.getDeclaredConstructor().newInstance();
+            if (AbstractCheck.class.isAssignableFrom(check)) {
+                final AbstractCheck testedCheck = (AbstractCheck) check.getDeclaredConstructor()
+                        .newInstance();
                 final int[] defaultTokens = testedCheck.getDefaultTokens();
                 final int[] acceptableTokens = testedCheck.getAcceptableTokens();
 
@@ -92,8 +111,9 @@ public class AllChecksTest extends BaseCheckTestSupport {
     @Test
     public void testRequiredTokensAreSubsetOfAcceptableTokens() throws Exception {
         for (Class<?> check : CheckUtil.getCheckstyleChecks()) {
-            if (Check.class.isAssignableFrom(check)) {
-                final Check testedCheck = (Check) check.getDeclaredConstructor().newInstance();
+            if (AbstractCheck.class.isAssignableFrom(check)) {
+                final AbstractCheck testedCheck = (AbstractCheck) check.getDeclaredConstructor()
+                        .newInstance();
                 final int[] requiredTokens = testedCheck.getRequiredTokens();
                 final int[] acceptableTokens = testedCheck.getAcceptableTokens();
 
@@ -110,8 +130,9 @@ public class AllChecksTest extends BaseCheckTestSupport {
     @Test
     public void testRequiredTokensAreSubsetOfDefaultTokens() throws Exception {
         for (Class<?> check : CheckUtil.getCheckstyleChecks()) {
-            if (Check.class.isAssignableFrom(check)) {
-                final Check testedCheck = (Check) check.getDeclaredConstructor().newInstance();
+            if (AbstractCheck.class.isAssignableFrom(check)) {
+                final AbstractCheck testedCheck = (AbstractCheck) check.getDeclaredConstructor()
+                        .newInstance();
                 final int[] defaultTokens = testedCheck.getDefaultTokens();
                 final int[] requiredTokens = testedCheck.getRequiredTokens();
 
@@ -130,14 +151,12 @@ public class AllChecksTest extends BaseCheckTestSupport {
         final Set<String> checksReferencedInConfig = CheckUtil.getConfigCheckStyleChecks();
         final Set<String> checksNames = getSimpleNames(CheckUtil.getCheckstyleChecks());
 
-        for (String check : checksNames) {
-            if (!checksReferencedInConfig.contains(check)) {
+        checksNames.stream().filter(check -> !checksReferencedInConfig.contains(check))
+            .forEach(check -> {
                 final String errorMessage = String.format(Locale.ROOT,
-                        "%s is not referenced in checkstyle_checks.xml", check);
+                    "%s is not referenced in checkstyle_checks.xml", check);
                 Assert.fail(errorMessage);
-            }
-        }
-
+            });
     }
 
     @Test
@@ -145,14 +164,14 @@ public class AllChecksTest extends BaseCheckTestSupport {
         final Set<String> checkstyleModulesNames = getSimpleNames(CheckUtil.getCheckstyleModules());
         final Set<String> modulesNamesWhichHaveXdocs = XDocUtil.getModulesNamesWhichHaveXdoc();
 
-        for (String moduleName : checkstyleModulesNames) {
-            if (!modulesNamesWhichHaveXdocs.contains(moduleName)) {
+        checkstyleModulesNames.stream()
+            .filter(moduleName -> !modulesNamesWhichHaveXdocs.contains(moduleName))
+            .forEach(moduleName -> {
                 final String missingModuleMessage = String.format(Locale.ROOT,
                     "Module %s does not have xdoc documentation.",
                     moduleName);
                 Assert.fail(missingModuleMessage);
-            }
-        }
+            });
     }
 
     @Test
@@ -176,7 +195,10 @@ public class AllChecksTest extends BaseCheckTestSupport {
 
     @Test
     public void testAllCheckstyleMessages() throws Exception {
-        for (Class<?> module : CheckUtil.getCheckstyleChecks()) {
+        final Map<String, List<String>> usedMessages = new TreeMap<>();
+
+        // test validity of messages from checks
+        for (Class<?> module : CheckUtil.getCheckstyleModules()) {
             for (Field message : CheckUtil.getCheckMessages(module)) {
                 Assert.assertEquals(module.getSimpleName() + "." + message.getName()
                         + " should be 'public static final'", Modifier.PUBLIC | Modifier.STATIC
@@ -187,18 +209,66 @@ public class AllChecksTest extends BaseCheckTestSupport {
                     message.setAccessible(true);
                 }
 
-                final String result = CheckUtil.getCheckMessage(module, message.get(null)
-                        .toString());
-
-                Assert.assertNotNull(module.getSimpleName() + " should have text for the message '"
-                        + message.getName() + "'", result);
-                Assert.assertFalse(
-                        module.getSimpleName() + " should have non-empty text for the message '"
-                                + message.getName() + "'", result.trim().isEmpty());
-                Assert.assertFalse(module.getSimpleName()
-                        + " should have non-TODO text for the message '" + message.getName() + "'",
-                        result.trim().startsWith("TODO"));
+                verifyCheckstyleMessage(usedMessages, module, message);
             }
+        }
+
+        // test properties for messages not used by checks
+        for (Entry<String, List<String>> entry : usedMessages.entrySet()) {
+            final Properties pr = new Properties();
+            pr.load(AllChecksTest.class.getResourceAsStream(
+                    "/" + entry.getKey().replace('.', '/') + "/messages.properties"));
+
+            for (Object key : pr.keySet()) {
+                // hidden exception messages
+                if ("translation.wrongLanguageCode".equals(key)) {
+                    continue;
+                }
+
+                Assert.assertTrue("property '" + key + "' isn't used by any check in package '"
+                        + entry.getKey() + "'", entry.getValue().contains(key.toString()));
+            }
+        }
+    }
+
+    private static void verifyCheckstyleMessage(Map<String, List<String>> usedMessages,
+            Class<?> module, Field message) throws Exception {
+        final String messageString = message.get(null).toString();
+        final String packageName = module.getPackage().getName();
+        List<String> packageMessages = usedMessages.get(packageName);
+
+        if (packageMessages == null) {
+            packageMessages = new ArrayList<>();
+            usedMessages.put(packageName, packageMessages);
+        }
+
+        packageMessages.add(messageString);
+
+        for (Locale locale : ALL_LOCALES) {
+            String result = null;
+
+            try {
+                result = CheckUtil.getCheckMessage(module, locale, messageString);
+            }
+            catch (IllegalArgumentException ex) {
+                Assert.fail(module.getSimpleName() + " with the message '" + messageString
+                        + "' in locale '" + locale.getLanguage() + "' failed with: "
+                        + ex.getClass().getSimpleName() + " - " + ex.getMessage());
+            }
+
+            Assert.assertNotNull(
+                    module.getSimpleName() + " should have text for the message '"
+                            + messageString + "' in locale " + locale.getLanguage() + "'",
+                    result);
+            Assert.assertFalse(
+                    module.getSimpleName() + " should have non-empty text for the message '"
+                            + messageString + "' in locale '" + locale.getLanguage() + "'",
+                    result.trim().isEmpty());
+            Assert.assertFalse(
+                    module.getSimpleName() + " should have non-TODO text for the message '"
+                            + messageString + "' in locale " + locale.getLanguage() + "'",
+                    !"todo.match".equals(messageString)
+                            && result.trim().startsWith("TODO"));
         }
     }
 
@@ -223,10 +293,7 @@ public class AllChecksTest extends BaseCheckTestSupport {
      * @return a set of simple names.
      */
     private static Set<String> getSimpleNames(Set<Class<?>> checks) {
-        final Set<String> checksNames = new HashSet<>();
-        for (Class<?> check : checks) {
-            checksNames.add(check.getSimpleName().replace("Check", ""));
-        }
-        return checksNames;
+        return checks.stream().map(check -> check.getSimpleName().replace("Check", ""))
+            .collect(Collectors.toSet());
     }
 }

@@ -57,11 +57,11 @@ public class SuppressionsLoaderTest extends BaseCheckTestSupport {
 
     @Test
     public void testNoSuppressions()
-        throws CheckstyleException {
+            throws CheckstyleException {
         final FilterSet fc =
             SuppressionsLoader.loadSuppressions(getPath("suppressions_none.xml"));
         final FilterSet fc2 = new FilterSet();
-        assertEquals(fc, fc2);
+        assertEquals(fc2, fc);
     }
 
     @Test
@@ -100,7 +100,7 @@ public class SuppressionsLoaderTest extends BaseCheckTestSupport {
 
     @Test
     public void testMultipleSuppression()
-        throws CheckstyleException {
+            throws CheckstyleException {
         final FilterSet fc =
             SuppressionsLoader.loadSuppressions(getPath("suppressions_multiple.xml"));
         final FilterSet fc2 = new FilterSet();
@@ -120,7 +120,7 @@ public class SuppressionsLoaderTest extends BaseCheckTestSupport {
         se3.setLines("1,2-3");
         se3.setColumns("1,2-3");
         fc2.addFilter(se3);
-        assertEquals(fc, fc2);
+        assertEquals(fc2, fc);
     }
 
     @Test
@@ -130,10 +130,9 @@ public class SuppressionsLoaderTest extends BaseCheckTestSupport {
             SuppressionsLoader.loadSuppressions(fn);
         }
         catch (CheckstyleException ex) {
-            assertEquals(
-                "Unable to parse " + fn + " - Attribute \"files\" is required and must be"
-                    + " specified for element type \"suppress\".",
-                ex.getMessage());
+            assertTrue(ex.getMessage().startsWith("Unable to parse " + fn));
+            assertTrue(ex.getMessage().contains("\"files\""));
+            assertTrue(ex.getMessage().contains("\"suppress\""));
         }
     }
 
@@ -144,10 +143,9 @@ public class SuppressionsLoaderTest extends BaseCheckTestSupport {
             SuppressionsLoader.loadSuppressions(fn);
         }
         catch (CheckstyleException ex) {
-            assertEquals(
-                "Unable to parse " + fn + " - Attribute \"checks\" is required and must be"
-                    + " specified for element type \"suppress\".",
-                ex.getMessage());
+            assertTrue(ex.getMessage().startsWith("Unable to parse " + fn));
+            assertTrue(ex.getMessage().contains("\"checks\""));
+            assertTrue(ex.getMessage().contains("\"suppress\""));
         }
     }
 
@@ -270,10 +268,10 @@ public class SuppressionsLoaderTest extends BaseCheckTestSupport {
 
     @Test
     public void testLoadFromClasspath()
-        throws CheckstyleException {
+            throws CheckstyleException {
         final FilterSet fc =
             SuppressionsLoader.loadSuppressions(getPath("suppressions_none.xml"));
         final FilterSet fc2 = new FilterSet();
-        assertEquals(fc, fc2);
+        assertEquals(fc2, fc);
     }
 }

@@ -26,19 +26,20 @@ import static com.puppycrawl.tools.checkstyle.checks.metrics.JavaNCSSCheck.MSG_M
 import java.io.File;
 import java.io.IOException;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
 import com.puppycrawl.tools.checkstyle.BaseCheckTestSupport;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
+import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
 /**
  * Test case for the JavaNCSS-Check.
  *
  * @author Lars Ködderitzsch
  */
+// -@cs[AbbreviationAsWordInName] Test should be named as its main class.
 public class JavaNCSSCheckTest extends BaseCheckTestSupport {
     @Override
     protected String getPath(String filename) throws IOException {
@@ -76,9 +77,9 @@ public class JavaNCSSCheckTest extends BaseCheckTestSupport {
     @Test
     public void testDefaultConfiguration() throws Exception {
         final DefaultConfiguration checkConfig = createCheckConfig(JavaNCSSCheck.class);
-        final String[] expected = ArrayUtils.EMPTY_STRING_ARRAY;
 
         createChecker(checkConfig);
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
         verify(checkConfig, getPath("InputJavaNCSS.java"), expected);
     }
 

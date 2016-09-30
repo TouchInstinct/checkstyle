@@ -36,6 +36,7 @@ import java.util.regex.PatternSyntaxException;
 
 import org.apache.commons.beanutils.ConversionException;
 
+import com.google.common.base.CharMatcher;
 import com.puppycrawl.tools.checkstyle.api.CheckstyleException;
 
 /**
@@ -44,6 +45,19 @@ import com.puppycrawl.tools.checkstyle.api.CheckstyleException;
  * @author <a href="mailto:nesterenko-aleksey@list.ru">Aleksey Nesterenko</a>
  */
 public final class CommonUtils {
+
+    /** Copied from org.apache.commons.lang3.ArrayUtils. */
+    public static final String[] EMPTY_STRING_ARRAY = new String[0];
+    /** Copied from org.apache.commons.lang3.ArrayUtils. */
+    public static final Integer[] EMPTY_INTEGER_OBJECT_ARRAY = new Integer[0];
+    /** Copied from org.apache.commons.lang3.ArrayUtils. */
+    public static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
+    /** Copied from org.apache.commons.lang3.ArrayUtils. */
+    public static final int[] EMPTY_INT_ARRAY = new int[0];
+    /** Copied from org.apache.commons.lang3.ArrayUtils. */
+    public static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
+    /** Copied from org.apache.commons.lang3.ArrayUtils. */
+    public static final double[] EMPTY_DOUBLE_ARRAY = new double[0];
 
     /** Prefix for the exception when unable to find resource. */
     private static final String UNABLE_TO_FIND_EXCEPTION_PREFIX = "Unable to find: ";
@@ -329,14 +343,13 @@ public final class CommonUtils {
      *            Closeable object
      */
     public static void close(Closeable closeable) {
-        if (closeable == null) {
-            return;
-        }
-        try {
-            closeable.close();
-        }
-        catch (IOException ex) {
-            throw new IllegalStateException("Cannot close the stream", ex);
+        if (closeable != null) {
+            try {
+                closeable.close();
+            }
+            catch (IOException ex) {
+                throw new IllegalStateException("Cannot close the stream", ex);
+            }
         }
     }
 
@@ -400,5 +413,58 @@ public final class CommonUtils {
             }
         }
         return result;
+    }
+
+    /**
+     * Check if a string is blank.
+     * A string is considered blank if it is null, empty or contains only  whitespace characters,
+     * as determined by {@link CharMatcher#WHITESPACE}.
+     * @param str the string to check
+     * @return true if str is either null, empty or whitespace-only.
+     */
+    public static boolean isBlank(String str) {
+        return str == null || CharMatcher.WHITESPACE.matchesAllOf(str);
+    }
+
+    /**
+     * Returns file name without extension.
+     * We do not use the method from Guava library to reduce Checkstyle's dependencies
+     * on external libraries.
+     * @param fullFilename file name with extension.
+     * @return file name without extension.
+     */
+    public static String getFileNameWithoutExtension(String fullFilename) {
+        final String fileName = new File(fullFilename).getName();
+        final int dotIndex = fileName.lastIndexOf('.');
+        final String fileNameWithoutExtension;
+        if (dotIndex == -1) {
+            fileNameWithoutExtension = fileName;
+        }
+        else {
+            fileNameWithoutExtension = fileName.substring(0, dotIndex);
+        }
+        return fileNameWithoutExtension;
+    }
+
+    /**
+     * Returns file extension for the given file name
+     * or empty string if file does not have an extension.
+     * We do not use the method from Guava library to reduce Checkstyle's dependencies
+     * on external libraries.
+     * @param fileNameWithExtension file name with extension.
+     * @return file extension for the given file name
+     *         or empty string if file does not have an extension.
+     */
+    public static String getFileExtension(String fileNameWithExtension) {
+        final String fileName = Paths.get(fileNameWithExtension).toString();
+        final int dotIndex = fileName.lastIndexOf('.');
+        final String extension;
+        if (dotIndex == -1) {
+            extension = "";
+        }
+        else {
+            extension = fileName.substring(dotIndex + 1);
+        }
+        return extension;
     }
 }

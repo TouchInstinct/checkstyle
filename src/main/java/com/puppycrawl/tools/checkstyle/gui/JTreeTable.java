@@ -25,6 +25,8 @@ import java.awt.FontMetrics;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EventObject;
 import java.util.List;
 
@@ -37,10 +39,6 @@ import javax.swing.KeyStroke;
 import javax.swing.LookAndFeel;
 import javax.swing.table.TableCellEditor;
 import javax.swing.tree.TreePath;
-
-import com.google.common.collect.ImmutableList;
-import com.google.common.primitives.Ints;
-import com.puppycrawl.tools.checkstyle.api.DetailAST;
 
 /**
  * This example shows how to create a simple JTreeTable component,
@@ -106,7 +104,7 @@ public class JTreeTable extends JTable {
 
             @Override
             public void actionPerformed(ActionEvent event) {
-                doExpandByEnter();
+                expandSelectedNode();
             }
         };
         final KeyStroke stroke = KeyStroke.getKeyStroke("ENTER");
@@ -118,17 +116,18 @@ public class JTreeTable extends JTable {
             @Override
             public void mouseClicked(MouseEvent event) {
                 if (event.getClickCount() == 2) {
-                    makeCodeSelection();
+                    expandSelectedNode();
                 }
             }
         });
     }
 
     /**
-     * Do expansion of a tree node after pressing ENTER.
+     * Do expansion of a tree node.
      */
-    private void doExpandByEnter() {
-        final TreePath selected = makeCodeSelection();
+    private void expandSelectedNode() {
+        final TreePath selected = tree.getSelectionPath();
+        makeCodeSelection();
 
         if (tree.isExpanded(selected)) {
             tree.collapsePath(selected);
@@ -141,13 +140,11 @@ public class JTreeTable extends JTable {
 
     /**
      * Make selection of code in a text area.
-     * @return selected TreePath.
      */
-    private TreePath makeCodeSelection() {
-        final TreePath selected = tree.getSelectionPath();
-        final DetailAST ast = (DetailAST) selected.getLastPathComponent();
-        new CodeSelector(ast, editor, linePositionMap).select();
-        return selected;
+    private void makeCodeSelection() {
+        // temporary disabled. Have to deal with Javadoc nodes as well
+        // see https://github.com/checkstyle/checkstyle/issues/3432
+        new CodeSelector(null, editor, linePositionMap);
     }
 
     /**
@@ -165,7 +162,7 @@ public class JTreeTable extends JTable {
         getColumn("Line").setMaxWidth(widthOfColumnContainingSixCharacterString);
         getColumn("Column").setMaxWidth(widthOfColumnContainingSixCharacterString);
         final int preferredTreeColumnWidth =
-                Ints.checkedCast(Math.round(getPreferredSize().getWidth() * 0.6));
+                Math.toIntExact(Math.round(getPreferredSize().getWidth() * 0.6));
         getColumn("Tree").setPreferredWidth(preferredTreeColumnWidth);
         // Twenty eight character string to contain "Type" column
         final int widthOfTwentyEightCharacterString =
@@ -211,8 +208,6 @@ public class JTreeTable extends JTable {
 
     /**
      * Overridden to pass the new rowHeight to the tree.
-     *
-     * @param newRowHeight new row height
      */
     @Override
     public final void setRowHeight(int newRowHeight) {
@@ -242,7 +237,8 @@ public class JTreeTable extends JTable {
      * @param linePositionMap Line position map.
      */
     public void setLinePositionMap(List<Integer> linePositionMap) {
-        this.linePositionMap = ImmutableList.copyOf(linePositionMap);
+        final List<Integer> copy = new ArrayList<>(linePositionMap);
+        this.linePositionMap = Collections.unmodifiableList(copy);
     }
 
     /**
@@ -279,9 +275,6 @@ public class JTreeTable extends JTable {
          * <p>By returning false we are also enforcing the policy that
          * the tree will never be editable (at least by a key sequence).
          *
-         * @param event the event the editor should use to consider
-         *              whether to begin editing or not
-         * @return true if editing can be started
          * @see TableCellEditor
          */
         @Override

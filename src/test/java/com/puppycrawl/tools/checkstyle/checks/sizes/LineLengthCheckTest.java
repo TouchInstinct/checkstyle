@@ -25,11 +25,11 @@ import static org.junit.Assert.assertArrayEquals;
 import java.io.File;
 import java.io.IOException;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.junit.Test;
 
 import com.puppycrawl.tools.checkstyle.BaseCheckTestSupport;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
+import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
 public class LineLengthCheckTest extends BaseCheckTestSupport {
     @Override
@@ -47,22 +47,22 @@ public class LineLengthCheckTest extends BaseCheckTestSupport {
     @Test
     public void testGetRequiredTokens() {
         final LineLengthCheck checkObj = new LineLengthCheck();
-        assertArrayEquals(ArrayUtils.EMPTY_INT_ARRAY, checkObj.getRequiredTokens());
+        assertArrayEquals(CommonUtils.EMPTY_INT_ARRAY, checkObj.getRequiredTokens());
     }
 
     @Test
     public void testGetAcceptableTokens() {
         final LineLengthCheck checkObj = new LineLengthCheck();
-        assertArrayEquals(ArrayUtils.EMPTY_INT_ARRAY, checkObj.getAcceptableTokens());
+        assertArrayEquals(CommonUtils.EMPTY_INT_ARRAY, checkObj.getAcceptableTokens());
     }
 
     @Test
     public void testSimple()
-        throws Exception {
+            throws Exception {
         final DefaultConfiguration checkConfig =
             createCheckConfig(LineLengthCheck.class);
         checkConfig.addAttribute("max", "80");
-        checkConfig.addAttribute("ignorePattern",  "^.*is OK.*regexp.*$");
+        checkConfig.addAttribute("ignorePattern", "^.*is OK.*regexp.*$");
         final String[] expected = {
             "18: " + getCheckMessage(MSG_KEY, 80, 81),
             "145: " + getCheckMessage(MSG_KEY, 80, 83),
@@ -72,7 +72,7 @@ public class LineLengthCheckTest extends BaseCheckTestSupport {
 
     @Test
     public void shouldLogActualLineLength()
-        throws Exception {
+            throws Exception {
         final DefaultConfiguration checkConfig =
             createCheckConfig(LineLengthCheck.class);
         checkConfig.addAttribute("max", "80");

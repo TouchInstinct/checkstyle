@@ -23,11 +23,10 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-import org.apache.commons.lang3.ArrayUtils;
-
-import com.puppycrawl.tools.checkstyle.api.Check;
+import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
+import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
 /**
  * Checks that each top-level class, interface
@@ -84,7 +83,7 @@ import com.puppycrawl.tools.checkstyle.api.TokenTypes;
  *
  * @author maxvetrenko
  */
-public class OneTopLevelClassCheck extends Check {
+public class OneTopLevelClassCheck extends AbstractCheck {
 
     /**
      * A key is pointing to the warning message text in "messages.properties"
@@ -109,7 +108,7 @@ public class OneTopLevelClassCheck extends Check {
     // ZERO tokens as Check do Traverse of Tree himself, he does not need to subscribed to Tokens
     @Override
     public int[] getAcceptableTokens() {
-        return ArrayUtils.EMPTY_INT_ARRAY;
+        return CommonUtils.EMPTY_INT_ARRAY;
     }
 
     @Override

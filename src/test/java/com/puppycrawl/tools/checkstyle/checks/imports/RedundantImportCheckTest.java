@@ -60,7 +60,7 @@ public class RedundantImportCheckTest
 
     @Test
     public void testWithChecker()
-        throws Exception {
+            throws Exception {
         final DefaultConfiguration checkConfig =
             createCheckConfig(RedundantImportCheck.class);
         final String[] expected = {
@@ -77,12 +77,12 @@ public class RedundantImportCheckTest
 
     @Test
     public void testUnnamedPackage()
-        throws Exception {
+            throws Exception {
         final DefaultConfiguration checkConfig =
             createCheckConfig(RedundantImportCheck.class);
         final String[] expected = {
-            "2:1: " + getCheckMessage(MSG_DUPLICATE, 1, "java.util.List"),
-            "4:1: " + getCheckMessage(MSG_LANG, "java.lang.String"),
+            "4:1: " + getCheckMessage(MSG_DUPLICATE, 3, "java.util.List"),
+            "6:1: " + getCheckMessage(MSG_LANG, "java.lang.String"),
         };
         verify(checkConfig, getNonCompilablePath("InputRedundantImport_UnnamedPackage.java"),
             expected);

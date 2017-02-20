@@ -38,7 +38,7 @@ public class NullAnnotationsCheck extends AbstractCheck {
      * A keys are pointing to the warning message text in "messages.properties"
      * file.
      */
-    public static final String MSG_MISSED_ANNOTATION_KEY = "Messed @NonNull or @Nullable annotation for ";
+    public static final String MSG_MISSED_ANNOTATION_KEY = "Missed @NonNull or @Nullable annotation for ";
     public static final String MSG_USELESS_ANNOTATION_KEY = "Useless @NonNull or @Nullable annotation for ";
 
     private static final String NON_NULL = "NonNull";
@@ -103,13 +103,11 @@ public class NullAnnotationsCheck extends AbstractCheck {
         final boolean isStatic = modifiersAST.branchContains(TokenTypes.LITERAL_STATIC);
         final boolean isFinal = modifiersAST.branchContains(TokenTypes.FINAL);
 
-        if(!isStatic && isFinal) {
-            checkToken(field);
-        }
+        checkToken(field, isStatic && isFinal);
     }
 
     private void visitMethod(final DetailAST method) {
-        checkToken(method);
+        checkToken(method, false);
 
         final DetailAST modifiers =
             method.findFirstToken(TokenTypes.MODIFIERS);
@@ -125,17 +123,17 @@ public class NullAnnotationsCheck extends AbstractCheck {
             while (child != null) {
                 // children are PARAMETER_DEF and COMMA
                 if (child.getType() == TokenTypes.PARAMETER_DEF) {
-                    checkToken(child);
+                    checkToken(child, false);
                 }
                 child = child.getNextSibling();
             }
         }
     }
 
-    private void checkToken(final DetailAST ast) {
+    private void checkToken(final DetailAST ast, final boolean ignore) {
         boolean containsAnnotation = AnnotationUtility.containsAnnotation(ast, NON_NULL)
                 || AnnotationUtility.containsAnnotation(ast, NULLABLE);
-        boolean ignored = isIgnoredToken(ast);
+        boolean ignored = ignore || isIgnoredToken(ast);
         if (!ignored && !containsAnnotation) {
             final DetailAST paramName = ast.findFirstToken(TokenTypes.IDENT);
             final DetailAST firstNode = CheckUtils.getFirstNode(ast);

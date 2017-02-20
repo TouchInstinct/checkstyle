@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2017 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -84,11 +84,8 @@ public class FallThroughCheck extends AbstractCheck {
     /** Do we need to check last case group. */
     private boolean checkLastCaseGroup;
 
-    /** Relief pattern to allow fall through to the next case branch. */
-    private String reliefPattern = "fallthru|falls? ?through";
-
-    /** Relief regexp. */
-    private Pattern regExp;
+    /** Relief regexp to allow fall through to the next case branch. */
+    private Pattern reliefPattern = Pattern.compile("fallthru|falls? ?through");
 
     @Override
     public int[] getDefaultTokens() {
@@ -111,7 +108,7 @@ public class FallThroughCheck extends AbstractCheck {
      * @param pattern
      *            The regular expression pattern.
      */
-    public void setReliefPattern(String pattern) {
+    public void setReliefPattern(Pattern pattern) {
         reliefPattern = pattern;
     }
 
@@ -121,12 +118,6 @@ public class FallThroughCheck extends AbstractCheck {
      */
     public void setCheckLastCaseGroup(boolean value) {
         checkLastCaseGroup = value;
-    }
-
-    @Override
-    public void init() {
-        super.init();
-        regExp = Pattern.compile(reliefPattern);
     }
 
     @Override
@@ -276,7 +267,13 @@ public class FallThroughCheck extends AbstractCheck {
         }
 
         if (!isTerminated) {
-            isTerminated = isTerminated(ast.getFirstChild(),
+            DetailAST firstChild = ast.getFirstChild();
+
+            if (firstChild.getType() == TokenTypes.RESOURCE_SPECIFICATION) {
+                firstChild = firstChild.getNextSibling();
+            }
+
+            isTerminated = isTerminated(firstChild,
                     useBreak, useContinue);
 
             DetailAST catchStmt = ast.findFirstToken(TokenTypes.LITERAL_CATCH);
@@ -339,7 +336,7 @@ public class FallThroughCheck extends AbstractCheck {
         //    /+ FALLTHRU +/}
         //
         final String linePart = lines[endLineNo - 1].substring(0, endColNo);
-        if (matchesComment(regExp, linePart, endLineNo)) {
+        if (matchesComment(reliefPattern, linePart, endLineNo)) {
             allThroughComment = true;
         }
         else {
@@ -357,7 +354,7 @@ public class FallThroughCheck extends AbstractCheck {
             final int startLineNo = currentCase.getLineNo();
             for (int i = endLineNo - 2; i > startLineNo - 1; i--) {
                 if (!lines[i].trim().isEmpty()) {
-                    allThroughComment = matchesComment(regExp, lines[i], i + 1);
+                    allThroughComment = matchesComment(reliefPattern, lines[i], i + 1);
                     break;
                 }
             }

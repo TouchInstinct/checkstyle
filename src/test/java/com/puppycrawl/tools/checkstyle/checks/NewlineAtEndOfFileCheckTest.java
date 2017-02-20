@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2017 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -23,6 +23,7 @@ import static com.puppycrawl.tools.checkstyle.checks.NewlineAtEndOfFileCheck.MSG
 import static java.util.Locale.ENGLISH;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.when;
 
@@ -144,13 +145,22 @@ public class NewlineAtEndOfFileCheckTest
             expected);
     }
 
-    @Test(expected = CheckstyleException.class)
+    @Test
     public void testSetLineSeparatorFailure()
             throws Exception {
         final DefaultConfiguration checkConfig =
             createCheckConfig(NewlineAtEndOfFileCheck.class);
         checkConfig.addAttribute("lineSeparator", "ct");
-        createChecker(checkConfig);
+        try {
+            createChecker(checkConfig);
+            fail("exception expected");
+        }
+        catch (CheckstyleException ex) {
+            assertTrue(ex.getMessage().startsWith(
+                    "cannot initialize module com.puppycrawl.tools.checkstyle."
+                            + "checks.NewlineAtEndOfFileCheck - "
+                            + "Cannot set property 'lineSeparator' to 'ct' in module"));
+        }
     }
 
     @Test

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2017 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -29,7 +29,6 @@ import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.FullIdent;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
-import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
 /**
  * <p>
@@ -386,33 +385,27 @@ public class CustomImportOrderCheck extends AbstractCheck {
      * Sets standardRegExp specified by user.
      * @param regexp
      *        user value.
-     * @throws org.apache.commons.beanutils.ConversionException
-     *         if unable to create Pattern object.
      */
-    public final void setStandardPackageRegExp(String regexp) {
-        standardPackageRegExp = CommonUtils.createPattern(regexp);
+    public final void setStandardPackageRegExp(Pattern regexp) {
+        standardPackageRegExp = regexp;
     }
 
     /**
      * Sets thirdPartyRegExp specified by user.
      * @param regexp
      *        user value.
-     * @throws org.apache.commons.beanutils.ConversionException
-     *         if unable to create Pattern object.
      */
-    public final void setThirdPartyPackageRegExp(String regexp) {
-        thirdPartyPackageRegExp = CommonUtils.createPattern(regexp);
+    public final void setThirdPartyPackageRegExp(Pattern regexp) {
+        thirdPartyPackageRegExp = regexp;
     }
 
     /**
      * Sets specialImportsRegExp specified by user.
      * @param regexp
      *        user value.
-     * @throws org.apache.commons.beanutils.ConversionException
-     *         if unable to create Pattern object.
      */
-    public final void setSpecialImportsRegExp(String regexp) {
-        specialImportsRegExp = CommonUtils.createPattern(regexp);
+    public final void setSpecialImportsRegExp(Pattern regexp) {
+        specialImportsRegExp = regexp;
     }
 
     /**
@@ -509,6 +502,9 @@ public class CustomImportOrderCheck extends AbstractCheck {
             final String importGroup = importObject.getImportGroup();
             final String fullImportIdent = importObject.getImportFullPath();
 
+            if (getCountOfEmptyLinesBefore(importObject.getLineNumber()) > 1) {
+                log(importObject.getLineNumber(), MSG_LINE_SEPARATOR, fullImportIdent);
+            }
             if (importGroup.equals(currentGroup)) {
                 if (sortImportsInGroupAlphabetically
                         && previousImportFromCurrentGroup != null
@@ -526,7 +522,7 @@ public class CustomImportOrderCheck extends AbstractCheck {
                     final String nextGroup = getNextImportGroup(currentGroupNumber + 1);
                     if (importGroup.equals(nextGroup)) {
                         if (separateLineBetweenGroups
-                                && !hasEmptyLineBefore(importObject.getLineNumber())) {
+                                && getCountOfEmptyLinesBefore(importObject.getLineNumber()) == 0) {
                             log(importObject.getLineNumber(), MSG_LINE_SEPARATOR, fullImportIdent);
                         }
                         currentGroup = nextGroup;
@@ -621,7 +617,7 @@ public class CustomImportOrderCheck extends AbstractCheck {
         }
         else if (customImportOrderRules.contains(SAME_PACKAGE_RULE_GROUP)) {
             final String importPathTrimmedToSamePackageDepth =
-                    getFirstNDomainsFromIdent(samePackageMatchingDepth, importPath);
+                    getFirstDomainsFromIdent(samePackageMatchingDepth, importPath);
             if (samePackageDomainsRegExp.equals(importPathTrimmedToSamePackageDepth)) {
                 bestMatch.group = SAME_PACKAGE_RULE_GROUP;
                 bestMatch.matchLength = importPath.length();
@@ -702,16 +698,22 @@ public class CustomImportOrderCheck extends AbstractCheck {
     }
 
     /**
-     * Checks if a token has a empty line before.
+     * Counts empty lines before given.
      * @param lineNo
      *        Line number of current import.
-     * @return true, if token have empty line before.
+     * @return count of empty lines before given.
      */
-    private boolean hasEmptyLineBefore(int lineNo) {
+    private int getCountOfEmptyLinesBefore(int lineNo) {
+        int result = 0;
+        final String[] lines = getLines();
         //  [lineNo - 2] is the number of the previous line
         //  because the numbering starts from zero.
-        final String lineBefore = getLine(lineNo - 2);
-        return lineBefore.trim().isEmpty();
+        int lineBeforeIndex = lineNo - 2;
+        while (lineBeforeIndex >= 0 && lines[lineBeforeIndex].trim().isEmpty()) {
+            lineBeforeIndex--;
+            result++;
+        }
+        return result;
     }
 
     /**
@@ -770,7 +772,7 @@ public class CustomImportOrderCheck extends AbstractCheck {
     private static String createSamePackageRegexp(int firstPackageDomainsCount,
              DetailAST packageNode) {
         final String packageFullPath = getFullImportIdent(packageNode);
-        return getFirstNDomainsFromIdent(firstPackageDomainsCount, packageFullPath);
+        return getFirstDomainsFromIdent(firstPackageDomainsCount, packageFullPath);
     }
 
     /**
@@ -782,7 +784,7 @@ public class CustomImportOrderCheck extends AbstractCheck {
      * @return String with defined amount of domains or full identifier
      *        (if full identifier had less domain then specified)
      */
-    private static String getFirstNDomainsFromIdent(
+    private static String getFirstDomainsFromIdent(
             final int firstPackageDomainsCount, final String packageFullPath) {
         final StringBuilder builder = new StringBuilder();
         final StringTokenizer tokens = new StringTokenizer(packageFullPath, ".");

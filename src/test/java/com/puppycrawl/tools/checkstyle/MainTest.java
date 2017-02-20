@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2017 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -798,5 +798,18 @@ public class MainTest {
         final List<File> result = (List<File>) method.invoke(null, new File(getFilePath("")),
                 list);
         assertNotEquals(0, result.size());
+    }
+
+    @Test
+    public void testCustomRootModule() throws Exception {
+        TestRootModuleChecker.reset();
+
+        exit.checkAssertionAfterwards(() -> {
+            assertEquals("", systemOut.getLog());
+            assertEquals("", systemErr.getLog());
+            assertTrue(TestRootModuleChecker.isProcessed());
+        });
+        Main.main("-c", getPath("config-custom-root-module.xml"),
+                getPath("InputMain.java"));
     }
 }

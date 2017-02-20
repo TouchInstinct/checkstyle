@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2017 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -541,7 +541,7 @@ public abstract class AbstractExpressionHandler {
      * @param rparen parenthesis to check
      * @param lparen left parenthesis associated with aRparen
      */
-    protected final void checkRParen(DetailAST lparen, DetailAST rparen) {
+    protected final void checkRightParen(DetailAST lparen, DetailAST rparen) {
         if (rparen != null) {
             // the rcurly can either be at the correct indentation,
             // or not first on the line
@@ -561,7 +561,7 @@ public abstract class AbstractExpressionHandler {
      * Check the indentation of the left parenthesis.
      * @param lparen parenthesis to check
      */
-    protected final void checkLParen(final DetailAST lparen) {
+    protected final void checkLeftParen(final DetailAST lparen) {
         // the rcurly can either be at the correct indentation, or on the
         // same line as the lcurly
         if (lparen != null

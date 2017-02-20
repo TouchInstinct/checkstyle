@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2017 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -61,7 +61,7 @@ public class ArrayInitHandler extends BlockParentHandler {
     }
 
     @Override
-    protected DetailAST getLCurly() {
+    protected DetailAST getLeftCurly() {
         return getMainAst();
     }
 
@@ -73,7 +73,7 @@ public class ArrayInitHandler extends BlockParentHandler {
     }
 
     @Override
-    protected DetailAST getRCurly() {
+    protected DetailAST getRightCurly() {
         return getMainAst().findFirstToken(TokenTypes.RCURLY);
     }
 
@@ -94,7 +94,7 @@ public class ArrayInitHandler extends BlockParentHandler {
                     getIndentCheck().getLineWrappingIndentation());
 
         final int firstLine = getFirstLine(Integer.MAX_VALUE, getListChild());
-        final int lcurlyPos = expandedTabsColumnNo(getLCurly());
+        final int lcurlyPos = expandedTabsColumnNo(getLeftCurly());
         final int firstChildPos =
             getNextFirstNonBlankOnLineAfter(firstLine, lcurlyPos);
         if (firstChildPos >= 0) {

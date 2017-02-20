@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2017 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -33,9 +33,11 @@ import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
  * allowLineBreaks to true.
  * </p>
  * <p> By default the check will check the following operators:
+ *  {@link TokenTypes#COMMA COMMA},
  *  {@link TokenTypes#SEMI SEMI},
  *  {@link TokenTypes#POST_DEC POST_DEC},
- *  {@link TokenTypes#POST_INC POST_INC}.
+ *  {@link TokenTypes#POST_INC POST_INC},
+ *  {@link TokenTypes#ELLIPSIS ELLIPSIS}.
  * {@link TokenTypes#DOT DOT} is also an acceptable token in a configuration
  * of this check.
  * </p>
@@ -77,6 +79,7 @@ public class NoWhitespaceBeforeCheck
             TokenTypes.SEMI,
             TokenTypes.POST_INC,
             TokenTypes.POST_DEC,
+            TokenTypes.ELLIPSIS,
         };
     }
 
@@ -90,6 +93,7 @@ public class NoWhitespaceBeforeCheck
             TokenTypes.DOT,
             TokenTypes.GENERIC_START,
             TokenTypes.GENERIC_END,
+            TokenTypes.ELLIPSIS,
         };
     }
 

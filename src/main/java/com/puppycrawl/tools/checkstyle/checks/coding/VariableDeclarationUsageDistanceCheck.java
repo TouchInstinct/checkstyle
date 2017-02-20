@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2017 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -27,12 +27,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import antlr.collections.ASTEnumeration;
-
 import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.FullIdent;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
-import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
 /**
  * <p>
@@ -213,13 +211,10 @@ public class VariableDeclarationUsageDistanceCheck extends AbstractCheck {
 
     /**
      * Sets RegExp pattern to ignore distance calculation for variables listed in this pattern.
-     * @param ignorePattern
-     *        Pattern contains ignored variables.
-     * @throws org.apache.commons.beanutils.ConversionException
-     *         if unable to create Pattern object.
+     * @param pattern a pattern.
      */
-    public void setIgnoreVariablePattern(String ignorePattern) {
-        ignoreVariablePattern = CommonUtils.createPattern(ignorePattern);
+    public void setIgnoreVariablePattern(Pattern pattern) {
+        ignoreVariablePattern = pattern;
     }
 
     /**

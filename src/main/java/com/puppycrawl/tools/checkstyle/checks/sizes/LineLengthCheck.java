@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2017 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -90,14 +90,7 @@ public class LineLengthCheck extends AbstractCheck {
     private int max = DEFAULT_MAX_COLUMNS;
 
     /** The regexp when long lines are ignored. */
-    private Pattern ignorePattern;
-
-    /**
-     * Creates a new {@code LineLengthCheck} instance.
-     */
-    public LineLengthCheck() {
-        setIgnorePattern("^$");
-    }
+    private Pattern ignorePattern = Pattern.compile("^$");
 
     @Override
     public int[] getDefaultTokens() {
@@ -140,9 +133,9 @@ public class LineLengthCheck extends AbstractCheck {
 
     /**
      * Set the ignore pattern.
-     * @param format a {@code String} value
+     * @param pattern a pattern.
      */
-    public final void setIgnorePattern(String format) {
-        ignorePattern = CommonUtils.createPattern(format);
+    public final void setIgnorePattern(Pattern pattern) {
+        ignorePattern = pattern;
     }
 }

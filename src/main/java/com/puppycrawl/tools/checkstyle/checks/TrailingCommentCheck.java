@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2017 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -108,28 +108,23 @@ public class TrailingCommentCheck extends AbstractCheck {
     /** Pattern for legal trailing comment. */
     private Pattern legalComment;
 
-    /** The format string of the regexp. */
-    private String format = "^[\\s\\});]*$";
-
     /** The regexp to match against. */
-    private Pattern regexp = Pattern.compile(format);
+    private Pattern format = Pattern.compile("^[\\s\\});]*$");
 
     /**
      * Sets patter for legal trailing comments.
-     * @param legalComment format to set.
+     * @param legalComment pattern to set.
      */
-    public void setLegalComment(final String legalComment) {
-        this.legalComment = CommonUtils.createPattern(legalComment);
+    public void setLegalComment(final Pattern legalComment) {
+        this.legalComment = legalComment;
     }
 
     /**
-     * Set the format to the specified regular expression.
-     * @param format a {@code String} value
-     * @throws org.apache.commons.beanutils.ConversionException unable to parse format
+     * Set the format for the specified regular expression.
+     * @param pattern a pattern
      */
-    public final void setFormat(String format) {
-        this.format = format;
-        regexp = CommonUtils.createPattern(format);
+    public final void setFormat(Pattern pattern) {
+        format = pattern;
     }
 
     @Override
@@ -155,9 +150,9 @@ public class TrailingCommentCheck extends AbstractCheck {
     @Override
     public void beginTree(DetailAST rootAST) {
         final Map<Integer, TextBlock> cppComments = getFileContents()
-                .getCppComments();
+                .getSingleLineComments();
         final Map<Integer, List<TextBlock>> cComments = getFileContents()
-                .getCComments();
+                .getBlockComments();
         final Set<Integer> lines = new HashSet<>();
         lines.addAll(cppComments.keySet());
         lines.addAll(cComments.keySet());
@@ -181,7 +176,7 @@ public class TrailingCommentCheck extends AbstractCheck {
                     continue;
                 }
             }
-            if (!regexp.matcher(lineBefore).find()
+            if (!format.matcher(lineBefore).find()
                 && !isLegalComment(comment)) {
                 log(lineNo, MSG_KEY);
             }

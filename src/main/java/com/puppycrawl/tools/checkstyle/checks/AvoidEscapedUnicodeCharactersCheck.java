@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2017 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -33,7 +33,7 @@ import com.puppycrawl.tools.checkstyle.api.TokenTypes;
  * <p>
  * Restrict using <a href =
  * "http://docs.oracle.com/javase/specs/jls/se8/html/jls-3.html#jls-3.3">
- * Unicode escapes</a> (e.g. \u221e).
+ * Unicode escapes</a> (such as <code>&#92;u221e</code>).
  * It is possible to allow using escapes for
  * <a href="https://en.wiktionary.org/wiki/Appendix:Control_characters">
  * non-printable(control) characters</a>.
@@ -45,8 +45,8 @@ import com.puppycrawl.tools.checkstyle.api.TokenTypes;
  * <p>
  * Examples of using Unicode:</p>
  * <pre>
- * String unitAbbrev = "μs"; //Best: perfectly clear even without a comment.
- * String unitAbbrev = "\u03bcs"; //Poor: the reader has no idea what this is.
+ * String unitAbbrev = "μs";      // Best: perfectly clear even without a comment.
+ * String unitAbbrev = "&#92;u03bcs"; // Poor: the reader has no idea what this is.
  * </pre>
  * <p>
  * An example of how to configure the check is:
@@ -58,7 +58,7 @@ import com.puppycrawl.tools.checkstyle.api.TokenTypes;
  * An example of non-printable(control) characters.
  * </p>
  * <pre>
- * return '\ufeff' + content; // byte order mark
+ * return '&#92;ufeff' + content; // byte order mark
  * </pre>
  * <p>
  * An example of how to configure the check to allow using escapes
@@ -73,7 +73,7 @@ import com.puppycrawl.tools.checkstyle.api.TokenTypes;
  * Example of using escapes with trail comment:
  * </p>
  * <pre>
- * String unitAbbrev = "\u03bcs"; // Greek letter mu, "s"
+ * String unitAbbrev = "&#92;u03bcs"; // Greek letter mu, "s"
  * </pre>
  * <p>An example of how to configure the check to allow using escapes
  * if trail comment is present:
@@ -86,7 +86,7 @@ import com.puppycrawl.tools.checkstyle.api.TokenTypes;
  * <p>Example of using escapes if literal contains only them:
  * </p>
  * <pre>
- * String unitAbbrev = "\u03bc\u03bc\u03bc";
+ * String unitAbbrev = "&#92;u03bc&#92;u03bc&#92;u03bc";
  * </pre>
  * <p>An example of how to configure the check to allow escapes
  * if literal contains only them:
@@ -128,6 +128,9 @@ public class AvoidEscapedUnicodeCharactersCheck
     private static final Pattern ALL_ESCAPED_CHARS =
             Pattern.compile("^((\\\\u)[a-fA-F0-9]{4}"
                     + "||\\\\b|\\\\t|\\\\n|\\\\f|\\\\r|\\\\|\"|\')+$");
+
+    /** Regular expression for escaped backslash. */
+    private static final Pattern ESCAPED_BACKSLASH = Pattern.compile("\\\\\\\\");
 
     /** Regular expression for non-printable unicode chars. */
     private static final Pattern NON_PRINTABLE_CHARS = Pattern.compile("\\\\u1680|\\\\u2028"
@@ -217,8 +220,8 @@ public class AvoidEscapedUnicodeCharactersCheck
 
     @Override
     public void beginTree(DetailAST rootAST) {
-        singlelineComments = getFileContents().getCppComments();
-        blockComments = getFileContents().getCComments();
+        singlelineComments = getFileContents().getSingleLineComments();
+        blockComments = getFileContents().getBlockComments();
     }
 
     @Override
@@ -242,7 +245,9 @@ public class AvoidEscapedUnicodeCharactersCheck
      * @return true if literal has Unicode chars.
      */
     private static boolean hasUnicodeChar(String literal) {
-        return UNICODE_REGEXP.matcher(literal).find();
+        final String literalWithoutEscapedBackslashes =
+                ESCAPED_BACKSLASH.matcher(literal).replaceAll("");
+        return UNICODE_REGEXP.matcher(literalWithoutEscapedBackslashes).find();
     }
 
     /**
@@ -275,7 +280,7 @@ public class AvoidEscapedUnicodeCharactersCheck
             final List<TextBlock> commentList = blockComments.get(lineNo);
             if (commentList != null) {
                 final TextBlock comment = commentList.get(commentList.size() - 1);
-                result = isTrailingCComent(comment, line);
+                result = isTrailingBlockComment(comment, line);
             }
         }
         return result;
@@ -287,7 +292,7 @@ public class AvoidEscapedUnicodeCharactersCheck
      * @param line the line where the comment starts.
      * @return true if the comment is trailing.
      */
-    private static boolean isTrailingCComent(TextBlock comment, String line) {
+    private static boolean isTrailingBlockComment(TextBlock comment, String line) {
         return comment.getText().length != 1
             || line.substring(comment.getEndColNo() + 1).trim().isEmpty();
     }

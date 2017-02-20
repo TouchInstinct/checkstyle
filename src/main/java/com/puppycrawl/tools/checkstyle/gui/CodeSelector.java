@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2017 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -25,6 +25,7 @@ import java.util.List;
 import javax.swing.JTextArea;
 
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
+import com.puppycrawl.tools.checkstyle.api.DetailNode;
 
 /**
  * Helper class to select a code.
@@ -34,18 +35,23 @@ public class CodeSelector {
     /** Editor. */
     private final JTextArea editor;
     /** Presentation model. */
-    private final CodeSelectorPModel pModel;
+    private final CodeSelectorPresentation pModel;
 
     /**
      * Constructor.
-     * @param ast ast node.
+     * @param node ast node.
      * @param editor text area editor.
      * @param lines2position list to map lines.
      */
-    public CodeSelector(final DetailAST ast, final JTextArea editor,
+    public CodeSelector(final Object node, final JTextArea editor,
                         final List<Integer> lines2position) {
         this.editor = editor;
-        pModel = new CodeSelectorPModel(ast, lines2position);
+        if (node instanceof DetailAST) {
+            pModel = new CodeSelectorPresentation((DetailAST) node, lines2position);
+        }
+        else {
+            pModel = new CodeSelectorPresentation((DetailNode) node, lines2position);
+        }
     }
 
     /**

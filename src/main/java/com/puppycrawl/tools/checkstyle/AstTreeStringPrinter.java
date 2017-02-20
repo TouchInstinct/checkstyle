@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2017 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -26,7 +26,6 @@ import java.util.regex.Pattern;
 
 import antlr.RecognitionException;
 import antlr.TokenStreamException;
-
 import com.puppycrawl.tools.checkstyle.api.CheckstyleException;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.DetailNode;
@@ -92,16 +91,16 @@ public final class AstTreeStringPrinter {
         final StringBuilder messageBuilder = new StringBuilder();
         DetailAST node = ast;
         while (node != null) {
-            if (node.getType() == TokenTypes.BLOCK_COMMENT_BEGIN
-                    && JavadocUtils.isJavadocComment(node)) {
+            messageBuilder.append(getIndentation(node))
+                .append(getNodeInfo(node))
+                .append(LINE_SEPARATOR);
+            if (node.getType() == TokenTypes.COMMENT_CONTENT
+                    && JavadocUtils.isJavadocComment(node.getParent())) {
                 final String javadocTree = parseAndPrintJavadocTree(node);
                 messageBuilder.append(javadocTree);
             }
             else {
-                messageBuilder.append(getIndentation(node))
-                    .append(getNodeInfo(node))
-                    .append(LINE_SEPARATOR)
-                    .append(printJavaAndJavadocTree(node.getFirstChild()));
+                messageBuilder.append(printJavaAndJavadocTree(node.getFirstChild()));
             }
             node = node.getNextSibling();
         }
@@ -114,10 +113,13 @@ public final class AstTreeStringPrinter {
      * @return string javadoc tree
      */
     private static String parseAndPrintJavadocTree(DetailAST node) {
-        final DetailNode tree = DetailNodeTreeStringPrinter.parseJavadocAsDetailNode(node);
+        final DetailAST javadocBlock = node.getParent();
+        final DetailNode tree = DetailNodeTreeStringPrinter.parseJavadocAsDetailNode(javadocBlock);
 
-        final String rootPrefix = getIndentation(node);
-        final String prefix = rootPrefix.substring(0, rootPrefix.length() - 2) + "   ";
+        String baseIndentation = getIndentation(node);
+        baseIndentation = baseIndentation.substring(0, baseIndentation.length() - 2);
+        final String rootPrefix = baseIndentation + "   `--";
+        final String prefix = baseIndentation + "       ";
         return DetailNodeTreeStringPrinter.printTree(tree, rootPrefix, prefix);
     }
 

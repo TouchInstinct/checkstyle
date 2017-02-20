@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2017 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -73,6 +73,7 @@ public class JavadocTagContinuationIndentationCheckTest
             "290: " + getCheckMessage(MSG_KEY, 4),
             "310: " + getCheckMessage(MSG_KEY, 4),
             "322: " + getCheckMessage(MSG_KEY, 4),
+            "324: " + getCheckMessage(MSG_KEY, 4),
         };
         verify(checkConfig, getPath("InputJavaDocTagContinuationIndentation.java"),
                 expected);

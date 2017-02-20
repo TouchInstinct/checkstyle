@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2017 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -26,9 +26,15 @@ import org.junit.Test;
 
 public class PropertiesExpanderTest {
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testCtorException() {
-        new PropertiesExpander(null);
+        try {
+            new PropertiesExpander(null);
+            Assert.fail("exception expected");
+        }
+        catch (IllegalArgumentException ex) {
+            Assert.assertEquals("cannot pass null", ex.getMessage());
+        }
     }
 
     @Test

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2017 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -196,10 +196,10 @@ public class JavadocMethodCheck extends AbstractTypeAwareCheck {
 
     /**
      * Set regex for matching method names to ignore.
-     * @param regex regex for matching method names.
+     * @param pattern a pattern.
      */
-    public void setIgnoreMethodNamesRegex(String regex) {
-        ignoreMethodNamesRegex = CommonUtils.createPattern(regex);
+    public void setIgnoreMethodNamesRegex(Pattern pattern) {
+        ignoreMethodNamesRegex = pattern;
     }
 
     /**
@@ -229,19 +229,19 @@ public class JavadocMethodCheck extends AbstractTypeAwareCheck {
     /**
      * Set the scope.
      *
-     * @param from a {@code String} value
+     * @param scope a scope.
      */
-    public void setScope(String from) {
-        scope = Scope.getInstance(from);
+    public void setScope(Scope scope) {
+        this.scope = scope;
     }
 
     /**
      * Set the excludeScope.
      *
-     * @param excludeScope a {@code String} value
+     * @param excludeScope a scope.
      */
-    public void setExcludeScope(String excludeScope) {
-        this.excludeScope = Scope.getInstance(excludeScope);
+    public void setExcludeScope(Scope excludeScope) {
+        this.excludeScope = excludeScope;
     }
 
     /**
@@ -694,7 +694,9 @@ public class JavadocMethodCheck extends AbstractTypeAwareCheck {
         while (child != null) {
             if (child.getType() == TokenTypes.PARAMETER_DEF) {
                 final DetailAST ident = child.findFirstToken(TokenTypes.IDENT);
-                returnValue.add(ident);
+                if (ident != null) {
+                    returnValue.add(ident);
+                }
             }
             child = child.getNextSibling();
         }

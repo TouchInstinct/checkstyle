@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2017 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -266,6 +266,20 @@ public class CommentsIndentationCheckTest extends BaseCheckTestSupport {
             "128: " + getCheckMessage(MSG_KEY_SINGLE, "127, 129", 0, "12, 8"),
         };
         final String testInputFile = "InputCommentsIndentationInMultiblockStructures.java";
+        verify(checkConfig, getPath(testInputFile), expected);
+    }
+
+    @Test
+    public void testCommentsAfterAnnotation() throws Exception {
+        final DefaultConfiguration checkConfig = createCheckConfig(CommentsIndentationCheck.class);
+        final String[] expected = {
+            "14: " + getCheckMessage(MSG_KEY_SINGLE, 15, 4, 0),
+            "18: " + getCheckMessage(MSG_KEY_SINGLE, 19, 8, 4),
+            "36: " + getCheckMessage(MSG_KEY_SINGLE, 37, 4, 0),
+            "41: " + getCheckMessage(MSG_KEY_SINGLE, 42, 8, 4),
+            "50: " + getCheckMessage(MSG_KEY_SINGLE, 51, 2, 4),
+        };
+        final String testInputFile = "InputCommentsIndentationAfterAnnotation.java";
         verify(checkConfig, getPath(testInputFile), expected);
     }
 

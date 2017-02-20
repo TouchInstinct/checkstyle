@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2017 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -42,12 +42,12 @@ public class SwitchHandler extends BlockParentHandler {
     }
 
     @Override
-    protected DetailAST getLCurly() {
+    protected DetailAST getLeftCurly() {
         return getMainAst().findFirstToken(TokenTypes.LCURLY);
     }
 
     @Override
-    protected DetailAST getRCurly() {
+    protected DetailAST getRightCurly() {
         return getMainAst().findFirstToken(TokenTypes.RCURLY);
     }
 

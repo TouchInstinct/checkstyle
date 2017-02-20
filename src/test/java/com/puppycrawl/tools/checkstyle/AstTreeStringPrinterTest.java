@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2017 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -29,6 +29,7 @@ import java.nio.file.Paths;
 import org.junit.Assert;
 import org.junit.Test;
 
+import antlr.NoViableAltException;
 import com.puppycrawl.tools.checkstyle.api.CheckstyleException;
 
 public class AstTreeStringPrinterTest {
@@ -46,10 +47,17 @@ public class AstTreeStringPrinterTest {
         assertUtilsClassHasPrivateConstructor(AstTreeStringPrinter.class);
     }
 
-    @Test(expected = CheckstyleException.class)
+    @Test
     public void testParseFileThrowable() throws Exception {
-        AstTreeStringPrinter.printFileAst(
-            new File(getNonCompilablePath("InputAstTreeStringPrinter.java")), false);
+        try {
+            AstTreeStringPrinter.printFileAst(
+                new File(getNonCompilablePath("InputAstTreeStringPrinter.java")), false);
+            Assert.fail("exception expected");
+        }
+        catch (CheckstyleException ex) {
+            Assert.assertSame(NoViableAltException.class, ex.getCause().getClass());
+            Assert.assertEquals("unexpected token: classD", ex.getCause().getMessage());
+        }
     }
 
     @Test
@@ -73,13 +81,39 @@ public class AstTreeStringPrinterTest {
     }
 
     @Test
-    public void testParseFileWithJavadoc() throws Exception {
+    public void testParseFileWithJavadoc1() throws Exception {
         final String actual = AstTreeStringPrinter.printJavaAndJavadocTree(
                 new File(getPath("InputAstTreeStringPrinterJavadoc.java")))
                 .replaceAll("\\\\r\\\\n", "\\\\n");
         final String expected = new String(Files.readAllBytes(Paths.get(
-                getPath("expectedInputAstTreeStringPrinterJavadoc.txt"))), StandardCharsets.UTF_8)
+                getPath("expectedInputAstTreeStringPrinterJavadoc.txt"))),
+                        StandardCharsets.UTF_8)
                 .replaceAll("\\\\r\\\\n", "\\\\n");
         Assert.assertEquals(expected, actual);
     }
+
+    @Test
+    public void testParseFileWithJavadoc2() throws Exception {
+        final String actual = AstTreeStringPrinter.printJavaAndJavadocTree(
+                new File(getPath("InputAstTreeStringPrinterJavaAndJavadoc.java")))
+                .replaceAll("\\\\r\\\\n", "\\\\n");
+        final String expected = new String(Files.readAllBytes(Paths.get(
+                getPath("expectedInputAstTreeStringPrinterJavaAndJavadoc.txt"))),
+                        StandardCharsets.UTF_8)
+                .replaceAll("\\\\r\\\\n", "\\\\n");
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test
+    public void testParseFileWithJavadoc3() throws Exception {
+        final String actual = AstTreeStringPrinter.printJavaAndJavadocTree(
+                new File(getPath("InputAstTreeStringPrinterAttributesAndMethodsJavadoc.java")))
+                .replaceAll("\\\\r\\\\n", "\\\\n");
+        final String expected = new String(Files.readAllBytes(Paths.get(
+                getPath("expectedInputAstTreeStringPrinterAttributesAndMethodsJavadoc.txt"))),
+                        StandardCharsets.UTF_8)
+                .replaceAll("\\\\r\\\\n", "\\\\n");
+        Assert.assertEquals(expected, actual);
+    }
+
 }

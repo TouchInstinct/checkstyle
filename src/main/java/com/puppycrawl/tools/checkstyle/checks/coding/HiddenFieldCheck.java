@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2017 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -30,7 +30,6 @@ import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.Scope;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
 import com.puppycrawl.tools.checkstyle.utils.CheckUtils;
-import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 import com.puppycrawl.tools.checkstyle.utils.ScopeUtils;
 
 /**
@@ -143,7 +142,7 @@ public class HiddenFieldCheck
     private FieldFrame frame;
 
     /** Pattern for names of variables and parameters to ignore. */
-    private Pattern regexp;
+    private Pattern ignoreFormat;
 
     /** Controls whether to check the parameter of a property setter method. */
     private boolean ignoreSetter;
@@ -356,7 +355,7 @@ public class HiddenFieldCheck
      * @return true is regexp is matching
      */
     private boolean isMatchingRegexp(String name) {
-        return regexp != null && regexp.matcher(name).find();
+        return ignoreFormat != null && ignoreFormat.matcher(name).find();
     }
 
     /**
@@ -511,11 +510,11 @@ public class HiddenFieldCheck
     }
 
     /**
-     * Set the ignore format to the specified regular expression.
-     * @param format a {@code String} value
+     * Set the ignore format for the specified regular expression.
+     * @param pattern a pattern.
      */
-    public void setIgnoreFormat(String format) {
-        regexp = CommonUtils.createPattern(format);
+    public void setIgnoreFormat(Pattern pattern) {
+        ignoreFormat = pattern;
     }
 
     /**

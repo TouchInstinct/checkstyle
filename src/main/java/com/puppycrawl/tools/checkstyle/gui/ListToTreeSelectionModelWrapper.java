@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2017 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -33,18 +33,19 @@ import javax.swing.tree.TreePath;
  */
 class ListToTreeSelectionModelWrapper extends DefaultTreeSelectionModel {
     private static final long serialVersionUID = 2267930983939339510L;
-    /** JTreeTable to perform updates on. */
-    private final JTreeTable treeTable;
+    /** TreeTable to perform updates on. */
+    private final TreeTable treeTable;
     /** Set to true when we are updating the ListSelectionModel. */
     private boolean updatingListSelectionModel;
 
     /**
      * @param jTreeTable TreeTable to perform updates on.
      */
-    ListToTreeSelectionModelWrapper(JTreeTable jTreeTable) {
+    ListToTreeSelectionModelWrapper(TreeTable jTreeTable) {
         treeTable = jTreeTable;
-        getListSelectionModel().addListSelectionListener(event ->
-            updateSelectedPathsFromSelectedRows());
+        getListSelectionModel().addListSelectionListener(event -> {
+            updateSelectedPathsFromSelectedRows();
+        });
     }
 
     /**

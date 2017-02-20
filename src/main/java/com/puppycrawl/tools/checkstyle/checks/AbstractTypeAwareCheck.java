@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2017 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -158,6 +158,7 @@ public abstract class AbstractTypeAwareCheck extends AbstractCheck {
     @Override
     public final void leaveToken(DetailAST ast) {
         if (ast.getType() == TokenTypes.CLASS_DEF
+            || ast.getType() == TokenTypes.INTERFACE_DEF
             || ast.getType() == TokenTypes.ENUM_DEF) {
             // perhaps it was inner class
             int dotIdx = currentClassName.lastIndexOf('$');

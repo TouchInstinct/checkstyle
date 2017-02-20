@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2017 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -23,6 +23,8 @@ import static com.puppycrawl.tools.checkstyle.checks.whitespace.AbstractParenPad
 import static com.puppycrawl.tools.checkstyle.checks.whitespace.AbstractParenPadCheck.MSG_WS_NOT_FOLLOWED;
 import static com.puppycrawl.tools.checkstyle.checks.whitespace.AbstractParenPadCheck.MSG_WS_NOT_PRECEDED;
 import static com.puppycrawl.tools.checkstyle.checks.whitespace.AbstractParenPadCheck.MSG_WS_PRECEDED;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.io.IOException;
@@ -101,6 +103,8 @@ public class ParenPadCheckTest
             "275:42: " + getCheckMessage(MSG_WS_NOT_PRECEDED, ")"),
             "276:18: " + getCheckMessage(MSG_WS_NOT_FOLLOWED, "("),
             "276:33: " + getCheckMessage(MSG_WS_NOT_PRECEDED, ")"),
+            "287:55: " + getCheckMessage(MSG_WS_NOT_FOLLOWED, "("),
+            "287:70: " + getCheckMessage(MSG_WS_NOT_PRECEDED, ")"),
         };
         verify(checkConfig, getPath("InputWhitespace.java"), expected);
     }
@@ -241,12 +245,21 @@ public class ParenPadCheckTest
         verify(checkConfig, getPath("InputParenPad.java"), expected);
     }
 
-    @Test(expected = CheckstyleException.class)
+    @Test
     public void testInvalidOption() throws Exception {
         final DefaultConfiguration checkConfig = createCheckConfig(ParenPadCheck.class);
         checkConfig.addAttribute("option", "invalid_option");
-        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
 
-        verify(checkConfig, getPath("InputParenPad.java"), expected);
+        try {
+            final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+
+            verify(checkConfig, getPath("InputParenPad.java"), expected);
+            fail("exception expected");
+        }
+        catch (CheckstyleException ex) {
+            assertTrue(ex.getMessage().startsWith(
+                    "cannot initialize module com.puppycrawl.tools.checkstyle.TreeWalker - "
+                            + "Cannot set property 'option' to 'invalid_option' in module"));
+        }
     }
 }

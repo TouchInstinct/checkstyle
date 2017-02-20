@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2017 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -30,7 +30,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import antlr.CommonHiddenStreamToken;
-
 import com.puppycrawl.tools.checkstyle.BaseCheckTestSupport;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
@@ -175,6 +174,15 @@ public class NoWhitespaceAfterCheckTest
     }
 
     @Test
+    public void testSynchronized() throws Exception {
+        checkConfig.addAttribute("tokens", "LITERAL_SYNCHRONIZED");
+        final String[] expected = {
+            "14:21: " + getCheckMessage(MSG_KEY, "synchronized"),
+        };
+        verify(checkConfig, getPath("InputNoWhitespaceAfterSynchronized.java"), expected);
+    }
+
+    @Test
     public void testNpe() throws Exception {
         verify(checkConfig, getPath("InputNoWhiteSpaceAfterFormerNpe.java"));
     }
@@ -193,9 +201,9 @@ public class NoWhitespaceAfterCheckTest
         //unexpected parent for ARRAY_DECLARATOR token
         final DetailAST astImport = mockAST(TokenTypes.IMPORT, "import", "mockfile");
         final DetailAST astArrayDeclarator = mockAST(TokenTypes.ARRAY_DECLARATOR, "[", "mockfile");
-        final DetailAST astRBrake = mockAST(TokenTypes.RBRACK, "[", "mockfile");
+        final DetailAST astRightBracket = mockAST(TokenTypes.RBRACK, "[", "mockfile");
         astImport.addChild(astArrayDeclarator);
-        astArrayDeclarator.addChild(astRBrake);
+        astArrayDeclarator.addChild(astRightBracket);
 
         final NoWhitespaceAfterCheck check = new NoWhitespaceAfterCheck();
         try {

@@ -7,6 +7,9 @@
 <module name="Checker">
     <!-- All checks are from https://github.com/sevntu-checkstyle/sevntu.checkstyle project -->
 
+    <!-- Hard coded until https://issues.apache.org/jira/browse/MCHECKSTYLE-332 is released. -->
+    <property name="cacheFile" value="target/cachefile-sevntu"/>
+
     <!-- Filters -->
     <module name="SuppressionFilter">
         <property name="file" value="${project.basedir}/config/sevntu_suppressions.xml"/>
@@ -92,8 +95,6 @@
             <property name="checkReadObjectMethod" value="true"/>
             <property name="matchMethodsByArgCount" value="true"/>
         </module>
-        <!--commented till https://github.com/sevntu-checkstyle/sevntu.checkstyle/issues/410-->
-        <!--<module name="AvoidModifiersForTypes"/>-->
         <module name="ForbidAnnotation">
             <property name="annotationNames" value="Ignore, VisibleForTesting"/>
             <property name="annotationTargets" value="METHOD_DEF"/>
@@ -120,7 +121,10 @@
         <module name="ForbidCertainImports">
             <property name="packageNameRegexp" value=".+\.checkstyle\.api.*|.+\.checkstyle\.utils.*"/>
             <property name="forbiddenImportsRegexp" value=".+\.checks\..+"/>
-            <property name="forbiddenImportsExcludesRegexp" value=""/>
+            <!-- AccessModifier is in util package (should be moved to api package) to disallow
+            its usage by API clients till https://github.com/checkstyle/checkstyle/issues/3511-->
+            <property name="forbiddenImportsExcludesRegexp"
+                      value="^com.puppycrawl.tools.checkstyle.checks.naming.AccessModifier$"/>
         </module>
         <module name="LineLengthExtended">
             <property name="max" value="100"/>
@@ -174,5 +178,17 @@
         <module name="SingleBreakOrContinueCheck"/>
         <module name="NumericLiteralNeedsUnderscoreCheck"/>
         <module name="UniformEnumConstantNameCheck" />
+        <module name="ForbidAnnotationElementValueCheck" />
+        <module name="HideUtilityClassConstructorCheck" />
+        <module name="AvoidModifiersForTypesCheck">
+          <property name="forbiddenClassesRegexpProtected" value="Logger"/>
+          <property name="forbiddenClassesRegexpPublic" value="Logger"/>
+          <property name="forbiddenClassesRegexpPackagePrivate" value="Logger"/>
+        </module>
+        <module name="ConstructorWithoutParamsCheck">
+          <property name="classNameFormat" value=".*Exception$"/>
+          <property name="ignoredClassNameFormat" value="UnsupportedOperationException"/>
+        </module>
+        <module name="ReturnCountExtendedCheck" />
     </module>
 </module>

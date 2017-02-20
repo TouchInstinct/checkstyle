@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2017 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -80,7 +80,8 @@ public final class DetailAST extends CommonASTWithHiddenTokens {
 
     @Override
     public void setFirstChild(AST ast) {
-        childCount = NOT_INITIALIZED;
+        clearBranchTokenTypes();
+        clearChildCountCache(this);
         super.setFirstChild(ast);
         if (ast != null) {
             ((DetailAST) ast).setParent(this);
@@ -89,6 +90,8 @@ public final class DetailAST extends CommonASTWithHiddenTokens {
 
     @Override
     public void setNextSibling(AST ast) {
+        clearBranchTokenTypes();
+        clearChildCountCache(parent);
         super.setNextSibling(ast);
         if (ast != null && parent != null) {
             ((DetailAST) ast).setParent(parent);
@@ -104,6 +107,8 @@ public final class DetailAST extends CommonASTWithHiddenTokens {
      *        DetailAST object.
      */
     public void addPreviousSibling(DetailAST ast) {
+        clearBranchTokenTypes();
+        clearChildCountCache(parent);
         if (ast != null) {
             ast.setParent(parent);
             final DetailAST previousSiblingNode = previousSibling;
@@ -127,6 +132,8 @@ public final class DetailAST extends CommonASTWithHiddenTokens {
      *        DetailAST object.
      */
     public void addNextSibling(DetailAST ast) {
+        clearBranchTokenTypes();
+        clearChildCountCache(parent);
         if (ast != null) {
             ast.setParent(parent);
             final DetailAST nextSibling = getNextSibling();
@@ -143,6 +150,8 @@ public final class DetailAST extends CommonASTWithHiddenTokens {
 
     @Override
     public void addChild(AST ast) {
+        clearBranchTokenTypes();
+        clearChildCountCache(this);
         super.addChild(ast);
         if (ast != null) {
             ((DetailAST) ast).setParent(this);
@@ -189,6 +198,7 @@ public final class DetailAST extends CommonASTWithHiddenTokens {
      * @param parent the parent token
      */
     private void setParent(DetailAST parent) {
+        clearBranchTokenTypes();
         this.parent = parent;
         final DetailAST nextSibling = getNextSibling();
         if (nextSibling != null) {
@@ -395,4 +405,25 @@ public final class DetailAST extends CommonASTWithHiddenTokens {
         return (DetailAST) super.getFirstChild();
     }
 
+    /**
+     * Clears the child count for the ast instance.
+     * @param ast The ast to clear.
+     */
+    private static void clearChildCountCache(DetailAST ast) {
+        if (ast != null) {
+            ast.childCount = NOT_INITIALIZED;
+        }
+    }
+
+    /**
+     * Clears branchTokenTypes cache for all parents of the current DetailAST instance, and the
+     * child count for the current DetailAST instance.
+     */
+    private void clearBranchTokenTypes() {
+        DetailAST prevParent = getParent();
+        while (prevParent != null) {
+            prevParent.branchTokenTypes = null;
+            prevParent = prevParent.getParent();
+        }
+    }
 }

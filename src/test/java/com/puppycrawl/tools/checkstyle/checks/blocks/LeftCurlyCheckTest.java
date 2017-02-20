@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2017 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -24,6 +24,8 @@ import static com.puppycrawl.tools.checkstyle.checks.blocks.LeftCurlyCheck.MSG_K
 import static com.puppycrawl.tools.checkstyle.checks.blocks.LeftCurlyCheck.MSG_KEY_LINE_PREVIOUS;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.io.IOException;
@@ -142,7 +144,7 @@ public class LeftCurlyCheckTest extends BaseCheckTestSupport {
     }
 
     @Test
-    public void testNL2() throws Exception {
+    public void testNewline2() throws Exception {
         checkConfig.addAttribute("option", LeftCurlyOption.NL.toString());
         final String[] expected = {
             "14:39: " + getCheckMessage(MSG_KEY_LINE_NEW, "{", 39),
@@ -191,7 +193,7 @@ public class LeftCurlyCheckTest extends BaseCheckTestSupport {
     }
 
     @Test
-    public void testNL3() throws Exception {
+    public void testNewline3() throws Exception {
         checkConfig.addAttribute("option", LeftCurlyOption.NL.toString());
         final String[] expected = {
             "26:33: " + getCheckMessage(MSG_KEY_LINE_NEW, "{", 33),
@@ -361,11 +363,20 @@ public class LeftCurlyCheckTest extends BaseCheckTestSupport {
         verify(checkConfig, getPath("InputScopeInnerInterfaces2.java"), expected);
     }
 
-    @Test(expected = CheckstyleException.class)
+    @Test
     public void testInvalidOption() throws Exception {
         checkConfig.addAttribute("option", "invalid_option");
-        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
 
-        verify(checkConfig, getPath("InputScopeInnerInterfaces.java"), expected);
+        try {
+            final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+
+            verify(checkConfig, getPath("InputScopeInnerInterfaces.java"), expected);
+            fail("exception expected");
+        }
+        catch (CheckstyleException ex) {
+            assertTrue(ex.getMessage().startsWith(
+                    "cannot initialize module com.puppycrawl.tools.checkstyle.TreeWalker - "
+                            + "Cannot set property 'option' to 'invalid_option' in module"));
+        }
     }
 }

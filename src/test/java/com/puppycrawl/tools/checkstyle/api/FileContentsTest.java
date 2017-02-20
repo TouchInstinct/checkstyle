@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2017 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -38,20 +38,29 @@ public class FileContentsTest {
     }
 
     @Test
-    public void testCppCommentNotIntersect() {
+    @SuppressWarnings("deprecation")
+    public void testDeprecatedAbbreviatedMethod() {
+        // just to make UT coverage 100%
+        final FileContents o = new FileContents("filename", "1", "2");
+        o.getCppComments();
+        o.getCComments();
+    }
+
+    @Test
+    public void testSinglelineCommentNotIntersect() {
         // just to make UT coverage 100%
         final FileContents o = new FileContents(
                 FileText.fromLines(new File("filename"), Collections.singletonList("  //  ")));
-        o.reportCppComment(1, 2);
+        o.reportSingleLineComment(1, 2);
         assertFalse(o.hasIntersectionWithComment(1, 0, 1, 1));
     }
 
     @Test
-    public void testCppCommentIntersect() {
+    public void testSinglelineCommentIntersect() {
         // just to make UT coverage 100%
         final FileContents o = new FileContents(
                 FileText.fromLines(new File("filename"), Collections.singletonList("  //   ")));
-        o.reportCppComment(1, 2);
+        o.reportSingleLineComment(1, 2);
         assertTrue(o.hasIntersectionWithComment(1, 5, 1, 6));
 
     }

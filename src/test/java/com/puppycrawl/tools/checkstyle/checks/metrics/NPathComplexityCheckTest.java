@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2017 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -28,13 +28,13 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import antlr.CommonHiddenStreamToken;
-
 import com.puppycrawl.tools.checkstyle.BaseCheckTestSupport;
 import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
 import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 
+// -@cs[AbbreviationAsWordInName] Can't change check name
 public class NPathComplexityCheckTest extends BaseCheckTestSupport {
     @Override
     protected String getPath(String filename) throws IOException {
@@ -121,8 +121,18 @@ public class NPathComplexityCheckTest extends BaseCheckTestSupport {
         final int[] expected = {
             TokenTypes.CTOR_DEF,
             TokenTypes.METHOD_DEF,
-            TokenTypes.INSTANCE_INIT,
             TokenTypes.STATIC_INIT,
+            TokenTypes.INSTANCE_INIT,
+            TokenTypes.LITERAL_WHILE,
+            TokenTypes.LITERAL_DO,
+            TokenTypes.LITERAL_FOR,
+            TokenTypes.LITERAL_IF,
+            TokenTypes.LITERAL_ELSE,
+            TokenTypes.LITERAL_SWITCH,
+            TokenTypes.LITERAL_CASE,
+            TokenTypes.LITERAL_TRY,
+            TokenTypes.LITERAL_CATCH,
+            TokenTypes.QUESTION,
         };
         Assert.assertNotNull(actual);
         Assert.assertArrayEquals(expected, actual);

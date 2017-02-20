@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2017 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -182,7 +182,7 @@ public class MethodCallHandler extends AbstractExpressionHandler {
 
             final DetailAST lparen = getMainAst();
             final DetailAST rparen = getMainAst().findFirstToken(TokenTypes.RPAREN);
-            checkLParen(lparen);
+            checkLeftParen(lparen);
 
             if (rparen.getLineNo() != lparen.getLineNo()) {
                 checkExpressionSubtree(
@@ -190,7 +190,7 @@ public class MethodCallHandler extends AbstractExpressionHandler {
                     new IndentLevel(getIndent(), getBasicOffset()),
                     false, true);
 
-                checkRParen(lparen, rparen);
+                checkRightParen(lparen, rparen);
                 checkWrappingIndentation(getMainAst(), getMethodCallLastNode(getMainAst()));
             }
         }

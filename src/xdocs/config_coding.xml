@@ -121,6 +121,10 @@ String b = (a==null || a.length&lt;1) ? null : a.substring(1);
       <subsection name="Example of Usage">
         <ul>
           <li>
+            <a href="https://github.com/search?q=path%3Asrc%2Fmain%2Fresources+filename%3Asun_checks.xml+repo%3Acheckstyle%2Fcheckstyle+AvoidInlineConditionals">
+            Sun Style</a>
+          </li>
+          <li>
             <a href="https://github.com/search?q=path%3Aconfig+filename%3Acheckstyle_checks.xml+repo%3Acheckstyle%2Fcheckstyle+AvoidInlineConditionals">
             Checkstyle Style</a>
           </li>
@@ -844,8 +848,8 @@ case 5:
               Regular expression to match the relief comment that suppresses
               the warning about a fall through.
             </td>
-            <td><a href="property_types.html#regexp">regular expression</a></td>
-            <td><code>fallthru|falls? ?through</code></td>
+            <td><a href="property_types.html#regexp">Regular Expression</a></td>
+            <td><code>"fallthru|falls? ?through"</code></td>
           </tr>
         </table>
       </subsection>
@@ -1063,8 +1067,8 @@ case 5:
           <tr>
             <td>ignoreFormat</td>
             <td>pattern for names of variables and parameters to ignore</td>
-            <td><a href="property_types.html#regexp">regular expression</a></td>
-            <td>(not applied)</td>
+            <td><a href="property_types.html#regexp">Regular Expression</a></td>
+            <td><code>null</code></td>
           </tr>
 
           <tr>
@@ -1650,7 +1654,8 @@ class SomeClass
     <section name="IllegalTokenText">
       <subsection name="Description">
         <p>
-          Checks for illegal token text.
+          Checks specified tokens text for matching an illegal pattern from
+          <code>format</code> property. By default no tokens are specified.
         </p>
       </subsection>
 
@@ -1665,8 +1670,8 @@ class SomeClass
           <tr>
             <td>format</td>
             <td>illegal pattern</td>
-            <td><a href="property_types.html#regexp">regular expression</a></td>
-            <td><code>^$</code> (empty)</td>
+            <td><a href="property_types.html#regexp">Regular Expression</a></td>
+            <td><code>&quot;$^&quot; (empty)</code></td>
           </tr>
           <tr>
             <td>ignoreCase</td>
@@ -1684,8 +1689,15 @@ class SomeClass
           <tr>
             <td>tokens</td>
             <td>tokens to check</td>
-            <td>subset of tokens <a
-            href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html">TokenTypes</a>.
+            <td>subset of tokens
+                <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#NUM_DOUBLE">NUM_DOUBLE</a>,
+                <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#NUM_FLOAT">NUM_FLOAT</a>,
+                <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#NUM_INT">NUM_INT</a>,
+                <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#NUM_LONG">NUM_LONG</a>,
+                <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#IDENT">IDENT</a>,
+                <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#COMMENT_CONTENT">COMMENT_CONTENT</a>,
+                <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#STRING_LITERAL">STRING_LITERAL</a>,
+                <a href="apidocs/com/puppycrawl/tools/checkstyle/api/TokenTypes.html#CHAR_LITERAL">CHAR_LITERAL</a>.
             </td>
             <td>empty</td>
           </tr>
@@ -1805,8 +1817,8 @@ class SomeClass
           <tr>
             <td>format</td>
             <td>Pattern for illegal class names.</td>
-            <td><a href="property_types.html#regexp">regular expression</a></td>
-            <td><code>^(.*[\\.])?Abstract.*$</code></td>
+            <td><a href="property_types.html#regexp">Regular Expression</a></td>
+            <td><code>"^(.*[.])?Abstract.*$"</code></td>
           </tr>
           <tr>
             <td>memberModifiers</td>
@@ -2458,8 +2470,8 @@ class MyClass {
             <td>
               Regular expression pattern for ignored strings (with quotation marks)
             </td>
-            <td><a href="property_types.html#regexp">regular expression</a></td>
-            <td><code>^""$</code> (ignore empty strings)</td>
+            <td><a href="property_types.html#regexp">Regular Expression</a></td>
+            <td><code>"^""$"</code></td>
           </tr>
           <tr>
             <td>ignoreOccurrenceContext</td>
@@ -3503,8 +3515,8 @@ public static class B {
           <tr>
             <td>format</td>
             <td>method names to ignore</td>
-            <td><a href="property_types.html#regexp">regular expression</a></td>
-            <td><code>^equals$</code> (empty)</td>
+            <td><a href="property_types.html#regexp">Regular Expression</a></td>
+            <td><code>"^equals$"</code></td>
           </tr>
           <tr>
             <td>tokens</td>
@@ -4095,7 +4107,7 @@ if (&quot;something&quot;.equals(x))
 
           <tr>
             <td>allowedDistance</td>
-            <td>A distance between declaration of variable and its first usage</td>
+            <td>A distance between declaration of variable and its first usage. Values should be greater than 0.</td>
             <td><a href="property_types.html#integer">Integer</a></td>
             <td>3</td>
           </tr>
@@ -4103,8 +4115,8 @@ if (&quot;something&quot;.equals(x))
           <tr>
             <td>ignoreVariablePattern</td>
             <td>pattern for ignoring the distance calculation</td>
-            <td><a href="property_types.html#regexp">regular expression</a></td>
-            <td>(not applied)</td>
+            <td><a href="property_types.html#regexp">Regular Expression</a></td>
+            <td><code>""</code></td>
           </tr>
 
           <tr>

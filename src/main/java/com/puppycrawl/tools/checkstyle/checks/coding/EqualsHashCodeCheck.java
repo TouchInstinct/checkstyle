@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2017 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -158,9 +158,9 @@ public class EqualsHashCodeCheck
     @Override
     public void finishTree(DetailAST rootAST) {
         objBlockWithEquals
-            .entrySet().stream().filter(detailASTDetailASTEntry ->
-                objBlockWithHashCode.remove(detailASTDetailASTEntry.getKey()) == null)
-            .forEach(detailASTDetailASTEntry -> {
+            .entrySet().stream().filter(detailASTDetailASTEntry -> {
+                return objBlockWithHashCode.remove(detailASTDetailASTEntry.getKey()) == null;
+            }).forEach(detailASTDetailASTEntry -> {
                 final DetailAST equalsAST = detailASTDetailASTEntry.getValue();
                 log(equalsAST.getLineNo(), equalsAST.getColumnNo(), MSG_KEY_HASHCODE);
             });

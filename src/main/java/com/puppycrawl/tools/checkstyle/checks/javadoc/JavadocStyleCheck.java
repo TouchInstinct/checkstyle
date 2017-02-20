@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2017 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -74,7 +74,7 @@ public class JavadocStyleCheck
         .collect(Collectors.toCollection(TreeSet::new)));
 
     /** HTML tags that are allowed in java docs.
-     * From http://www.w3schools.com/tags/default.asp
+     * From https://www.w3schools.com/tags/default.asp
      * The forms and structure tags are not allowed
      */
     private static final Set<String> ALLOWED_TAGS = Collections.unmodifiableSortedSet(Stream.of(
@@ -94,10 +94,7 @@ public class JavadocStyleCheck
     private Scope excludeScope;
 
     /** Format for matching the end of a sentence. */
-    private String endOfSentenceFormat = "([.?!][ \t\n\r\f<])|([.?!]$)";
-
-    /** Regular expression for matching the end of a sentence. */
-    private Pattern endOfSentencePattern;
+    private Pattern endOfSentenceFormat = Pattern.compile("([.?!][ \t\n\r\f<])|([.?!]$)");
 
     /**
      * Indicates if the first sentence should be checked for proper end of
@@ -236,7 +233,7 @@ public class JavadocStyleCheck
         final String commentText = getCommentText(comment.getText());
 
         if (!commentText.isEmpty()
-            && !getEndOfSentencePattern().matcher(commentText).find()
+            && !endOfSentenceFormat.matcher(commentText).find()
             && !(commentText.startsWith("{@inheritDoc}")
             && JavadocTagInfo.INHERIT_DOC.isValidOn(ast))) {
             log(comment.getStartLineNo(), MSG_NO_PERIOD);
@@ -492,38 +489,26 @@ public class JavadocStyleCheck
 
     /**
      * Sets the scope to check.
-     * @param from string to get the scope from
+     * @param scope a scope.
      */
-    public void setScope(String from) {
-        scope = Scope.getInstance(from);
+    public void setScope(Scope scope) {
+        this.scope = scope;
     }
 
     /**
      * Set the excludeScope.
-     * @param excludeScope a {@code String} value
+     * @param excludeScope a scope.
      */
-    public void setExcludeScope(String excludeScope) {
-        this.excludeScope = Scope.getInstance(excludeScope);
+    public void setExcludeScope(Scope excludeScope) {
+        this.excludeScope = excludeScope;
     }
 
     /**
      * Set the format for matching the end of a sentence.
-     * @param format format for matching the end of a sentence.
+     * @param pattern a pattern.
      */
-    public void setEndOfSentenceFormat(String format) {
-        endOfSentenceFormat = format;
-    }
-
-    /**
-     * Returns a regular expression for matching the end of a sentence.
-     *
-     * @return a regular expression for matching the end of a sentence.
-     */
-    private Pattern getEndOfSentencePattern() {
-        if (endOfSentencePattern == null) {
-            endOfSentencePattern = Pattern.compile(endOfSentenceFormat);
-        }
-        return endOfSentencePattern;
+    public void setEndOfSentenceFormat(Pattern pattern) {
+        endOfSentenceFormat = pattern;
     }
 
     /**

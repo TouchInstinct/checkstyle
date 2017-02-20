@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2017 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -25,7 +25,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
@@ -41,6 +40,7 @@ import java.util.Set;
 
 import javax.xml.bind.DatatypeConverter;
 
+import com.google.common.io.ByteStreams;
 import com.google.common.io.Closeables;
 import com.google.common.io.Flushables;
 import com.puppycrawl.tools.checkstyle.api.CheckstyleException;
@@ -68,10 +68,7 @@ final class PropertyCacheFile {
      * checked the key is chosen in such a way that it cannot be a
      * valid file name.
      */
-    private static final String CONFIG_HASH_KEY = "configuration*?";
-
-    /** Size of buffer which is used to read external configuration resources. */
-    private static final int BUFFER_SIZE = 1024;
+    public static final String CONFIG_HASH_KEY = "configuration*?";
 
     /** The details on files. **/
     private final Properties details = new Properties();
@@ -81,6 +78,9 @@ final class PropertyCacheFile {
 
     /** File name of cache. **/
     private final String fileName;
+
+    /** Generated configuration hash. **/
+    private String configHash;
 
     /**
      * Creates a new {@code PropertyCacheFile} instance.
@@ -106,17 +106,16 @@ final class PropertyCacheFile {
     public void load() throws IOException {
         // get the current config so if the file isn't found
         // the first time the hash will be added to output file
-        final String currentConfigHash = getHashCodeBasedOnObjectContent(config);
+        configHash = getHashCodeBasedOnObjectContent(config);
         if (new File(fileName).exists()) {
             FileInputStream inStream = null;
             try {
                 inStream = new FileInputStream(fileName);
                 details.load(inStream);
                 final String cachedConfigHash = details.getProperty(CONFIG_HASH_KEY);
-                if (!currentConfigHash.equals(cachedConfigHash)) {
+                if (!configHash.equals(cachedConfigHash)) {
                     // Detected configuration change - clear cache
-                    details.clear();
-                    details.setProperty(CONFIG_HASH_KEY, currentConfigHash);
+                    reset();
                 }
             }
             finally {
@@ -125,7 +124,7 @@ final class PropertyCacheFile {
         }
         else {
             // put the hash in the file if the file is going to be created
-            details.setProperty(CONFIG_HASH_KEY, currentConfigHash);
+            reset();
         }
     }
 
@@ -149,10 +148,11 @@ final class PropertyCacheFile {
     }
 
     /**
-     * Clears the cache.
+     * Resets the cache to be empty except for the configuration hash.
      */
-    public void clear() {
+    public void reset() {
         details.clear();
+        details.setProperty(CONFIG_HASH_KEY, configHash);
     }
 
     /**
@@ -186,6 +186,23 @@ final class PropertyCacheFile {
      */
     public void put(String checkedFileName, long timestamp) {
         details.setProperty(checkedFileName, Long.toString(timestamp));
+    }
+
+    /**
+     * Retrieves the hash of a specific file.
+     * @param name The name of the file to retrieve.
+     * @return The has of the file or {@code null}.
+     */
+    public String get(String name) {
+        return details.getProperty(name);
+    }
+
+    /**
+     * Removed a specific file from the cache.
+     * @param checkedFileName The name of the file to remove.
+     */
+    public void remove(String checkedFileName) {
+        details.remove(checkedFileName);
     }
 
     /**
@@ -230,7 +247,7 @@ final class PropertyCacheFile {
     public void putExternalResources(Set<String> locations) {
         final Set<ExternalResource> resources = loadExternalResources(locations);
         if (areExternalResourcesChanged(resources)) {
-            details.clear();
+            reset();
         }
         fillCacheWithExternalResources(resources);
     }
@@ -269,27 +286,16 @@ final class PropertyCacheFile {
      * @throws CheckstyleException if error while loading occurs.
      */
     private static byte[] loadExternalResource(String location) throws CheckstyleException {
-        byte[] content = null;
+        final byte[] content;
         final URI uri = CommonUtils.getUriByFilename(location);
-        InputStream resourceReader = null;
+
         try {
-            resourceReader = new BufferedInputStream(uri.toURL().openStream());
-            final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-            final byte[] data = new byte[BUFFER_SIZE];
-            int bytesRead = resourceReader.read(data, 0, data.length);
-            while (bytesRead != -1) {
-                outputStream.write(data, 0, bytesRead);
-                bytesRead = resourceReader.read(data, 0, data.length);
-            }
-            outputStream.flush();
-            content = outputStream.toByteArray();
+            content = ByteStreams.toByteArray(new BufferedInputStream(uri.toURL().openStream()));
         }
         catch (IOException ex) {
             throw new CheckstyleException("Unable to load external resource file " + location, ex);
         }
-        finally {
-            Closeables.closeQuietly(resourceReader);
-        }
+
         return content;
     }
 

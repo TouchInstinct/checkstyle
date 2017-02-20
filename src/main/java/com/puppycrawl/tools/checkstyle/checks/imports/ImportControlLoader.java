@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2017 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -50,6 +50,10 @@ final class ImportControlLoader extends AbstractLoader {
     private static final String DTD_PUBLIC_ID_1_1 =
         "-//Puppy Crawl//DTD Import Control 1.1//EN";
 
+    /** The public ID for the configuration dtd. */
+    private static final String DTD_PUBLIC_ID_1_2 =
+        "-//Puppy Crawl//DTD Import Control 1.2//EN";
+
     /** The resource for the configuration dtd. */
     private static final String DTD_RESOURCE_NAME_1_0 =
         "com/puppycrawl/tools/checkstyle/checks/imports/import_control_1_0.dtd";
@@ -57,6 +61,10 @@ final class ImportControlLoader extends AbstractLoader {
     /** The resource for the configuration dtd. */
     private static final String DTD_RESOURCE_NAME_1_1 =
         "com/puppycrawl/tools/checkstyle/checks/imports/import_control_1_1.dtd";
+
+    /** The resource for the configuration dtd. */
+    private static final String DTD_RESOURCE_NAME_1_2 =
+        "com/puppycrawl/tools/checkstyle/checks/imports/import_control_1_2.dtd";
 
     /** The map to lookup the resource name by the id. */
     private static final Map<String, String> DTD_RESOURCE_BY_ID = new HashMap<>();
@@ -70,12 +78,13 @@ final class ImportControlLoader extends AbstractLoader {
     /** Qualified name for element 'allow'. */
     private static final String ALLOW_ELEMENT_NAME = "allow";
 
-    /** Used to hold the {@link PkgControl} objects. */
-    private final Deque<PkgControl> stack = new ArrayDeque<>();
+    /** Used to hold the {@link ImportControl} objects. */
+    private final Deque<ImportControl> stack = new ArrayDeque<>();
 
     static {
         DTD_RESOURCE_BY_ID.put(DTD_PUBLIC_ID_1_0, DTD_RESOURCE_NAME_1_0);
         DTD_RESOURCE_BY_ID.put(DTD_PUBLIC_ID_1_1, DTD_RESOURCE_NAME_1_1);
+        DTD_RESOURCE_BY_ID.put(DTD_PUBLIC_ID_1_2, DTD_RESOURCE_NAME_1_2);
     }
 
     /**
@@ -96,11 +105,13 @@ final class ImportControlLoader extends AbstractLoader {
             throws SAXException {
         if ("import-control".equals(qName)) {
             final String pkg = safeGet(attributes, PKG_ATTRIBUTE_NAME);
-            stack.push(new PkgControl(pkg));
+            final boolean regex = containsRegexAttribute(attributes);
+            stack.push(new ImportControl(pkg, regex));
         }
         else if (SUBPACKAGE_ELEMENT_NAME.equals(qName)) {
             final String name = safeGet(attributes, "name");
-            stack.push(new PkgControl(stack.peek(), name));
+            final boolean regex = containsRegexAttribute(attributes);
+            stack.push(new ImportControl(stack.peek(), name, regex));
         }
         else if (ALLOW_ELEMENT_NAME.equals(qName) || "disallow".equals(qName)) {
             // Need to handle either "pkg" or "class" attribute.
@@ -109,23 +120,30 @@ final class ImportControlLoader extends AbstractLoader {
             final boolean isAllow = ALLOW_ELEMENT_NAME.equals(qName);
             final boolean isLocalOnly = attributes.getValue("local-only") != null;
             final String pkg = attributes.getValue(PKG_ATTRIBUTE_NAME);
-            final boolean regex = attributes.getValue("regex") != null;
-            final Guard guard;
+            final boolean regex = containsRegexAttribute(attributes);
+            final AbstractImportRule rule;
             if (pkg == null) {
                 // handle class names which can be normal class names or regular
                 // expressions
                 final String clazz = safeGet(attributes, "class");
-                guard = new Guard(isAllow, isLocalOnly, clazz, regex);
+                rule = new ClassImportRule(isAllow, isLocalOnly, clazz, regex);
             }
             else {
                 final boolean exactMatch =
                         attributes.getValue("exact-match") != null;
-                guard = new Guard(isAllow, isLocalOnly, pkg, exactMatch, regex);
+                rule = new PkgImportRule(isAllow, isLocalOnly, pkg, exactMatch, regex);
             }
-
-            final PkgControl pkgControl = stack.peek();
-            pkgControl.addGuard(guard);
+            stack.peek().addImportRule(rule);
         }
+    }
+
+    /**
+     * Check if the given attributes contain the regex attribute.
+     * @param attributes the attributes.
+     * @return if the regex attribute is contained.
+     */
+    private static boolean containsRegexAttribute(final Attributes attributes) {
+        return attributes.getValue("regex") != null;
     }
 
     @Override
@@ -139,10 +157,10 @@ final class ImportControlLoader extends AbstractLoader {
     /**
      * Loads the import control file from a file.
      * @param uri the uri of the file to load.
-     * @return the root {@link PkgControl} object.
+     * @return the root {@link ImportControl} object.
      * @throws CheckstyleException if an error occurs.
      */
-    public static PkgControl load(final URI uri) throws CheckstyleException {
+    public static ImportControl load(final URI uri) throws CheckstyleException {
         final InputStream inputStream;
         try {
             inputStream = uri.toURL().openStream();
@@ -161,10 +179,10 @@ final class ImportControlLoader extends AbstractLoader {
      * Loads the import control file from a {@link InputSource}.
      * @param source the source to load from.
      * @param uri uri of the source being loaded.
-     * @return the root {@link PkgControl} object.
+     * @return the root {@link ImportControl} object.
      * @throws CheckstyleException if an error occurs.
      */
-    private static PkgControl load(final InputSource source,
+    private static ImportControl load(final InputSource source,
         final URI uri) throws CheckstyleException {
         try {
             final ImportControlLoader loader = new ImportControlLoader();
@@ -181,9 +199,9 @@ final class ImportControlLoader extends AbstractLoader {
     }
 
     /**
-     * @return the root {@link PkgControl} object loaded.
+     * @return the root {@link ImportControl} object loaded.
      */
-    private PkgControl getRoot() {
+    private ImportControl getRoot() {
         return stack.peek();
     }
 

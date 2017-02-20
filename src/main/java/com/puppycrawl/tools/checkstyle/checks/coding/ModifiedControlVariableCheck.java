@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2017 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -377,9 +377,9 @@ public final class ModifiedControlVariableCheck extends AbstractCheck {
         final DetailAST forUpdateListAST = forIteratorAST.findFirstToken(TokenTypes.ELIST);
 
         findChildrenOfExpressionType(forUpdateListAST).stream()
-            .filter(iteratingExpressionAST ->
-                MUTATION_OPERATIONS.contains(iteratingExpressionAST.getType()))
-            .forEach(iteratingExpressionAST -> {
+            .filter(iteratingExpressionAST -> {
+                return MUTATION_OPERATIONS.contains(iteratingExpressionAST.getType());
+            }).forEach(iteratingExpressionAST -> {
                 final DetailAST oneVariableOperatorChild = iteratingExpressionAST.getFirstChild();
                 if (oneVariableOperatorChild.getType() == TokenTypes.IDENT) {
                     iteratorVariables.add(oneVariableOperatorChild.getText());

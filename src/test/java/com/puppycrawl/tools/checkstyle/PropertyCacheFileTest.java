@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2017 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -21,13 +21,15 @@ package com.puppycrawl.tools.checkstyle;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.mockito.Matchers.any;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 
+import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
@@ -36,7 +38,9 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.HashSet;
 import java.util.Locale;
+import java.util.Set;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -45,10 +49,11 @@ import org.junit.runner.RunWith;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+import com.google.common.io.ByteStreams;
 import com.puppycrawl.tools.checkstyle.api.Configuration;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({ PropertyCacheFile.class, PropertyCacheFileTest.class })
+@PrepareForTest({ PropertyCacheFile.class, PropertyCacheFileTest.class, ByteStreams.class })
 public class PropertyCacheFileTest {
 
     @Rule
@@ -83,17 +88,89 @@ public class PropertyCacheFileTest {
     }
 
     @Test
+    public void testConfigHashOnReset() throws IOException {
+        final Configuration config = new DefaultConfiguration("myName");
+        final String filePath = temporaryFolder.newFile().getPath();
+        final PropertyCacheFile cache = new PropertyCacheFile(config, filePath);
+
+        cache.load();
+
+        final String hash = cache.get(PropertyCacheFile.CONFIG_HASH_KEY);
+        assertNotNull(hash);
+
+        cache.reset();
+
+        assertEquals(hash, cache.get(PropertyCacheFile.CONFIG_HASH_KEY));
+    }
+
+    @Test
+    public void testConfigHashRemainsOnResetExternalResources() throws IOException {
+        final Configuration config = new DefaultConfiguration("myName");
+        final String filePath = temporaryFolder.newFile().getPath();
+        final PropertyCacheFile cache = new PropertyCacheFile(config, filePath);
+
+        // create cache with one file
+        cache.load();
+        cache.put("myFile", 1);
+
+        final String hash = cache.get(PropertyCacheFile.CONFIG_HASH_KEY);
+        assertNotNull(hash);
+
+        // apply new external resource to clear cache
+        final Set<String> resources = new HashSet<>();
+        resources.add("dummy");
+        cache.putExternalResources(resources);
+
+        assertEquals(hash, cache.get(PropertyCacheFile.CONFIG_HASH_KEY));
+        assertFalse(cache.isInCache("myFile", 1));
+    }
+
+    /**
+     * This SuppressWarning("unchecked") required to suppress
+     * "Unchecked generics array creation for varargs parameter" during mock
+     * @throws IOException when smth wrong with file creation or cache.load
+     */
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testNonExistingResource() throws IOException {
+        final Configuration config = new DefaultConfiguration("myName");
+        final String filePath = temporaryFolder.newFile().getPath();
+        final PropertyCacheFile cache = new PropertyCacheFile(config, filePath);
+
+        // create cache with one file
+        cache.load();
+        final String myFile = "myFile";
+        cache.put(myFile, 1);
+
+        final String hash = cache.get(PropertyCacheFile.CONFIG_HASH_KEY);
+        assertNotNull(hash);
+
+        mockStatic(ByteStreams.class);
+
+        when(ByteStreams.toByteArray(any(BufferedInputStream.class)))
+                .thenThrow(IOException.class);
+
+        // apply new external resource to clear cache
+        final Set<String> resources = new HashSet<>();
+        final String resource = "/com/puppycrawl/tools/checkstyle/java.header";
+        resources.add(resource);
+        cache.putExternalResources(resources);
+
+        assertFalse(cache.isInCache(myFile, 1));
+        assertFalse(cache.isInCache(resource, 1));
+    }
+
+    @Test
     public void testCacheDirectoryDoesNotExistAndShouldBeCreated() throws IOException {
         final Configuration config = new DefaultConfiguration("myName");
         final String filePath = String.format(Locale.getDefault(), "%s%2$stemp%2$scache.temp",
             temporaryFolder.getRoot(), File.separator);
         final PropertyCacheFile cache = new PropertyCacheFile(config, filePath);
-        try {
-            cache.persist();
-        }
-        catch (FileNotFoundException ex) {
-            fail("Exception is not expected. Cache directory should be created successfully!");
-        }
+
+        // no exception expected, cache directory should be created
+        cache.persist();
+
+        assertTrue("cache exists in directory", new File(filePath).exists());
     }
 
     @Test
@@ -102,12 +179,8 @@ public class PropertyCacheFileTest {
         final String filePath = "temp.cache";
         final PropertyCacheFile cache = new PropertyCacheFile(config, filePath);
 
-        try {
-            cache.persist();
-        }
-        catch (FileNotFoundException ex) {
-            fail("Exception is not expected!");
-        }
+        // no exception expected
+        cache.persist();
 
         if (Files.exists(Paths.get(filePath))) {
             Files.delete(Paths.get(filePath));

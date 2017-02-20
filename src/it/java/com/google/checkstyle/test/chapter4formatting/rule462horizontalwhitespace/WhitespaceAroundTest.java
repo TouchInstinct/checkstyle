@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2017 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -64,6 +64,9 @@ public class WhitespaceAroundTest extends BaseCheckTestSupport {
             "118:20: " + getCheckMessage(checkConfig.getMessages(), msgFollowed, "/"),
             "147:15: " + getCheckMessage(checkConfig.getMessages(), msgFollowed, "assert"),
             "150:20: " + getCheckMessage(checkConfig.getMessages(), msgPreceded, ":"),
+            "249:14: " + getCheckMessage(checkConfig.getMessages(), msgPreceded, "->"),
+            "250:17: " + getCheckMessage(checkConfig.getMessages(), msgFollowed, "->"),
+            "250:17: " + getCheckMessage(checkConfig.getMessages(), msgPreceded, "{"),
         };
 
         final String filePath = getPath("InputWhitespaceAroundBasic.java");

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2017 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -25,7 +25,6 @@ import java.io.IOException;
 import org.junit.Test;
 
 import com.google.checkstyle.test.base.BaseCheckTestSupport;
-import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
 import com.puppycrawl.tools.checkstyle.api.Configuration;
 import com.puppycrawl.tools.checkstyle.checks.javadoc.SingleLineJavadocCheck;
 
@@ -52,24 +51,8 @@ public class SingleLineJavadocTest extends BaseCheckTestSupport {
             "41: " + msg,
         };
 
-        final DefaultConfiguration checkConfig = createCheckConfig(SingleLineJavadocCheck.class);
-        checkConfig.addAttribute("ignoreInlineTags", "false");
+        final Configuration checkConfig = getCheckConfig("SingleLineJavadoc");
         final String filePath = getPath("InputSingleLineJavadocCheck.java");
-
-        final Integer[] warnList = getLinesWithWarn(filePath);
-        verify(checkConfig, filePath, expected, warnList);
-    }
-
-    @Test(expected = Exception.class)
-    public void customInlineTagTest() throws Exception {
-        final String msg = getCheckMessage(SingleLineJavadocCheck.class, "singleline.javadoc");
-
-        final Configuration checkConfig = getCheckConfig("SingleLineJavadocCheck");
-        final String filePath = getPath("InputSingleLineJavadocCheckError.java");
-
-        final String[] expected = {
-            "4: " + msg,
-        };
 
         final Integer[] warnList = getLinesWithWarn(filePath);
         verify(checkConfig, filePath, expected, warnList);

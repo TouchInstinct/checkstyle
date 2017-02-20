@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2017 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -19,16 +19,22 @@
 
 package com.puppycrawl.tools.checkstyle.checks.imports;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.MalformedURLException;
 import java.net.URI;
 
 import org.junit.Test;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
 
 import com.puppycrawl.tools.checkstyle.api.CheckstyleException;
@@ -40,30 +46,34 @@ public class ImportControlLoaderTest {
 
     @Test
     public void testLoad() throws CheckstyleException {
-        final PkgControl root =
+        final ImportControl root =
                 ImportControlLoader.load(new File(getPath("import-control_complete.xml")).toURI());
         assertNotNull(root);
     }
 
-    @Test(expected = CheckstyleException.class)
+    @Test
     public void testWrongFormatUri() throws Exception {
-        final PkgControl root =
-                ImportControlLoader.load(new URI("aaa://"
-                    + getPath("import-control_complete.xml")));
-        assertNotNull(root);
+        try {
+            ImportControlLoader.load(new URI("aaa://" + getPath("import-control_complete.xml")));
+            fail("exception expected");
+        }
+        catch (CheckstyleException ex) {
+            assertSame(MalformedURLException.class, ex.getCause().getClass());
+            assertEquals("unknown protocol: aaa", ex.getCause().getMessage());
+        }
     }
 
     @Test
     public void testExtraElementInConfig() throws Exception {
-        final PkgControl root =
+        final ImportControl root =
                 ImportControlLoader.load(
                     new File(getPath("import-control_WithNewElement.xml")).toURI());
         assertNotNull(root);
     }
 
-    @Test(expected = InvocationTargetException.class)
+    @Test
     // UT uses Reflection to avoid removing null-validation from static method
-    public void testSafeGetThrowsException() throws InvocationTargetException {
+    public void testSafeGetThrowsException() throws Exception {
         final AttributesImpl attr = new AttributesImpl() {
             @Override
             public String getValue(int index) {
@@ -76,18 +86,19 @@ public class ImportControlLoaderTest {
                 Attributes.class, String.class);
             privateMethod.setAccessible(true);
             privateMethod.invoke(null, attr, "you_cannot_find_me");
+            fail("exception expected");
         }
-        catch (IllegalAccessException | IllegalArgumentException
-                | NoSuchMethodException | SecurityException ex) {
-            throw new IllegalStateException(ex);
+        catch (InvocationTargetException ex) {
+            assertSame(SAXException.class, ex.getCause().getClass());
+            assertEquals("missing attribute you_cannot_find_me", ex.getCause().getMessage());
         }
     }
 
-    @Test(expected = InvocationTargetException.class)
+    @Test
     // UT uses Reflection to cover IOException from 'loader.parseInputSource(source);'
     // because this is possible situation (though highly unlikely), which depends on hardware
     // and is difficult to emulate
-    public void testLoadThrowsException() throws InvocationTargetException {
+    public void testLoadThrowsException() throws Exception {
         final InputSource source = new InputSource();
         try {
             final Class<?> clazz = ImportControlLoader.class;
@@ -96,10 +107,11 @@ public class ImportControlLoaderTest {
             privateMethod.setAccessible(true);
             privateMethod.invoke(null, source,
                     new File(getPath("import-control_complete.xml")).toURI());
+            fail("exception expected");
         }
-        catch (IllegalAccessException | IllegalArgumentException
-                | NoSuchMethodException | SecurityException ex) {
-            throw new IllegalStateException(ex);
+        catch (InvocationTargetException ex) {
+            assertSame(CheckstyleException.class, ex.getCause().getClass());
+            assertTrue(ex.getCause().getMessage().startsWith("unable to read"));
         }
     }
 }

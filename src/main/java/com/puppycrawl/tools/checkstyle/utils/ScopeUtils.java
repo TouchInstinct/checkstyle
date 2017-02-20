@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2017 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -20,7 +20,6 @@
 package com.puppycrawl.tools.checkstyle.utils;
 
 import antlr.collections.AST;
-
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.Scope;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
@@ -193,7 +192,7 @@ public final class ScopeUtils {
 
     /**
      * Returns whether the scope of a node is restricted to a code block.
-     * A code block is a method or constructor body, or a initializer block.
+     * A code block is a method or constructor body, an initializer block, or lambda body.
      *
      * @param node the node to check
      * @return a {@code boolean} value
@@ -207,9 +206,10 @@ public final class ScopeUtils {
              token = token.getParent()) {
             final int type = token.getType();
             if (type == TokenTypes.METHOD_DEF
-                || type == TokenTypes.CTOR_DEF
-                || type == TokenTypes.INSTANCE_INIT
-                || type == TokenTypes.STATIC_INIT) {
+                    || type == TokenTypes.CTOR_DEF
+                    || type == TokenTypes.INSTANCE_INIT
+                    || type == TokenTypes.STATIC_INIT
+                    || type == TokenTypes.LAMBDA) {
                 returnValue = true;
                 break;
             }

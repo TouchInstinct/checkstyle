@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2017 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -37,14 +37,28 @@ public class SeparatorWrapTest extends BaseCheckTestSupport {
     }
 
     @Test
-    public void separatorWrapTest() throws Exception {
+    public void separatorWrapDotTest() throws Exception {
 
         final String[] expected = {
             "28:30: " + getCheckMessage(SeparatorWrapCheck.class, "line.new", "."),
         };
 
-        final Configuration checkConfig = getCheckConfig("SeparatorWrap");
+        final Configuration checkConfig = getCheckConfig("SeparatorWrap", "SeparatorWrapDot");
         final String filePath = getPath("InputSeparatorWrap.java");
+
+        final Integer[] warnList = getLinesWithWarn(filePath);
+        verify(checkConfig, filePath, expected, warnList);
+    }
+
+    @Test
+    public void separatorWrapCommaTest() throws Exception {
+
+        final String[] expected = {
+            "31:17: " + getCheckMessage(SeparatorWrapCheck.class, "line.previous", ","),
+        };
+
+        final Configuration checkConfig = getCheckConfig("SeparatorWrap", "SeparatorWrapComma");
+        final String filePath = getPath("InputSeparatorWrapComma.java");
 
         final Integer[] warnList = getLinesWithWarn(filePath);
         verify(checkConfig, filePath, expected, warnList);

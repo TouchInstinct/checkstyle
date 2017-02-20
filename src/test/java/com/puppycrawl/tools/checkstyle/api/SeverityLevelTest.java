@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2017 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -21,6 +21,7 @@ package com.puppycrawl.tools.checkstyle.api;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 
 import java.util.Locale;
 
@@ -42,15 +43,22 @@ public class SeverityLevelTest {
         assertEquals(SeverityLevel.INFO, level);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testMisc() {
         final SeverityLevel o = SeverityLevel.getInstance("info");
         assertNotNull(o);
         assertEquals("info", o.toString());
         assertEquals("info", o.getName());
 
-        // will fail
-        SeverityLevel.getInstance("unknown");
+        try {
+            SeverityLevel.getInstance("unknown");
+            fail("exception expected");
+        }
+        catch (IllegalArgumentException ex) {
+            assertEquals(
+                    "No enum constant com.puppycrawl.tools.checkstyle.api.SeverityLevel.UNKNOWN",
+                    ex.getMessage());
+        }
     }
 
     @Test

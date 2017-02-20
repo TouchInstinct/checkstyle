@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2017 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -20,8 +20,11 @@
 package com.puppycrawl.tools.checkstyle.checks.imports;
 
 import static com.puppycrawl.tools.checkstyle.checks.imports.ImportOrderCheck.MSG_ORDERING;
+import static com.puppycrawl.tools.checkstyle.checks.imports.ImportOrderCheck.MSG_SEPARATED_IN_GROUP;
 import static com.puppycrawl.tools.checkstyle.checks.imports.ImportOrderCheck.MSG_SEPARATION;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.io.IOException;
@@ -131,14 +134,23 @@ public class ImportOrderCheckTest extends BaseCheckTestSupport {
         verify(checkConfig, getPath("InputImportOrderCaseInsensitive.java"), expected);
     }
 
-    @Test(expected = CheckstyleException.class)
+    @Test
     public void testInvalidOption() throws Exception {
         final DefaultConfiguration checkConfig =
             createCheckConfig(ImportOrderCheck.class);
         checkConfig.addAttribute("option", "invalid_option");
-        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
 
-        verify(checkConfig, getPath("InputImportOrder_Top.java"), expected);
+        try {
+            final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+
+            verify(checkConfig, getPath("InputImportOrder_Top.java"), expected);
+            fail("exception expected");
+        }
+        catch (CheckstyleException ex) {
+            assertTrue(ex.getMessage().startsWith(
+                    "cannot initialize module com.puppycrawl.tools.checkstyle.TreeWalker - "
+                            + "Cannot set property 'option' to 'invalid_option' in module"));
+        }
     }
 
     @Test
@@ -384,13 +396,22 @@ public class ImportOrderCheckTest extends BaseCheckTestSupport {
             expected);
     }
 
-    @Test(expected = CheckstyleException.class)
+    @Test
     public void testGroupWithSlashes() throws Exception {
         final DefaultConfiguration checkConfig = createCheckConfig(ImportOrderCheck.class);
         checkConfig.addAttribute("groups", "/^javax");
-        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
 
-        verify(checkConfig, getPath("InputImportOrder.java"), expected);
+        try {
+            final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+
+            verify(checkConfig, getPath("InputImportOrder.java"), expected);
+            fail("exception expected");
+        }
+        catch (CheckstyleException ex) {
+            assertTrue(ex.getMessage().startsWith(
+                    "cannot initialize module com.puppycrawl.tools.checkstyle.TreeWalker - "
+                            + "Cannot set property 'groups' to '/^javax' in module"));
+        }
     }
 
     @Test
@@ -413,6 +434,7 @@ public class ImportOrderCheckTest extends BaseCheckTestSupport {
             expected);
     }
 
+    // -@cs[ForbidAnnotationElementValue] Will examine turkish failure
     @Test(expected = IllegalStateException.class)
     public void testVisitTokenSwitchReflection() {
         // Create mock ast
@@ -529,5 +551,19 @@ public class ImportOrderCheckTest extends BaseCheckTestSupport {
                 "io.netty.handler.codec.http.HttpHeaders.Names.DATE"),
             };
         verify(checkConfig, getNonCompilablePath("InputEclipseStaticImportsOrder.java"), expected);
+    }
+
+    @Test
+    public void testImportGroupsRedundantSeparatedInternally() throws Exception {
+        final DefaultConfiguration checkConfig = createCheckConfig(ImportOrderCheck.class);
+        checkConfig.addAttribute("groups", "/^javax\\./,com");
+        checkConfig.addAttribute("ordered", "true");
+        checkConfig.addAttribute("separated", "true");
+        checkConfig.addAttribute("option", "bottom");
+        final String[] expected = {
+            "5: " + getCheckMessage(MSG_SEPARATED_IN_GROUP, "org.*"),
+        };
+        verify(checkConfig, getNonCompilablePath("InputImportOrder_MultiplePatternMatches.java"),
+                expected);
     }
 }

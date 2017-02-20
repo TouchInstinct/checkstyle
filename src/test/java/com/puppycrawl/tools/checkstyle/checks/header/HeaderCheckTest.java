@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2017 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -60,7 +60,7 @@ public class HeaderCheckTest extends BaseFileSetCheckTestSupport {
                 + "header" + File.separator + filename);
     }
 
-    protected String getConfigPath(String filename) throws IOException {
+    private String getConfigPath(String filename) throws IOException {
         return super.getPath("configs" + File.separator + filename);
     }
 
@@ -116,8 +116,9 @@ public class HeaderCheckTest extends BaseFileSetCheckTestSupport {
             assertTrue(ex.getMessage()
                     .startsWith("cannot initialize module"
                             + " com.puppycrawl.tools.checkstyle.checks.header.HeaderCheck"
-                            + " - Unable to find: "));
-            assertTrue(ex.getMessage().endsWith("nonExisting.file"));
+                            + " - illegal value "));
+            assertTrue(ex.getCause().getCause().getCause().getMessage()
+                    .startsWith("Unable to find: "));
         }
     }
 
@@ -230,7 +231,7 @@ public class HeaderCheckTest extends BaseFileSetCheckTestSupport {
         PowerMockito.doThrow(new IOException("expected exception")).when(check, "loadHeader",
                 anyObject());
 
-        check.setHeaderFile(getPath("InputRegexpHeader1.java"));
+        check.setHeaderFile(CommonUtils.getUriByFilename(getPath("InputRegexpHeader1.java")));
 
         final Method loadHeaderFile = AbstractHeaderCheck.class.getDeclaredMethod("loadHeaderFile");
         loadHeaderFile.setAccessible(true);
@@ -240,8 +241,7 @@ public class HeaderCheckTest extends BaseFileSetCheckTestSupport {
         }
         catch (InvocationTargetException ex) {
             assertTrue(ex.getCause() instanceof CheckstyleException);
-            assertEquals("unable to load header file "
-                    + getPath("InputRegexpHeader1.java"), ex.getCause().getMessage());
+            assertTrue(ex.getCause().getMessage().startsWith("unable to load header file "));
         }
     }
 
@@ -267,5 +267,26 @@ public class HeaderCheckTest extends BaseFileSetCheckTestSupport {
         // One more time to use cache.
         verify(checker, getPath("InputHeader.java"), expected);
 
+    }
+
+    @Test
+    public void testCacheHeaderWithoutFile() throws Exception {
+        final DefaultConfiguration checkConfig = createCheckConfig(HeaderCheck.class);
+        checkConfig.addAttribute("header", "Test");
+
+        final DefaultConfiguration checkerConfig = new DefaultConfiguration("checkstyle_checks");
+        checkerConfig.addChild(checkConfig);
+        checkerConfig.addAttribute("cacheFile", temporaryFolder.newFile().getPath());
+
+        final Checker checker = new Checker();
+        checker.setModuleClassLoader(Thread.currentThread().getContextClassLoader());
+        checker.configure(checkerConfig);
+        checker.addListener(new BriefUtLogger(stream));
+
+        final String[] expected = {
+            "1: " + getCheckMessage(MSG_MISMATCH, "Test"),
+        };
+
+        verify(checker, getPath("InputHeader.java"), expected);
     }
 }

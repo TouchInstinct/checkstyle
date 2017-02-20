@@ -43,11 +43,18 @@
       <property name="violationSuppressXPath" value="//MethodDeclaration[@Name='isNotRelevantSituation' and ../../..[@Image='WhitespaceAroundCheck']] | //MethodDeclaration[@Name='validateCli' and ../../..[@Image='Main']] | //ClassOrInterfaceDeclaration[@Image='JavadocMethodCheck' or @Image='JavadocStyleCheck']"/>
     </properties>
   </rule>
+  <rule ref="rulesets/java/codesize.xml/TooManyFields">
+    <properties>
+      <!-- Unable to split fields out of class. -->
+      <property name="violationSuppressXPath" value="//ClassOrInterfaceDeclaration[@Image='Checker']"/>
+    </properties>
+  </rule>
   <rule ref="rulesets/java/codesize.xml/TooManyMethods">
     <properties>
       <property name="maxmethods" value="20"/>
-      <!-- Reducing the number of methods requires making excess hierarchy or duplicating code, or making existing methods too complex. -->
-      <property name="violationSuppressXPath" value="//ClassOrInterfaceDeclaration[@Image='RequireThisCheck']"/>
+      <!-- Reducing the number of methods in RequireThisCheck requires making excess hierarchy or duplicating code, or making existing methods too complex. -->
+      <!-- PackageObjectFactory has many boilerplate methods. -->
+      <property name="violationSuppressXPath" value="//ClassOrInterfaceDeclaration[@Image='RequireThisCheck' or @Image='PackageObjectFactory']"/>
     </properties>
   </rule>
   <rule ref="rulesets/java/codesize.xml/ExcessiveClassLength">
@@ -93,8 +100,6 @@
     <exclude name="OnlyOneReturn"/>
     <!-- opposite to UnnecessaryConstructor -->
     <exclude name="AtLeastOneConstructor"/>
-    <!-- deprecated by PMD -->
-    <exclude name="BooleanInversion"/>
     <!-- that rule is too buggy, too much false positives-->
     <exclude name="DataflowAnomalyAnalysis"/>
     <!-- turning local variables to fields create design problems and extend scope of variable -->
@@ -122,7 +127,7 @@
     <properties>
       <!-- TreeWalker integrates Checkstyle and antlr and CheckstyleAntTask integrates Checkstyle
        with Ant. Checker collects external resource locations and setup configuration. -->
-      <property name="violationSuppressXPath" value="//ClassOrInterfaceDeclaration[@Image='TreeWalker' or @Image='CheckstyleAntTask' or @Image='Checker']"/>
+      <property name="violationSuppressXPath" value="//ClassOrInterfaceDeclaration[@Image='TreeWalker' or @Image='CheckstyleAntTask' or @Image='Checker' or @Image='Main']"/>
     </properties>
   </rule>
   <rule ref="rulesets/java/coupling.xml/CouplingBetweenObjects">
@@ -148,7 +153,7 @@
   <rule ref="rulesets/java/design.xml/ConfusingTernary">
     <properties>
      <!-- false positives on IF_ELSE-IF-ELSE-IF -->
-    <property name="violationSuppressXPath" value="//ClassOrInterfaceDeclaration[@Image='XMLLogger']//MethodDeclarator[@Image='isReference'] | //ClassOrInterfaceDeclaration[@Image='DetailAST']//MethodDeclarator[@Image='addPreviousSibling'] | //ClassOrInterfaceDeclaration[@Image='AnnotationLocationCheck']//MethodDeclarator[@Image='checkAnnotations'] | //ClassOrInterfaceDeclaration[@Image='PkgControl']//MethodDeclarator[@Image='checkAccess'] | //ClassOrInterfaceDeclaration[@Image='HandlerFactory']//MethodDeclarator[@Image='getHandler']"/>
+    <property name="violationSuppressXPath" value="//ClassOrInterfaceDeclaration[@Image='XMLLogger']//MethodDeclarator[@Image='isReference'] | //ClassOrInterfaceDeclaration[@Image='DetailAST']//MethodDeclarator[@Image='addPreviousSibling'] | //ClassOrInterfaceDeclaration[@Image='AnnotationLocationCheck']//MethodDeclarator[@Image='checkAnnotations'] | //ClassOrInterfaceDeclaration[@Image='ImportControl']//MethodDeclarator[@Image='checkAccess'] | //ClassOrInterfaceDeclaration[@Image='HandlerFactory']//MethodDeclarator[@Image='getHandler']"/>
     </properties>
   </rule>
   <rule ref="rulesets/java/design.xml/AccessorClassGeneration">
@@ -182,10 +187,17 @@
     <properties>
       <!-- default is 3 but we try to use single point of exit from method and that require extra IFs -->
       <property name="problemDepth" value="4"/>
+      <property name="violationSuppressXPath" value="//ClassOrInterfaceDeclaration[@Image='ClassResolver']//MethodDeclarator[@Image='resolve']"/>
     </properties>
   </rule>
 
   <rule ref="rulesets/java/empty.xml"/>
+  <rule ref="rulesets/java/empty.xml/EmptyCatchBlock">
+    <properties>
+      <property name="allowCommentedBlocks" value="true"/>
+    </properties>
+  </rule>
+
   <rule ref="rulesets/java/finalizers.xml"/>
   <rule ref="rulesets/java/imports.xml"/>
   <rule ref="rulesets/java/javabeans.xml">
@@ -210,12 +222,6 @@
   </rule>
 
   <rule ref="rulesets/java/migrating.xml"/>
-  <rule ref="rulesets/java/migrating.xml/JUnit4TestShouldUseTestAnnotation">
-    <properties>
-      <!-- False positive of PMD. Non-test methods can be named as 'test' -->
-      <property name="violationSuppressXPath" value="//ClassOrInterfaceDeclaration[@Image='PackageObjectFactory']"/>
-    </properties>
-  </rule>
 
   <rule ref="rulesets/java/naming.xml">
     <!-- we use CheckstyleCustomShortVariable, to control lenght (will be fixed in PMD 5.4) and skip Override methods -->
@@ -247,7 +253,7 @@
   <rule ref="rulesets/java/naming.xml/AbstractNaming">
     <properties>
      <!-- We can not brake compatibility with previous versions -->
-     <property name="violationSuppressXPath" value="//ClassOrInterfaceDeclaration[@Image='Check']"/>
+     <property name="violationSuppressXPath" value="//ClassOrInterfaceDeclaration[@Image='Check' or @Image='AbstractClassNameCheck']"/>
     </properties>
   </rule>
   <rule ref="rulesets/java/naming.xml/LongVariable">
@@ -289,6 +295,13 @@
   </rule>
 
   <rule ref="rulesets/java/strings.xml"/>
+  <rule ref="rulesets/java/strings.xml/AvoidDuplicateLiterals">
+    <properties>
+      <!-- Annotations like '@SuppressWarnings' don't need to be checked, it is better to keep their strings
+           connected to the annotation instead of separating. -->
+      <property name="skipAnnotations" value="true"/>
+    </properties>
+  </rule>
   <rule ref="rulesets/java/sunsecure.xml/MethodReturnsInternalArray">
     <properties>
       <!--It's not important when array is empty-->

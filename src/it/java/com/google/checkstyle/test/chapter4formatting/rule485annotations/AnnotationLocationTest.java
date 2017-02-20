@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2017 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -41,7 +41,8 @@ public class AnnotationLocationTest extends BaseCheckTestSupport {
 
         final Class<AnnotationLocationCheck> clazz = AnnotationLocationCheck.class;
         getCheckMessage(clazz, "annotation.location.alone");
-        final Configuration checkConfig = getCheckConfig("AnnotationLocation");
+        final Configuration checkConfig = getCheckConfig("AnnotationLocation",
+                "AnnotationLocationMostCases");
 
         final String msgLocationAlone = "annotation.location.alone";
         final String msgLocation = "annotation.location";
@@ -60,6 +61,25 @@ public class AnnotationLocationTest extends BaseCheckTestSupport {
         };
 
         final String filePath = getPath("InputAnnotationLocation.java");
+
+        final Integer[] warnList = getLinesWithWarn(filePath);
+        verify(checkConfig, filePath, expected, warnList);
+    }
+
+    @Test
+    public void annotationTestVariables() throws Exception {
+
+        final Class<AnnotationLocationCheck> clazz = AnnotationLocationCheck.class;
+        getCheckMessage(clazz, "annotation.location.alone");
+        final Configuration checkConfig = getCheckConfig("AnnotationLocation",
+                "AnnotationLocationVariables");
+
+        final String msgLocation = "annotation.location";
+        final String[] expected = {
+            "63: " + getCheckMessage(clazz, msgLocation, "MyAnnotation2", "7", "4"),
+        };
+
+        final String filePath = getPath("InputAnnotationLocationVariables.java");
 
         final Integer[] warnList = getLinesWithWarn(filePath);
         verify(checkConfig, filePath, expected, warnList);

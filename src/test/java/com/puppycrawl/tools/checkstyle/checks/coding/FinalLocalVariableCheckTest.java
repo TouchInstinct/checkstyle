@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2017 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -238,5 +238,14 @@ public class FinalLocalVariableCheckTest
         final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
         verify(checkConfig, getPath("InputFinalLocalVariableMultipleAndNestedConditions.java"),
             expected);
+    }
+
+    @Test
+    public void testMultiTypeCatch() throws Exception {
+        final DefaultConfiguration checkConfig = createCheckConfig(FinalLocalVariableCheck.class);
+        checkConfig.addAttribute("tokens", "PARAMETER_DEF,VARIABLE_DEF");
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+        verify(checkConfig, getPath("InputFinalLocalVariableMultiCatch.java"),
+                expected);
     }
 }

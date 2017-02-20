@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2017 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -20,14 +20,21 @@
 package com.puppycrawl.tools.checkstyle.api;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import org.junit.Test;
 
 public class SeverityLevelCounterTest {
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testCtorException() {
-        new SeverityLevelCounter(null);
+        try {
+            new SeverityLevelCounter(null);
+            fail("exception expected");
+        }
+        catch (IllegalArgumentException ex) {
+            assertEquals("'level' cannot be null", ex.getMessage());
+        }
     }
 
     @Test

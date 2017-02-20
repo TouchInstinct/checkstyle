@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2017 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -81,14 +81,26 @@ public class CommonUtilsTest {
         assertEquals(3, CommonUtils.lengthMinusTrailingWhitespace(" 23 \t "));
     }
 
-    @Test(expected = ConversionException.class)
+    @Test
     public void testBadRegex() {
-        CommonUtils.createPattern("[");
+        try {
+            CommonUtils.createPattern("[");
+            fail("exception expected");
+        }
+        catch (ConversionException ex) {
+            assertEquals("Failed to initialise regular expression [", ex.getMessage());
+        }
     }
 
-    @Test(expected = ConversionException.class)
+    @Test
     public void testBadRegex2() {
-        CommonUtils.createPattern("[", Pattern.MULTILINE);
+        try {
+            CommonUtils.createPattern("[", Pattern.MULTILINE);
+            fail("exception expected");
+        }
+        catch (ConversionException ex) {
+            assertEquals("Failed to initialise regular expression [", ex.getMessage());
+        }
     }
 
     @Test
@@ -196,11 +208,17 @@ public class CommonUtilsTest {
         assertTrue(closeable.closed);
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void testCloseWithException() {
-        CommonUtils.close(() -> {
-            throw new IOException("Test IOException");
-        });
+        try {
+            CommonUtils.close(() -> {
+                throw new IOException("Test IOException");
+            });
+            fail("exception expected");
+        }
+        catch (IllegalStateException ex) {
+            assertEquals("Cannot close the stream", ex.getMessage());
+        }
     }
 
     @Test

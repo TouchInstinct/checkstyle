@@ -1,0 +1,34 @@
+language: java
+
+
+jdk:
+  - oraclejdk8
+
+env:
+  matrix:
+    - PROFILE="-Ppitest-checks-blocks,no-validations"
+    - PROFILE="-Ppitest-checks-coding,no-validations"
+    - PROFILE="-Ppitest-checks-design,no-validations"
+    - PROFILE="-Ppitest-checks-header,no-validations"
+    - PROFILE="-Ppitest-checks-imports,no-validations"
+    - PROFILE="-Ppitest-checks-indentation,no-validations"
+    - PROFILE="-Ppitest-checks-javadoc,no-validations"
+    - PROFILE="-Ppitest-checks-metrics,no-validations"
+    - PROFILE="-Ppitest-checks-modifier,no-validations"
+    - PROFILE="-Ppitest-checks-naming,no-validations"
+    - PROFILE="-Ppitest-checks-regexp,no-validations"
+    - PROFILE="-Ppitest-checks-sizes,no-validations"
+    - PROFILE="-Ppitest-checks-whitespace,no-validations"
+
+build:
+  cache: true
+  cache_dir_list:
+    - /root/.m2
+
+  ci:
+    # we skip PRs and commits that are not for Issues, as pitest is too time consuming
+    - >-
+      if [ $(git log -1 | grep -E "Issue \#[0-9]+\:" | cat | wc -l) -gt 0 ];
+      then
+       mvn $PROFILE clean verify org.pitest:pitest-maven:mutationCoverage;
+      fi

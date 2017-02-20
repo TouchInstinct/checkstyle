@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2017 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -23,6 +23,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.Locale;
 
@@ -44,15 +45,21 @@ public class ScopeTest {
         assertEquals(Scope.PRIVATE, scope);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testMisc() {
         final Scope o = Scope.getInstance("public");
         assertNotNull(o);
         assertEquals("public", o.toString());
         assertEquals("public", o.getName());
 
-        // will fail
-        Scope.getInstance("unknown");
+        try {
+            Scope.getInstance("unknown");
+            fail("exception expected");
+        }
+        catch (IllegalArgumentException ex) {
+            assertEquals("No enum constant com.puppycrawl.tools.checkstyle.api.Scope.UNKNOWN",
+                    ex.getMessage());
+        }
     }
 
     @Test

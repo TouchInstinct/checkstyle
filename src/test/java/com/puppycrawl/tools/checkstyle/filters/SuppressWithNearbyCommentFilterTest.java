@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2017 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -40,14 +40,11 @@ import com.puppycrawl.tools.checkstyle.TreeWalker;
 import com.puppycrawl.tools.checkstyle.api.AuditEvent;
 import com.puppycrawl.tools.checkstyle.api.CheckstyleException;
 import com.puppycrawl.tools.checkstyle.api.Configuration;
-import com.puppycrawl.tools.checkstyle.api.LocalizedMessage;
-import com.puppycrawl.tools.checkstyle.api.SeverityLevel;
 import com.puppycrawl.tools.checkstyle.checks.FileContentsHolder;
 import com.puppycrawl.tools.checkstyle.checks.coding.IllegalCatchCheck;
 import com.puppycrawl.tools.checkstyle.checks.naming.ConstantNameCheck;
 import com.puppycrawl.tools.checkstyle.checks.naming.MemberNameCheck;
 import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
-
 import nl.jqno.equalsverifier.EqualsVerifier;
 
 public class SuppressWithNearbyCommentFilterTest
@@ -137,7 +134,7 @@ public class SuppressWithNearbyCommentFilterTest
     }
 
     @Test
-    public void testUsingAVariableMessage() throws Exception {
+    public void testUsingVariableMessage() throws Exception {
         final DefaultConfiguration filterConfig =
             createFilterConfig(SuppressWithNearbyCommentFilter.class);
         filterConfig.addAttribute("commentFormat", "ALLOW CATCH (\\w+) BECAUSE");
@@ -152,7 +149,7 @@ public class SuppressWithNearbyCommentFilterTest
     }
 
     @Test
-    public void testUsingAVariableCheckOnNextLine() throws Exception {
+    public void testUsingVariableCheckOnNextLine() throws Exception {
         final DefaultConfiguration filterConfig =
             createFilterConfig(SuppressWithNearbyCommentFilter.class);
         filterConfig.addAttribute("commentFormat", "ALLOW (\\w+) ON NEXT LINE");
@@ -165,7 +162,7 @@ public class SuppressWithNearbyCommentFilterTest
     }
 
     @Test
-    public void testUsingAVariableCheckOnPreviousLine() throws Exception {
+    public void testUsingVariableCheckOnPreviousLine() throws Exception {
         final DefaultConfiguration filterConfig =
             createFilterConfig(SuppressWithNearbyCommentFilter.class);
         filterConfig.addAttribute("commentFormat", "ALLOW (\\w+) ON PREVIOUS LINE");
@@ -284,16 +281,6 @@ public class SuppressWithNearbyCommentFilterTest
     public void testAcceptNullLocalizedMessage() {
         final SuppressWithNearbyCommentFilter filter = new SuppressWithNearbyCommentFilter();
         final AuditEvent auditEvent = new AuditEvent(this);
-        Assert.assertTrue(filter.accept(auditEvent));
-    }
-
-    @Test
-    public void testAcceptNullFileContents() {
-        final LocalizedMessage message =
-            new LocalizedMessage(1, 1, "messages.properties", "key", null, SeverityLevel.ERROR,
-                    null, getClass(), null);
-        final AuditEvent auditEvent = new AuditEvent(this, "Test.java", message);
-        final SuppressWithNearbyCommentFilter filter = new SuppressWithNearbyCommentFilter();
         Assert.assertTrue(filter.accept(auditEvent));
     }
 

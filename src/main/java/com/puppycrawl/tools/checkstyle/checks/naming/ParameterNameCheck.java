@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2017 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -19,32 +19,35 @@
 
 package com.puppycrawl.tools.checkstyle.checks.naming;
 
+import java.util.Arrays;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
 import com.puppycrawl.tools.checkstyle.utils.CheckUtils;
+import com.puppycrawl.tools.checkstyle.utils.ScopeUtils;
 
 /**
-* <p>
+ * <p>
  * Checks that method and <code>catch</code> parameter names conform to a format specified
  * by the format property. The format is a
  * {@link java.util.regex.Pattern regular expression}
  * and defaults to
  * <strong>^[a-z][a-zA-Z0-9]*$</strong>.
  * </p>
- * <p>The check has the following option:</p>
+ * <p>The check has the following options:</p>
  * <p><b>ignoreOverridden</b> - allows to skip methods with Override annotation from
  * validation. Default values is <b>false</b> .</p>
- * <p>
- * An example of how to configure the check is:
- * </p>
+ * <p><b>accessModifiers</b> - access modifiers of methods which should to be checked.
+ * Default value is <b>public, protected, package, private</b> .</p>
+ * An example of how to configure the check:
  * <pre>
  * &lt;module name="ParameterName"/&gt;
  * </pre>
  * <p>
-  * An example of how to configure the check for names that begin with
- * a lower case letter, followed by letters, digits, and underscores is:
+ * An example of how to configure the check for names that begin with
+ * a lower case letter, followed by letters, digits, and underscores:
  * </p>
  * <pre>
  * &lt;module name="ParameterName"&gt;
@@ -64,13 +67,17 @@ import com.puppycrawl.tools.checkstyle.utils.CheckUtils;
  * @author Oliver Burn
  * @author Andrei Selkin
  */
-public class ParameterNameCheck
-    extends AbstractNameCheck {
+public class ParameterNameCheck extends AbstractNameCheck {
 
     /**
      * Allows to skip methods with Override annotation from validation.
      */
     private boolean ignoreOverridden;
+
+    /** Access modifiers of methods which should be checked. */
+    private AccessModifier[] accessModifiers = Stream.of(AccessModifier.PUBLIC,
+        AccessModifier.PROTECTED, AccessModifier.PACKAGE, AccessModifier.PRIVATE)
+        .toArray(AccessModifier[]::new);
 
     /**
      * Creates a new {@code ParameterNameCheck} instance.
@@ -81,11 +88,19 @@ public class ParameterNameCheck
 
     /**
      * Sets whether to skip methods with Override annotation from validation.
-     *
      * @param ignoreOverridden Flag for skipping methods with Override annotation.
      */
     public void setIgnoreOverridden(boolean ignoreOverridden) {
         this.ignoreOverridden = ignoreOverridden;
+    }
+
+    /**
+     * Sets access modifiers of methods which should be checked.
+     * @param accessModifiers access modifiers of methods which should be checked.
+     */
+    public void setAccessModifiers(AccessModifier... accessModifiers) {
+        this.accessModifiers =
+            Arrays.copyOf(accessModifiers, accessModifiers.length);
     }
 
     @Override
@@ -108,10 +123,47 @@ public class ParameterNameCheck
         boolean checkName = true;
         if (ignoreOverridden && isOverriddenMethod(ast)
                 || ast.getParent().getType() == TokenTypes.LITERAL_CATCH
-                || CheckUtils.isReceiverParameter(ast)) {
+                || CheckUtils.isReceiverParameter(ast)
+                || !matchAccessModifiers(getAccessModifier(ast))) {
             checkName = false;
         }
         return checkName;
+    }
+
+    /**
+     * Returns the access modifier of the method/constructor at the specified AST. If
+     * the method is in an interface or annotation block, the access modifier is assumed
+     * to be public.
+     *
+     * @param ast the token of the method/constructor.
+     * @return the access modifier of the method/constructor.
+     */
+    private static AccessModifier getAccessModifier(final DetailAST ast) {
+        final DetailAST params = ast.getParent();
+        final DetailAST meth = params.getParent();
+        AccessModifier accessModifier = AccessModifier.PRIVATE;
+
+        if (meth.getType() == TokenTypes.METHOD_DEF
+                || meth.getType() == TokenTypes.CTOR_DEF) {
+            if (ScopeUtils.isInInterfaceOrAnnotationBlock(ast)) {
+                accessModifier = AccessModifier.PUBLIC;
+            }
+            else {
+                final DetailAST modsToken = meth.findFirstToken(TokenTypes.MODIFIERS);
+                accessModifier = CheckUtils.getAccessModifierFromModifiersToken(modsToken);
+            }
+        }
+
+        return accessModifier;
+    }
+
+    /**
+     * Checks whether a method has the correct access modifier to be checked.
+     * @param accessModifier the access modifier of the method.
+     * @return whether the method matches the expected access modifier.
+     */
+    private boolean matchAccessModifiers(final AccessModifier accessModifier) {
+        return Arrays.stream(accessModifiers).anyMatch(el -> el == accessModifier);
     }
 
     /**
@@ -126,7 +178,8 @@ public class ParameterNameCheck
         final Optional<DetailAST> annotation =
             Optional.ofNullable(parent.getFirstChild().getFirstChild());
 
-        if (annotation.isPresent() && annotation.get().getType() == TokenTypes.ANNOTATION) {
+        if (annotation.isPresent()
+                && annotation.get().getType() == TokenTypes.ANNOTATION) {
             final Optional<DetailAST> overrideToken =
                 Optional.ofNullable(annotation.get().findFirstToken(TokenTypes.IDENT));
             if (overrideToken.isPresent() && "Override".equals(overrideToken.get().getText())) {

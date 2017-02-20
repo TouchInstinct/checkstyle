@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2017 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -51,7 +51,7 @@ public class SeverityMatchFilterTest {
 
     @Test
     public void testSeverity() {
-        filter.setSeverity("info");
+        filter.setSeverity(SeverityLevel.INFO);
         final AuditEvent ev = new AuditEvent(this, "Test.java");
         // event with no message has severity level INFO
         assertTrue("no message", filter.accept(ev));
@@ -70,7 +70,7 @@ public class SeverityMatchFilterTest {
 
     @Test
     public void testAcceptOnMatch() {
-        filter.setSeverity("info");
+        filter.setSeverity(SeverityLevel.INFO);
         filter.setAcceptOnMatch(false);
         final AuditEvent ev = new AuditEvent(this, "Test.java");
         // event with no message has severity level INFO

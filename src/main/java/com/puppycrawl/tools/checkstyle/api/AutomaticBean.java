@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2017 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -21,11 +21,13 @@ package com.puppycrawl.tools.checkstyle.api;
 
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.InvocationTargetException;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 import java.util.StringTokenizer;
+import java.util.regex.Pattern;
 
 import org.apache.commons.beanutils.BeanUtilsBean;
 import org.apache.commons.beanutils.ConversionException;
@@ -43,6 +45,9 @@ import org.apache.commons.beanutils.converters.IntegerConverter;
 import org.apache.commons.beanutils.converters.LongConverter;
 import org.apache.commons.beanutils.converters.ShortConverter;
 
+import com.puppycrawl.tools.checkstyle.checks.naming.AccessModifier;
+import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
+
 /**
  * A Java Bean that implements the component lifecycle interfaces by
  * calling the bean's setters for all configuration attributes.
@@ -50,6 +55,10 @@ import org.apache.commons.beanutils.converters.ShortConverter;
  */
 public class AutomaticBean
     implements Configurable, Contextualizable {
+
+    /** Comma separator for StringTokenizer. */
+    private static final String COMMA_SEPARATOR = ",";
+
     /** The configuration of this bean. */
     private Configuration configuration;
 
@@ -64,6 +73,19 @@ public class AutomaticBean
     private static BeanUtilsBean createBeanUtilsBean() {
         final ConvertUtilsBean cub = new ConvertUtilsBean();
 
+        registerIntegralTypes(cub);
+        registerCustomTypes(cub);
+
+        return new BeanUtilsBean(cub, new PropertyUtilsBean());
+    }
+
+    /**
+     * Register basic types of JDK like boolean, int, and String to use with BeanUtils. All these
+     * types are found in the {@code java.lang} package.
+     * @param cub
+     *            Instance of {@link ConvertUtilsBean} to register types with.
+     */
+    private static void registerIntegralTypes(ConvertUtilsBean cub) {
         cub.register(new BooleanConverter(), Boolean.TYPE);
         cub.register(new BooleanConverter(), Boolean.class);
         cub.register(new ArrayConverter(
@@ -100,8 +122,20 @@ public class AutomaticBean
 
         // BigDecimal, BigInteger, Class, Date, String, Time, TimeStamp
         // do not use defaults in the default configuration of ConvertUtilsBean
+    }
 
-        return new BeanUtilsBean(cub, new PropertyUtilsBean());
+    /**
+     * Register custom types of JDK like URI and Checkstyle specific classes to use with BeanUtils.
+     * None of these types should be found in the {@code java.lang} package.
+     * @param cub
+     *            Instance of {@link ConvertUtilsBean} to register types with.
+     */
+    private static void registerCustomTypes(ConvertUtilsBean cub) {
+        cub.register(new PatternConverter(), Pattern.class);
+        cub.register(new ServerityLevelConverter(), SeverityLevel.class);
+        cub.register(new ScopeConverter(), Scope.class);
+        cub.register(new UriConverter(), URI.class);
+        cub.register(new RelaxedAccessModifierArrayConverter(), AccessModifier[].class);
     }
 
     /**
@@ -241,6 +275,54 @@ public class AutomaticBean
         }
     }
 
+    /** A converter that converts strings to patterns. */
+    private static class PatternConverter implements Converter {
+        @SuppressWarnings({"unchecked", "rawtypes"})
+        @Override
+        public Object convert(Class type, Object value) {
+            return CommonUtils.createPattern(value.toString());
+        }
+    }
+
+    /** A converter that converts strings to severity level. */
+    private static class ServerityLevelConverter implements Converter {
+        @SuppressWarnings({"unchecked", "rawtypes"})
+        @Override
+        public Object convert(Class type, Object value) {
+            return SeverityLevel.getInstance(value.toString());
+        }
+    }
+
+    /** A converter that converts strings to scope. */
+    private static class ScopeConverter implements Converter {
+        @SuppressWarnings({"unchecked", "rawtypes"})
+        @Override
+        public Object convert(Class type, Object value) {
+            return Scope.getInstance(value.toString());
+        }
+    }
+
+    /** A converter that converts strings to uri. */
+    private static class UriConverter implements Converter {
+        @SuppressWarnings({"unchecked", "rawtypes"})
+        @Override
+        public Object convert(Class type, Object value) {
+            final String url = value.toString();
+            URI result = null;
+
+            if (!CommonUtils.isBlank(url)) {
+                try {
+                    result = CommonUtils.getUriByFilename(url);
+                }
+                catch (CheckstyleException ex) {
+                    throw new ConversionException(ex);
+                }
+            }
+
+            return result;
+        }
+    }
+
     /**
      * A converter that does not care whether the array elements contain String
      * characters like '*' or '_'. The normal ArrayConverter class has problems
@@ -252,7 +334,7 @@ public class AutomaticBean
         public Object convert(Class type, Object value) {
             // Convert to a String and trim it for the tokenizer.
             final StringTokenizer tokenizer = new StringTokenizer(
-                value.toString().trim(), ",");
+                value.toString().trim(), COMMA_SEPARATOR);
             final List<String> result = new ArrayList<>();
 
             while (tokenizer.hasMoreTokens()) {
@@ -261,6 +343,30 @@ public class AutomaticBean
             }
 
             return result.toArray(new String[result.size()]);
+        }
+    }
+
+    /**
+     * A converter that converts strings to {@link AccessModifier}.
+     * This implementation does not care whether the array elements contain characters like '_'.
+     * The normal {@link ArrayConverter} class has problems with this character.
+     */
+    private static class RelaxedAccessModifierArrayConverter implements Converter {
+
+        @SuppressWarnings({"unchecked", "rawtypes"})
+        @Override
+        public Object convert(Class type, Object value) {
+            // Converts to a String and trims it for the tokenizer.
+            final StringTokenizer tokenizer = new StringTokenizer(
+                value.toString().trim(), COMMA_SEPARATOR);
+            final List<AccessModifier> result = new ArrayList<>();
+
+            while (tokenizer.hasMoreTokens()) {
+                final String token = tokenizer.nextToken();
+                result.add(AccessModifier.getInstance(token.trim()));
+            }
+
+            return result.toArray(new AccessModifier[result.size()]);
         }
     }
 }

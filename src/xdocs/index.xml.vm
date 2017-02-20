@@ -110,7 +110,7 @@
         However, some members of the community have created an unofficial backport of the latest
         Checkstyle releases to be run with JDKs as old as 1.6. If you wish to continue using new
         Checkstyle versions on older JDKs, we recommend you either checkout the
-        <a href="https://github.com/rnveach/checkstyle-backport-jre6">github site</a> or the 
+        <a href="https://github.com/rnveach/checkstyle-backport-jre6">github site</a> or the
         <a href="https://rnveach.github.io/checkstyle-backport-jre6/">documentation site</a> on how
         to use the backport version of the utility, in place of the official Checkstyle version.
       </p>
@@ -168,14 +168,14 @@
                   </td>
               </tr>
               <tr>
-                  <td><a href="http://www.eclipse.org">Eclipse/RAD/RDz</a></td>
+                  <td><a href="https://eclipse.org">Eclipse/RAD/RDz</a></td>
                   <td>David Schneider</td>
                   <td>
                       <a href="http://eclipse-cs.sourceforge.net/">Eclipse-CS Home Page</a>
                   </td>
                   <td>
                       In 2007 was awarded
-                      <a href="http://www.eclipse.org/org/press-release/20070306eclipsecommunityawards.php">
+                      <a href="https://eclipse.org/org/press-release/20070306eclipsecommunityawards.php">
                           Best Open Source Eclipse-based Developer tool
                       </a>.
                   </td>
@@ -201,7 +201,7 @@
                   <td/>
               </tr>
               <tr>
-                  <td><a href="http://www.eclipse.org">Eclipse/RAD/RDz</a></td>
+                  <td><a href="https://eclipse.org">Eclipse/RAD/RDz</a></td>
                   <td>Roman Ivanov</td>
                   <td>
                       <a href="https://github.com/sevntu-checkstyle">Project Page</a>
@@ -272,10 +272,10 @@
                   <td/>
               </tr>
               <tr>
-                  <td><a href="https://sonarqube.com/">SonarQube</a></td>
+                  <td><a href="https://sonarqube.com/about">SonarQube</a></td>
                   <td>Freddy Mallet (initial author)</td>
-                  <td><a href="https://sonarqube.com/">SonarQube Home Page</a></td>
-                  <td><a href="https://sonarqube.com/">Demo site</a></td>
+                  <td><a href="https://sonarqube.com/about">SonarQube Home Page</a></td>
+                  <td><a href="https://sonarqube.com/projects">Demo site</a></td>
               </tr>
               <tr>
                   <td><a href="http://www.jedit.org/">jEdit</a></td>
@@ -344,7 +344,7 @@
                   <td/>
               </tr>
               <tr>
-                  <td><a href="http://www.eclipse.org">Eclipse/RAD/RDz</a></td>
+                  <td><a href="https://eclipse.org">Eclipse/RAD/RDz</a></td>
                   <td>Marco van Meegen</td>
                   <td>
                       <a href="http://www.mvmsoft.de/content/plugins/checkclipse/checkclipse.htm">Checklipse Home Page</a>

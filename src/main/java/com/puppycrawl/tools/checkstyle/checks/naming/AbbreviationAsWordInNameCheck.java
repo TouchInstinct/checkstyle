@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2017 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -38,6 +38,16 @@ import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
  * identifier name, it also allows to enforce camel case naming. Please read more at
  * <a href="http://checkstyle.sourceforge.net/reports/google-java-style.html#s5.3-camel-case">
  * Google Style Guide</a> to get to know how to avoid long abbreviations in names.
+ * </p>
+ * <p>
+ * {@code allowedAbbreviationLength} specifies how many consecutive capital letters are
+ * allowed in the identifier.
+ * A value of <i>3</i> indicates that up to 4 consecutive capital letters are allowed,
+ * one after the other, before a violation is printed. The identifier 'MyTEST' would be
+ * allowed, but 'MyTESTS' would not be.
+ * A value of <i>0</i> indicates that only 1 consecutive capital letter is allowed. This
+ * is what should be used to enforce strict camel casing. The identifier 'MyTest' would
+ * be allowed, but 'MyTEst' would not be.
  * </p>
  * <p>
  * Option {@code allowedAbbreviationLength} indicates on the allowed amount of capital
@@ -209,7 +219,7 @@ public class AbbreviationAsWordInNameCheck extends AbstractCheck {
 
             final String abbr = getDisallowedAbbreviation(typeName);
             if (abbr != null) {
-                log(nameAst.getLineNo(), MSG_KEY, typeName, allowedAbbreviationLength);
+                log(nameAst.getLineNo(), MSG_KEY, typeName, allowedAbbreviationLength + 1);
             }
         }
     }

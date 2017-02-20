@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2017 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -20,8 +20,11 @@
 package com.puppycrawl.tools.checkstyle;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import org.junit.Test;
+
+import com.puppycrawl.tools.checkstyle.api.CheckstyleException;
 
 public class DefaultConfigurationTest {
 
@@ -34,5 +37,20 @@ public class DefaultConfigurationTest {
         assertEquals(1, config.getChildren().length);
         config.removeChild(configChild);
         assertEquals(0, config.getChildren().length);
+    }
+
+    @Test
+    public void testExceptioForNonExistingAttribute() {
+        final String name = "MyConfig";
+        final DefaultConfiguration config = new DefaultConfiguration(name);
+        final String attributeName = "NonExisting#$%";
+        try {
+            config.getAttribute(attributeName);
+            fail("Exception is expected");
+        }
+        catch (CheckstyleException expected) {
+            assertEquals("missing key '" + attributeName + "' in " + name,
+                    expected.getMessage());
+        }
     }
 }

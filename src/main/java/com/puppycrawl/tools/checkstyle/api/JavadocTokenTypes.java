@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2017 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -24,6 +24,9 @@ import org.antlr.v4.runtime.Recognizer;
 import com.puppycrawl.tools.checkstyle.grammars.javadoc.JavadocParser;
 
 /**
+ * Contains the constants for all the tokens contained in the Abstract
+ * Syntax Tree for the javadoc grammar.
+ *
  * @author Baratali Izmailov
  * @see <a href="http://docs.oracle.com/javase/8/docs/technotes/tools/unix/javadoc.html">
  * javadoc - The Java API Documentation Generator</a>

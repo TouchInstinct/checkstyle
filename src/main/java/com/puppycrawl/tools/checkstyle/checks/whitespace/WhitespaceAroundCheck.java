@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2017 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -251,6 +251,7 @@ public class WhitespaceAroundCheck extends AbstractCheck {
     public int[] getAcceptableTokens() {
         return new int[] {
             TokenTypes.ASSIGN,
+            TokenTypes.ARRAY_INIT,
             TokenTypes.BAND,
             TokenTypes.BAND_ASSIGN,
             TokenTypes.BOR,
@@ -448,6 +449,7 @@ public class WhitespaceAroundCheck extends AbstractCheck {
     private static boolean shouldCheckSeparationFromNextToken(DetailAST ast, char nextChar) {
         return !(ast.getType() == TokenTypes.LITERAL_RETURN
                     && ast.getFirstChild().getType() == TokenTypes.SEMI)
+                && ast.getType() != TokenTypes.ARRAY_INIT
                 && !isAnonymousInnerClassEnd(ast.getType(), nextChar)
                 && !isPartOfDoubleBraceInitializerForNextToken(ast);
     }

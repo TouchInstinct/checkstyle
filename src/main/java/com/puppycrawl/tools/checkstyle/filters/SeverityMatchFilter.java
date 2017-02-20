@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2017 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -40,14 +40,13 @@ public class SeverityMatchFilter
     private boolean acceptOnMatch = true;
 
     /**
-     * Sets the severity level.  The string should be one of the names
-     * defined in the {@code SeverityLevel} class.
+     * Sets the severity level.
      *
      * @param severity  The new severity level
      * @see SeverityLevel
      */
-    public final void setSeverity(String severity) {
-        this.severity = SeverityLevel.getInstance(severity);
+    public final void setSeverity(SeverityLevel severity) {
+        this.severity = severity;
     }
 
     /**

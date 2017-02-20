@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2017 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -27,7 +27,6 @@ import com.puppycrawl.tools.checkstyle.api.FileContents;
 import com.puppycrawl.tools.checkstyle.api.Scope;
 import com.puppycrawl.tools.checkstyle.api.TextBlock;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
-import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 import com.puppycrawl.tools.checkstyle.utils.ScopeUtils;
 
 /**
@@ -55,27 +54,26 @@ public class JavadocVariableCheck
 
     /**
      * Sets the scope to check.
-     * @param from string to get the scope from
+     * @param scope a scope.
      */
-    public void setScope(String from) {
-        scope = Scope.getInstance(from);
+    public void setScope(Scope scope) {
+        this.scope = scope;
     }
 
     /**
      * Set the excludeScope.
-     * @param excludeScope a {@code String} value
+     * @param excludeScope a scope.
      */
-    public void setExcludeScope(String excludeScope) {
-        this.excludeScope = Scope.getInstance(excludeScope);
+    public void setExcludeScope(Scope excludeScope) {
+        this.excludeScope = excludeScope;
     }
 
     /**
      * Sets the variable names to ignore in the check.
-     * @param regexp regular expression to define variable names to ignore.
-     * @throws org.apache.commons.beanutils.ConversionException if unable to create Pattern object.
+     * @param pattern a pattern.
      */
-    public void setIgnoreNamePattern(String regexp) {
-        ignoreNamePattern = CommonUtils.createPattern(regexp);
+    public void setIgnoreNamePattern(Pattern pattern) {
+        ignoreNamePattern = pattern;
     }
 
     @Override

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2017 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -87,14 +87,12 @@ public class WriteTagCheck
     /** Compiled regexp to match tag. **/
     private Pattern tagRegExp;
     /** Compiled regexp to match tag content. **/
-    private Pattern tagFormatRegExp;
+    private Pattern tagFormat;
 
     /** Regexp to match tag. */
     private String tag;
-    /** Regexp to match tag content. */
-    private String tagFormat;
     /** The severity level of found tag reports. */
-    private SeverityLevel tagSeverityLevel = SeverityLevel.INFO;
+    private SeverityLevel tagSeverity = SeverityLevel.INFO;
 
     /**
      * Sets the tag to check.
@@ -107,22 +105,20 @@ public class WriteTagCheck
 
     /**
      * Set the tag format.
-     * @param format a {@code String} value
+     * @param pattern a {@code String} value
      */
-    public void setTagFormat(String format) {
-        tagFormat = format;
-        tagFormatRegExp = CommonUtils.createPattern(format);
+    public void setTagFormat(Pattern pattern) {
+        tagFormat = pattern;
     }
 
     /**
-     * Sets the tag severity level.  The string should be one of the names
-     * defined in the {@code SeverityLevel} class.
+     * Sets the tag severity level.
      *
      * @param severity  The new severity level
      * @see SeverityLevel
      */
-    public final void setTagSeverity(String severity) {
-        tagSeverityLevel = SeverityLevel.getInstance(severity);
+    public final void setTagSeverity(SeverityLevel severity) {
+        tagSeverity = severity;
     }
 
     @Override
@@ -181,11 +177,11 @@ public class WriteTagCheck
                     tagCount += 1;
                     final int contentStart = matcher.start(1);
                     final String content = commentValue.substring(contentStart);
-                    if (tagFormatRegExp == null || tagFormatRegExp.matcher(content).find()) {
+                    if (tagFormat == null || tagFormat.matcher(content).find()) {
                         logTag(lineNo + i - comment.length, tag, content);
                     }
                     else {
-                        log(lineNo + i - comment.length, MSG_TAG_FORMAT, tag, tagFormat);
+                        log(lineNo + i - comment.length, MSG_TAG_FORMAT, tag, tagFormat.pattern());
                     }
                 }
             }
@@ -206,7 +202,7 @@ public class WriteTagCheck
      */
     protected final void logTag(int line, String tagName, String tagValue) {
         final String originalSeverity = getSeverity();
-        setSeverity(tagSeverityLevel.getName());
+        setSeverity(tagSeverity.getName());
 
         log(line, MSG_WRITE_TAG, tagName, tagValue);
 

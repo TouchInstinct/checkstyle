@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2017 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -22,12 +22,14 @@ package com.puppycrawl.tools.checkstyle;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.when;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOError;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -36,6 +38,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Properties;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -45,13 +48,16 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.powermock.api.mockito.PowerMockito;
 
+import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.AbstractFileSetCheck;
 import com.puppycrawl.tools.checkstyle.api.AuditEvent;
 import com.puppycrawl.tools.checkstyle.api.CheckstyleException;
 import com.puppycrawl.tools.checkstyle.api.Configuration;
+import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.ExternalResourceHolder;
 import com.puppycrawl.tools.checkstyle.api.Filter;
 import com.puppycrawl.tools.checkstyle.api.LocalizedMessage;
+import com.puppycrawl.tools.checkstyle.api.TokenTypes;
 import com.puppycrawl.tools.checkstyle.checks.TranslationCheck;
 import com.puppycrawl.tools.checkstyle.checks.coding.HiddenFieldCheck;
 import com.puppycrawl.tools.checkstyle.filters.SuppressionFilter;
@@ -61,6 +67,14 @@ public class CheckerTest extends BaseCheckTestSupport {
 
     @Rule
     public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+
+    private static Method getAcceptFileStarted() throws NoSuchMethodException {
+        final Class<Checker> checkerClass = Checker.class;
+        final Method acceptFileStarted = checkerClass.getDeclaredMethod("acceptFileStarted",
+                String.class);
+        acceptFileStarted.setAccessible(true);
+        return acceptFileStarted;
+    }
 
     private static Method getFireAuditFinished() throws NoSuchMethodException {
         final Class<Checker> checkerClass = Checker.class;
@@ -173,6 +187,33 @@ public class CheckerTest extends BaseCheckTestSupport {
         assertTrue("Checker.fireErrors() doesn't call listener", aa2.wasCalled());
         assertFalse("Checker.fireErrors() does call removed listener", auditAdapter.wasCalled());
 
+    }
+
+    @Test
+    public void testAddBeforeExecutionFileFilter() throws Exception {
+        final Checker checker = new Checker();
+        final TestBeforeExecutionFileFilter filter = new TestBeforeExecutionFileFilter();
+
+        checker.addBeforeExecutionFileFilter(filter);
+
+        filter.resetFilter();
+        getAcceptFileStarted().invoke(checker, "Test.java");
+        assertTrue("Checker.acceptFileStarted() doesn't call filter", filter.wasCalled());
+    }
+
+    @Test
+    public void testRemoveBeforeExecutionFileFilter() throws Exception {
+        final Checker checker = new Checker();
+        final TestBeforeExecutionFileFilter filter = new TestBeforeExecutionFileFilter();
+        final TestBeforeExecutionFileFilter f2 = new TestBeforeExecutionFileFilter();
+        checker.addBeforeExecutionFileFilter(filter);
+        checker.addBeforeExecutionFileFilter(f2);
+        checker.removeBeforeExecutionFileFilter(filter);
+
+        f2.resetFilter();
+        getAcceptFileStarted().invoke(checker, "Test.java");
+        assertTrue("Checker.acceptFileStarted() doesn't call filter", f2.wasCalled());
+        assertFalse("Checker.acceptFileStarted() does call removed filter", filter.wasCalled());
     }
 
     @Test
@@ -574,29 +615,6 @@ public class CheckerTest extends BaseCheckTestSupport {
     }
 
     @Test
-    public void testCacheIoExceptionWhenReadingExternalResource() throws Exception {
-        final SuppressionFilter mock = PowerMockito.mock(SuppressionFilter.class);
-        final Set<String> mockResourceLocations = new HashSet<>(1);
-        mockResourceLocations.add("http://mock.sourceforge.net/suppressions_none.xml");
-        when(mock.getExternalResourceLocations()).thenReturn(mockResourceLocations);
-
-        final DefaultConfiguration checkerConfig = new DefaultConfiguration("checkstyle_checks");
-        checkerConfig.addAttribute("cacheFile", temporaryFolder.newFile().getPath());
-
-        final Checker checker = new Checker();
-        checker.addFilter(mock);
-        checker.setModuleClassLoader(Thread.currentThread().getContextClassLoader());
-        checker.configure(checkerConfig);
-
-        final String pathToEmptyFile = temporaryFolder.newFile("file.java").getPath();
-        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
-
-        verify(checker, pathToEmptyFile, pathToEmptyFile, expected);
-        // One more time to use cahce.
-        verify(checker, pathToEmptyFile, pathToEmptyFile, expected);
-    }
-
-    @Test
     public void testMultipleConfigs() throws Exception {
         final DefaultConfiguration headerCheckConfig =
             createCheckConfig(MockMissingExternalResourcesFileSetCheck.class);
@@ -677,6 +695,89 @@ public class CheckerTest extends BaseCheckTestSupport {
         verify(checker, pathToEmptyFile, expected);
     }
 
+    @Test
+    public void testClearLazyLoadCacheInDetailAST() throws Exception {
+        final DefaultConfiguration checkConfig1 =
+            createCheckConfig(CheckWhichDoesNotRequireCommentNodes.class);
+        final DefaultConfiguration checkConfig2 =
+            createCheckConfig(CheckWhichRequiresCommentNodes.class);
+
+        final DefaultConfiguration treeWalkerConfig = createCheckConfig(TreeWalker.class);
+        treeWalkerConfig.addChild(checkConfig1);
+        treeWalkerConfig.addChild(checkConfig2);
+
+        final DefaultConfiguration checkerConfig = new DefaultConfiguration("checkstyleConfig");
+        checkerConfig.addChild(treeWalkerConfig);
+
+        final Checker checker = new Checker();
+        checker.setModuleClassLoader(Thread.currentThread().getContextClassLoader());
+        checker.configure(checkerConfig);
+        checker.addListener(new BriefUtLogger(stream));
+
+        final String filePath = getPath("api/InputClearDetailAstLazyLoadCache.java");
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+
+        verify(checker, filePath, filePath, expected);
+    }
+
+    @Test
+    public void testCacheOnViolationSuppression() throws Exception {
+        final File cacheFile = temporaryFolder.newFile();
+        final DefaultConfiguration violationCheck =
+                createCheckConfig(DummyFileSetViolationCheck.class);
+        final DefaultConfiguration defaultConfig = new DefaultConfiguration("defaultConfiguration");
+        defaultConfig.addAttribute("cacheFile", cacheFile.getPath());
+        defaultConfig.addChild(violationCheck);
+
+        final DefaultConfiguration filterConfig = createCheckConfig(SuppressionFilter.class);
+        filterConfig.addAttribute("file", getPath("suppress_all.xml"));
+        defaultConfig.addChild(filterConfig);
+
+        final Checker checker = new Checker();
+        checker.setModuleClassLoader(Thread.currentThread().getContextClassLoader());
+        checker.addListener(new BriefUtLogger(stream));
+        checker.configure(defaultConfig);
+
+        final String fileViolationPath = temporaryFolder.newFile("ViolationFile.java").getPath();
+        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+
+        verify(checker, fileViolationPath, expected);
+
+        try (FileInputStream input = new FileInputStream(cacheFile)) {
+            final Properties details = new Properties();
+            details.load(input);
+
+            assertNotNull("suppressed violation file saved in cache",
+                    details.getProperty(fileViolationPath));
+        }
+    }
+
+    @Test
+    public void testHaltOnExceptionOff() throws Exception {
+        final DefaultConfiguration checkConfig =
+            createCheckConfig(CheckWhichThrowsError.class);
+
+        final DefaultConfiguration treeWalkerConfig = createCheckConfig(TreeWalker.class);
+        treeWalkerConfig.addChild(checkConfig);
+
+        final DefaultConfiguration checkerConfig = new DefaultConfiguration("checkstyleConfig");
+        checkerConfig.addChild(treeWalkerConfig);
+
+        checkerConfig.addAttribute("haltOnException", "false");
+
+        final Checker checker = new Checker();
+        checker.setModuleClassLoader(Thread.currentThread().getContextClassLoader());
+        checker.configure(checkerConfig);
+        checker.addListener(new BriefUtLogger(stream));
+
+        final String filePath = getPath("InputMain.java");
+        final String[] expected = {
+            "0: Got an exception - java.lang.IndexOutOfBoundsException: test",
+        };
+
+        verify(checker, filePath, filePath, expected);
+    }
+
     private Checker createMockCheckerWithCacheForModule(
         Class<? extends ExternalResourceHolder> mockClass) throws IOException, CheckstyleException {
 
@@ -706,6 +807,22 @@ public class CheckerTest extends BaseCheckTestSupport {
 
         @Override
         protected void processFiltered(File file, List<String> lines) throws CheckstyleException { }
+
+        @Override
+        public Set<String> getExternalResourceLocations() {
+            final Set<String> externalResourceLocation = new HashSet<>(1);
+            externalResourceLocation.add("non_existing_external_resource.xml");
+            return externalResourceLocation;
+        }
+    }
+
+    private static class DummyFileSetViolationCheck extends AbstractFileSetCheck
+        implements ExternalResourceHolder {
+
+        @Override
+        protected void processFiltered(File file, List<String> lines) throws CheckstyleException {
+            log(0, "test");
+        }
 
         @Override
         public Set<String> getExternalResourceLocations() {
@@ -757,6 +874,136 @@ public class CheckerTest extends BaseCheckTestSupport {
                 locations.add(secondExternalResourceLocation);
             }
             return locations;
+        }
+    }
+
+    private static class CheckWhichDoesNotRequireCommentNodes extends AbstractCheck {
+
+        /** Number of children of method definition token. */
+        private static final int METHOD_DEF_CHILD_COUNT = 7;
+
+        @Override
+        public int[] getDefaultTokens() {
+            return new int[] {TokenTypes.METHOD_DEF};
+        }
+
+        @Override
+        public int[] getAcceptableTokens() {
+            return new int[] {TokenTypes.METHOD_DEF};
+        }
+
+        @Override
+        public int[] getRequiredTokens() {
+            return new int[] {TokenTypes.METHOD_DEF};
+        }
+
+        @Override
+        public void visitToken(DetailAST ast) {
+            if (ast.branchContains(TokenTypes.BLOCK_COMMENT_BEGIN)) {
+                log(ast, "AST has incorrect structure structure."
+                    + " The check does not require comment nodes but there were comment nodes"
+                    + " in the AST.");
+            }
+            final int childCount = ast.getChildCount();
+            if (childCount != METHOD_DEF_CHILD_COUNT) {
+                final String msg = String.format(Locale.getDefault(),
+                    "AST node in no comment tree has wrong number of children. "
+                            + "Expected is %d but was %d",
+                    METHOD_DEF_CHILD_COUNT, childCount);
+                log(ast, msg);
+            }
+            // count children where comment lives
+            int actualChildCount = 0;
+            for (DetailAST child = ast.getFirstChild().getFirstChild(); child != null; child =
+                    child.getNextSibling()) {
+                actualChildCount++;
+            }
+            final int cacheChildCount = ast.getFirstChild().getChildCount();
+            if (cacheChildCount != actualChildCount) {
+                final String msg = String.format(Locale.getDefault(),
+                        "AST node with no comment has wrong number of children. "
+                                + "Expected is %d but was %d",
+                        cacheChildCount, actualChildCount);
+                log(ast, msg);
+            }
+        }
+    }
+
+    private static class CheckWhichRequiresCommentNodes extends AbstractCheck {
+
+        /** Number of children of method definition token. */
+        private static final int METHOD_DEF_CHILD_COUNT = 7;
+
+        @Override
+        public boolean isCommentNodesRequired() {
+            return true;
+        }
+
+        @Override
+        public int[] getDefaultTokens() {
+            return new int[] {TokenTypes.METHOD_DEF};
+        }
+
+        @Override
+        public int[] getAcceptableTokens() {
+            return new int[] {TokenTypes.METHOD_DEF};
+        }
+
+        @Override
+        public int[] getRequiredTokens() {
+            return new int[] {TokenTypes.METHOD_DEF};
+        }
+
+        @Override
+        public void visitToken(DetailAST ast) {
+            if (!ast.branchContains(TokenTypes.BLOCK_COMMENT_BEGIN)) {
+                log(ast, "Incorrect AST structure.");
+            }
+            final int childCount = ast.getChildCount();
+            if (childCount != METHOD_DEF_CHILD_COUNT) {
+                final String msg = String.format(Locale.getDefault(),
+                    "AST node in comment tree has wrong number of children. "
+                            + "Expected is %d but was %d",
+                    METHOD_DEF_CHILD_COUNT, childCount);
+                log(ast, msg);
+            }
+            // count children where comment lives
+            int actualChildCount = 0;
+            for (DetailAST child = ast.getFirstChild().getFirstChild(); child != null; child =
+                    child.getNextSibling()) {
+                actualChildCount++;
+            }
+            final int cacheChildCount = ast.getFirstChild().getChildCount();
+            if (cacheChildCount != actualChildCount) {
+                final String msg = String.format(Locale.getDefault(),
+                        "AST node with comment has wrong number of children. "
+                                + "Expected is %d but was %d",
+                        cacheChildCount, actualChildCount);
+                log(ast, msg);
+            }
+        }
+    }
+
+    private static class CheckWhichThrowsError extends AbstractCheck {
+
+        @Override
+        public int[] getDefaultTokens() {
+            return new int[] {TokenTypes.CLASS_DEF};
+        }
+
+        @Override
+        public int[] getAcceptableTokens() {
+            return new int[] {TokenTypes.CLASS_DEF};
+        }
+
+        @Override
+        public int[] getRequiredTokens() {
+            return new int[] {TokenTypes.CLASS_DEF};
+        }
+
+        @Override
+        public void visitToken(DetailAST ast) {
+            throw new IndexOutOfBoundsException("test");
         }
     }
 }

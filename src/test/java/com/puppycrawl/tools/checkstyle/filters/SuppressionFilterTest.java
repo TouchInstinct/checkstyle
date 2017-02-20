@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2017 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -30,15 +30,12 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
 
-import org.junit.Assume;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
-
 import org.mockito.BDDMockito;
 import org.mockito.Mockito;
-
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
@@ -51,7 +48,6 @@ import com.puppycrawl.tools.checkstyle.DefaultConfiguration;
 import com.puppycrawl.tools.checkstyle.api.AuditEvent;
 import com.puppycrawl.tools.checkstyle.api.CheckstyleException;
 import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
-
 import nl.jqno.equalsverifier.EqualsVerifier;
 import nl.jqno.equalsverifier.Warning;
 
@@ -229,39 +225,44 @@ public class SuppressionFilterTest extends BaseCheckTestSupport {
         }
 
         // Run the test only if connection is available and url is reachable.
-        Assume.assumeFalse(urlForTest == null);
+        // We must use an if statement over junit's rule or assume because
+        // powermock disrupts the assume exception and turns into a failure
+        // instead of a skip when it doesn't pass
+        if (urlForTest != null) {
+            final DefaultConfiguration firstFilterConfig =
+                createCheckConfig(SuppressionFilter.class);
+            firstFilterConfig.addAttribute("file", urlForTest);
 
-        final DefaultConfiguration firstFilterConfig = createCheckConfig(SuppressionFilter.class);
-        firstFilterConfig.addAttribute("file", urlForTest);
+            final DefaultConfiguration firstCheckerConfig =
+                new DefaultConfiguration("checkstyle_checks");
+            firstCheckerConfig.addChild(firstFilterConfig);
+            final String cacheFile = temporaryFolder.newFile().getPath();
+            firstCheckerConfig.addAttribute("cacheFile", cacheFile);
 
-        final DefaultConfiguration firstCheckerConfig =
-            new DefaultConfiguration("checkstyle_checks");
-        firstCheckerConfig.addChild(firstFilterConfig);
-        final String cacheFile = temporaryFolder.newFile().getPath();
-        firstCheckerConfig.addAttribute("cacheFile", cacheFile);
+            final Checker checker = new Checker();
+            checker.setModuleClassLoader(Thread.currentThread().getContextClassLoader());
+            checker.configure(firstCheckerConfig);
+            checker.addListener(new BriefUtLogger(stream));
 
-        final Checker checker = new Checker();
-        checker.setModuleClassLoader(Thread.currentThread().getContextClassLoader());
-        checker.configure(firstCheckerConfig);
-        checker.addListener(new BriefUtLogger(stream));
+            final String pathToEmptyFile = temporaryFolder.newFile("file.java").getPath();
+            final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
 
-        final String pathToEmptyFile = temporaryFolder.newFile("file.java").getPath();
-        final String[] expected = CommonUtils.EMPTY_STRING_ARRAY;
+            verify(checker, pathToEmptyFile, expected);
 
-        verify(checker, pathToEmptyFile, expected);
+            // One more time to use cache.
+            final DefaultConfiguration secondFilterConfig =
+                createCheckConfig(SuppressionFilter.class);
+            secondFilterConfig.addAttribute("file", urlForTest);
 
-        // One more time to use cache.
-        final DefaultConfiguration secondFilterConfig = createCheckConfig(SuppressionFilter.class);
-        secondFilterConfig.addAttribute("file", urlForTest);
+            final DefaultConfiguration secondCheckerConfig =
+                new DefaultConfiguration("checkstyle_checks");
+            secondCheckerConfig.addAttribute("cacheFile", cacheFile);
+            secondCheckerConfig.addChild(secondFilterConfig);
 
-        final DefaultConfiguration secondCheckerConfig =
-            new DefaultConfiguration("checkstyle_checks");
-        secondCheckerConfig.addAttribute("cacheFile", cacheFile);
-        secondCheckerConfig.addChild(secondFilterConfig);
+            checker.configure(secondCheckerConfig);
 
-        checker.configure(secondCheckerConfig);
-
-        verify(checker, pathToEmptyFile, expected);
+            verify(checker, pathToEmptyFile, expected);
+        }
     }
 
     private static boolean isConnectionAvailableAndStable(String url) throws Exception {

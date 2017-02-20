@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2017 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -34,6 +34,7 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 import com.google.common.base.CaseFormat;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.DetailNode;
+import com.puppycrawl.tools.checkstyle.api.JavadocTokenTypes;
 import com.puppycrawl.tools.checkstyle.checks.javadoc.JavadocNodeImpl;
 import com.puppycrawl.tools.checkstyle.grammars.javadoc.JavadocLexer;
 import com.puppycrawl.tools.checkstyle.grammars.javadoc.JavadocParser;
@@ -77,6 +78,9 @@ public class JavadocDetailNodeParser {
     public static final String MSG_KEY_UNRECOGNIZED_ANTLR_ERROR =
             "javadoc.unrecognized.antlr.error";
 
+    /** Symbols with which javadoc starts. */
+    private static final String JAVADOC_START = "/**";
+
     /**
      * Line number of the Block comment AST that is being parsed.
      */
@@ -95,6 +99,7 @@ public class JavadocDetailNodeParser {
      */
     public ParseStatus parseJavadocAsDetailNode(DetailAST javadocCommentAst) {
         blockCommentLineNumber = javadocCommentAst.getLineNo();
+
         final String javadocComment = JavadocUtils.getJavadocCommentContent(javadocCommentAst);
 
         // Use a new error listener each time to be able to use
@@ -113,6 +118,10 @@ public class JavadocDetailNodeParser {
             final ParseTree parseTree = parseJavadocAsParseTree(javadocComment);
 
             final DetailNode tree = convertParseTreeToDetailNode(parseTree);
+            // adjust first line to indent of /**
+            adjustFirstLineToJavadocIndent(tree,
+                        javadocCommentAst.getColumnNo()
+                                + JAVADOC_START.length());
             result.setTree(tree);
         }
         catch (ParseCancellationException ex) {
@@ -181,6 +190,12 @@ public class JavadocDetailNodeParser {
         ParseTree parseTreeParent = parseTreeNode;
 
         while (currentJavadocParent != null) {
+            // remove unnecessary children tokens
+            if (currentJavadocParent.getType() == JavadocTokenTypes.TEXT) {
+                currentJavadocParent
+                        .setChildren((DetailNode[]) JavadocNodeImpl.EMPTY_DETAIL_NODE_ARRAY);
+            }
+
             final JavadocNodeImpl[] children =
                     (JavadocNodeImpl[]) currentJavadocParent.getChildren();
 
@@ -294,6 +309,21 @@ public class JavadocDetailNodeParser {
         node.setParent(parent);
         node.setChildren((DetailNode[]) new JavadocNodeImpl[parseTree.getChildCount()]);
         return node;
+    }
+
+    /**
+     * Adjust first line nodes to javadoc indent.
+     * @param tree DetailNode tree root
+     * @param javadocColumnNumber javadoc indent
+     */
+    private void adjustFirstLineToJavadocIndent(DetailNode tree, int javadocColumnNumber) {
+        if (tree.getLineNumber() == blockCommentLineNumber) {
+            ((JavadocNodeImpl) tree).setColumnNumber(tree.getColumnNumber() + javadocColumnNumber);
+            final DetailNode[] children = tree.getChildren();
+            for (DetailNode child : children) {
+                adjustFirstLineToJavadocIndent(child, javadocColumnNumber);
+            }
+        }
     }
 
     /**
@@ -543,7 +573,7 @@ public class JavadocDetailNodeParser {
          * @param messageKey message key
          * @param messageArguments message arguments
          */
-        ParseErrorMessage(int lineNumber, String messageKey, Object ... messageArguments) {
+        ParseErrorMessage(int lineNumber, String messageKey, Object... messageArguments) {
             this.lineNumber = lineNumber;
             this.messageKey = messageKey;
             this.messageArguments = messageArguments.clone();

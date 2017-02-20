@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2017 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -87,6 +87,7 @@ public class AvoidEscapedUnicodeCharactersCheckTest extends BaseCheckTestSupport
             "93: " + getCheckMessage(MSG_KEY),
             "94: " + getCheckMessage(MSG_KEY),
             "98: " + getCheckMessage(MSG_KEY),
+            "104: " + getCheckMessage(MSG_KEY),
         };
         verify(checkConfig, getPath("InputAvoidEscapedUnicodeCharacters.java"), expected);
     }
@@ -127,6 +128,7 @@ public class AvoidEscapedUnicodeCharactersCheckTest extends BaseCheckTestSupport
             "92: " + getCheckMessage(MSG_KEY),
             "94: " + getCheckMessage(MSG_KEY),
             "98: " + getCheckMessage(MSG_KEY),
+            "104: " + getCheckMessage(MSG_KEY),
         };
         verify(checkConfig, getPath("InputAvoidEscapedUnicodeCharacters.java"), expected);
     }
@@ -156,6 +158,7 @@ public class AvoidEscapedUnicodeCharactersCheckTest extends BaseCheckTestSupport
             "82: " + getCheckMessage(MSG_KEY),
             "92: " + getCheckMessage(MSG_KEY),
             "98: " + getCheckMessage(MSG_KEY),
+            "104: " + getCheckMessage(MSG_KEY),
         };
         verify(checkConfig, getPath("InputAvoidEscapedUnicodeCharacters.java"), expected);
     }
@@ -209,6 +212,7 @@ public class AvoidEscapedUnicodeCharactersCheckTest extends BaseCheckTestSupport
             "93: " + getCheckMessage(MSG_KEY),
             "94: " + getCheckMessage(MSG_KEY),
             "98: " + getCheckMessage(MSG_KEY),
+            "104: " + getCheckMessage(MSG_KEY),
         };
         verify(checkConfig, getPath("InputAvoidEscapedUnicodeCharacters.java"), expected);
     }

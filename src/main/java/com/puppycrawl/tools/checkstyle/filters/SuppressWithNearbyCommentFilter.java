@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2017 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -99,16 +99,16 @@ public class SuppressWithNearbyCommentFilter
     private boolean checkCPP = true;
 
     /** Parsed comment regexp that marks checkstyle suppression region. */
-    private Pattern commentRegexp;
+    private Pattern commentFormat = Pattern.compile(DEFAULT_COMMENT_FORMAT);
 
     /** The comment pattern that triggers suppression. */
-    private String checkFormat;
+    private String checkFormat = DEFAULT_CHECK_FORMAT;
 
     /** The message format to suppress. */
     private String messageFormat;
 
     /** The influence of the suppression comment. */
-    private String influenceFormat;
+    private String influenceFormat = DEFAULT_INFLUENCE_FORMAT;
 
     /**
      * References the current FileContents for this filter.
@@ -120,23 +120,11 @@ public class SuppressWithNearbyCommentFilter
     private WeakReference<FileContents> fileContentsReference = new WeakReference<>(null);
 
     /**
-     * Constructs a SuppressionCommentFilter.
-     * Initializes comment on, comment off, and check formats
-     * to defaults.
-     */
-    public SuppressWithNearbyCommentFilter() {
-        setCommentFormat(DEFAULT_COMMENT_FORMAT);
-        checkFormat = DEFAULT_CHECK_FORMAT;
-        influenceFormat = DEFAULT_INFLUENCE_FORMAT;
-    }
-
-    /**
      * Set the format for a comment that turns off reporting.
-     * @param format a {@code String} value.
-     * @throws ConversionException if unable to create Pattern object.
+     * @param pattern a pattern.
      */
-    public final void setCommentFormat(String format) {
-        commentRegexp = CommonUtils.createPattern(format);
+    public final void setCommentFormat(Pattern pattern) {
+        commentFormat = pattern;
     }
 
     /**
@@ -203,16 +191,14 @@ public class SuppressWithNearbyCommentFilter
         if (event.getLocalizedMessage() != null) {
             // Lazy update. If the first event for the current file, update file
             // contents and tag suppressions
-            final FileContents currentContents = FileContentsHolder.getContents();
+            final FileContents currentContents = FileContentsHolder.getCurrentFileContents();
 
-            if (currentContents != null) {
-                if (getFileContents() != currentContents) {
-                    setFileContents(currentContents);
-                    tagSuppressions();
-                }
-                if (matchesTag(event)) {
-                    accepted = false;
-                }
+            if (getFileContents() != currentContents) {
+                setFileContents(currentContents);
+                tagSuppressions();
+            }
+            if (matchesTag(event)) {
+                accepted = false;
             }
         }
         return accepted;
@@ -240,11 +226,11 @@ public class SuppressWithNearbyCommentFilter
         tags.clear();
         final FileContents contents = getFileContents();
         if (checkCPP) {
-            tagSuppressions(contents.getCppComments().values());
+            tagSuppressions(contents.getSingleLineComments().values());
         }
         if (checkC) {
             final Collection<List<TextBlock>> cComments =
-                contents.getCComments().values();
+                contents.getBlockComments().values();
             cComments.forEach(this::tagSuppressions);
         }
         Collections.sort(tags);
@@ -273,7 +259,7 @@ public class SuppressWithNearbyCommentFilter
      * @param line the line number of text.
      */
     private void tagCommentLine(String text, int line) {
-        final Matcher matcher = commentRegexp.matcher(text);
+        final Matcher matcher = commentFormat.matcher(text);
         if (matcher.find()) {
             addTag(matcher.group(0), line);
         }
@@ -323,18 +309,18 @@ public class SuppressWithNearbyCommentFilter
             String format = "";
             try {
                 format = CommonUtils.fillTemplateWithStringsByRegexp(
-                        filter.checkFormat, text, filter.commentRegexp);
+                        filter.checkFormat, text, filter.commentFormat);
                 tagCheckRegexp = Pattern.compile(format);
                 if (filter.messageFormat == null) {
                     tagMessageRegexp = null;
                 }
                 else {
                     format = CommonUtils.fillTemplateWithStringsByRegexp(
-                            filter.messageFormat, text, filter.commentRegexp);
+                            filter.messageFormat, text, filter.commentFormat);
                     tagMessageRegexp = Pattern.compile(format);
                 }
                 format = CommonUtils.fillTemplateWithStringsByRegexp(
-                        filter.influenceFormat, text, filter.commentRegexp);
+                        filter.influenceFormat, text, filter.commentFormat);
                 final int influence;
                 try {
                     if (CommonUtils.startsWithChar(format, '+')) {

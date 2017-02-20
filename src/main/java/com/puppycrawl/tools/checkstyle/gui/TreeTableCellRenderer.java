@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // checkstyle: Checks Java source code for adherence to a set of rules.
-// Copyright (C) 2001-2016 the original author or authors.
+// Copyright (C) 2001-2017 the original author or authors.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -42,7 +42,7 @@ class TreeTableCellRenderer extends JTree implements
     private static final long serialVersionUID = 4324031590789321581L;
 
     /** Tree table to render. */
-    private final JTreeTable treeTable;
+    private final TreeTable treeTable;
 
     /** Last table/tree row asked to renderer. */
     private int visibleRow;
@@ -52,7 +52,7 @@ class TreeTableCellRenderer extends JTree implements
      * @param treeTable tree table to render.
      * @param model Tree model.
      */
-    TreeTableCellRenderer(JTreeTable treeTable, TreeModel model) {
+    TreeTableCellRenderer(TreeTable treeTable, TreeModel model) {
         super(model);
         this.treeTable = treeTable;
     }

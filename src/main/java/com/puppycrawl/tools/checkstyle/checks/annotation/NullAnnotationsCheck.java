@@ -30,14 +30,16 @@ import com.puppycrawl.tools.checkstyle.api.TokenTypes;
 import com.puppycrawl.tools.checkstyle.utils.CheckUtils;
 import com.puppycrawl.tools.checkstyle.utils.CommonUtils;
 import com.puppycrawl.tools.checkstyle.utils.AnnotationUtility;
+import com.puppycrawl.tools.checkstyle.utils.ScopeUtils;
 
 public class NullAnnotationsCheck extends AbstractCheck {
 
     /**
-     * A key is pointing to the warning message text in "messages.properties"
+     * A keys are pointing to the warning message text in "messages.properties"
      * file.
      */
-    public static final String MSG_KEY = "null.annotations";
+    public static final String MSG_MISSED_ANNOTATION_KEY = "Messed @NonNull or @Nullable annotation for ";
+    public static final String MSG_USELESS_ANNOTATION_KEY = "Useless @NonNull or @Nullable annotation for ";
 
     private static final String NON_NULL = "NonNull";
     private static final String NULLABLE = "Nullable";
@@ -49,6 +51,7 @@ public class NullAnnotationsCheck extends AbstractCheck {
      */
     private final Set<Integer> primitiveDataTypes = Collections.unmodifiableSet(
         Stream.of(
+            TokenTypes.LITERAL_VOID,
             TokenTypes.LITERAL_BYTE,
             TokenTypes.LITERAL_SHORT,
             TokenTypes.LITERAL_INT,
@@ -86,7 +89,9 @@ public class NullAnnotationsCheck extends AbstractCheck {
     public void visitToken(DetailAST ast) {
         final DetailAST container = ast.getParent().getParent();
         if(ast.getType() == TokenTypes.VARIABLE_DEF) {
-            visitField(ast);
+            if (ScopeUtils.isClassFieldDef(ast)) {
+                visitField(ast);
+            }
         } else {
             visitMethod(ast);
         }
@@ -128,19 +133,30 @@ public class NullAnnotationsCheck extends AbstractCheck {
     }
 
     private void checkToken(final DetailAST ast) {
-        if (!isIgnoredParam(ast)
-                && !(AnnotationUtility.containsAnnotation(ast, NON_NULL) || AnnotationUtility.containsAnnotation(ast, NULLABLE))) {
+        boolean containsAnnotation = AnnotationUtility.containsAnnotation(ast, NON_NULL)
+                || AnnotationUtility.containsAnnotation(ast, NULLABLE);
+        boolean ignored = isIgnoredToken(ast);
+        if (!ignored && !containsAnnotation) {
             final DetailAST paramName = ast.findFirstToken(TokenTypes.IDENT);
             final DetailAST firstNode = CheckUtils.getFirstNode(ast);
             log(firstNode.getLineNo(), firstNode.getColumnNo(),
-                MSG_KEY, paramName.getText());
+                MSG_MISSED_ANNOTATION_KEY + paramName.getText());
+        } else if (ignored && containsAnnotation) {
+            final DetailAST paramName = ast.findFirstToken(TokenTypes.IDENT);
+            final DetailAST firstNode = CheckUtils.getFirstNode(ast);
+            log(firstNode.getLineNo(), firstNode.getColumnNo(),
+                MSG_USELESS_ANNOTATION_KEY + paramName.getText());
         }
     }
 
-    private boolean isIgnoredParam(DetailAST paramDef) {
-        final DetailAST parameterType = paramDef
-            .findFirstToken(TokenTypes.TYPE).getFirstChild();
-        if (primitiveDataTypes.contains(parameterType.getType())) {
+    private boolean isIgnoredToken(DetailAST token) {
+        final DetailAST parameterType = token
+            .findFirstToken(TokenTypes.TYPE);
+        // constructor
+        if(parameterType == null) {
+            return true;
+        }
+        if (primitiveDataTypes.contains(parameterType.getFirstChild().getType())) {
             return true;
         }
         return false;
